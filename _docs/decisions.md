@@ -29,3 +29,14 @@ Decision:
 ## 2026-10-31 Code structure
 Decision: notebooks for explanation, an installable package for all reusable logic, and versioned
 aggregated output tables forming the contract for Phase 2 (plan section 6).
+
+## 2026-10-31 MEPS variable shortlist and 2022-23 mapping (decision gate 1)
+Decision: the shortlist and name mapping in `_docs/variable-mapping.md` is approved. BMI
+(`ADBMI42`) is excluded from the pooled 2022+2023 model and the final rating structure, and is
+used only in a 2022-only sensitivity analysis.
+Why: `ADBMI42` and `CHBMIX42` exist in the 2022 Full-Year Consolidated file (HC-243) but no BMI
+variable exists in the 2023 file (HC-251) under any name or round suffix, confirmed by grepping
+both years' raw SAS program statement files. A factor only present in half the pooled data would
+distort the pooled fit.
+Alternatives: checking a separate 2023 PUF (such as Preventive Care) for a BMI variable, rejected
+for now, can be revisited as a stretch goal if time allows.
