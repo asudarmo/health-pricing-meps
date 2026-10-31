@@ -1,0 +1,7 @@
+health_pricing:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "data/interim/meps.duckdb"
+      threads: 4
