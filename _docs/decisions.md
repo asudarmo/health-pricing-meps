@@ -31,12 +31,32 @@ Decision: notebooks for explanation, an installable package for all reusable log
 aggregated output tables forming the contract for Phase 2 (plan section 6).
 
 ## 2026-10-31 MEPS variable shortlist and 2022-23 mapping (decision gate 1)
-Decision: the shortlist and name mapping in `_docs/variable-mapping.md` is approved. BMI
-(`ADBMI42`) is excluded from the pooled 2022+2023 model and the final rating structure, and is
-used only in a 2022-only sensitivity analysis.
-Why: `ADBMI42` and `CHBMIX42` exist in the 2022 Full-Year Consolidated file (HC-243) but no BMI
-variable exists in the 2023 file (HC-251) under any name or round suffix, confirmed by grepping
-both years' raw SAS program statement files. A factor only present in half the pooled data would
-distort the pooled fit.
+Decision: the shortlist and name mapping in `_docs/variable-mapping.md` is approved, with these
+specific calls.
+- BMI (`ADBMI42`) is excluded from the pooled 2022+2023 model and the final rating structure. A
+  2022-only BMI sensitivity analysis is moved to the stretch goals (plan section 5), not MVP.
+- `OFTSMK53` (main interview, all adults) is the primary smoking rating factor. `ADSMOK42` (SAQ)
+  is kept only as a consistency check against it, because the SAQ has a coverage gap `OFTSMK53`
+  does not.
+- `PHYEXE53` (moderate/vigorous exercise 5x a week) is confirmed present in both years and added
+  as a candidate lifestyle factor.
+- Service-category expenditure variables (`IPTEXP`, `OPTEXP`, `OBVEXP`, `OBDRV`, `OBDEXP`,
+  `ERTEXP`, `RXEXP`, both years) are added to the shortlist, they cost the PMI-scope claim
+  categories directly from the FYC file.
+Why:
+- `ADBMI42` and `CHBMIX42` exist in the 2022 Full-Year Consolidated file (HC-243) but no BMI
+  variable exists in the 2023 file (HC-251) under any name or round suffix, confirmed by grepping
+  both years' raw SAS program statement files. A factor absent from 2023 cannot be checked on the
+  out-of-time test (plan section 2.5), which is the main reason to exclude it, not only that it
+  would distort the pooled fit.
+- An earlier version of this decision misread the `_M18` suffix on `DIABDX_M18` as an age-18+
+  restriction. AHRQ's own documentation defines `_Myy` as marking the collection year a variable's
+  definition changed, so `_M18` means "changed in collection year 2018", corrected after the user
+  challenged it and a label comparison confirmed `DIABDX_M18` has no "(>17)" age qualifier unlike
+  every other condition flag in the shortlist. No decision changes as a result, `DIABDX_M18` is
+  still used as-is, but the mapping note is corrected.
+- Adult-only condition flags (`HIBPDX`, `CHDDX`, `ANGIDX`, `MIDX`, `OHRTDX`, `STRKDX`, `CHOLDX`,
+  `CANCERDX`, `ARTHDX`) are coded `-1 = INAPPLICABLE` for children, since the question is age
+  restricted. M2 must set an explicit coding rule for this, not decided here.
 Alternatives: checking a separate 2023 PUF (such as Preventive Care) for a BMI variable, rejected
 for now, can be revisited as a stretch goal if time allows.

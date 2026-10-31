@@ -201,6 +201,8 @@ Stretch (only if ahead):
 - Reweight MEPS to UK age/sex/BMI/smoking mix (Health Survey for England)
 - Databricks run
 - CMS market rates as a conversion benchmark
+- BMI sensitivity analysis on 2022 only, BMI has no 2023 equivalent so cannot be validated
+  out-of-time (`_docs/variable-mapping.md`)
 
 ### Risks
 
