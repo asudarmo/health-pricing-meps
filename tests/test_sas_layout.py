@@ -79,3 +79,17 @@ def test_read_fixed_width_treats_reserved_negative_codes_as_numeric(tmp_path: Pa
     df = read_fixed_width(dat_path, fields)
     assert df.loc[0, "AGE23X"] == -1
     assert pd.notna(df.loc[0, "AGE23X"])
+
+
+def test_read_fixed_width_literal_decimal_point_overrides_implied_decimals(tmp_path: Path):
+    su_path = tmp_path / "fixture_su.txt"
+    su_path.write_text(FIXTURE_SU_TXT, encoding="latin-1")
+    fields = parse_layout(su_path)
+
+    # PERWT23F is 4.2, but AHRQ's event and weight fields hold a literal point, which SAS keeps
+    # as written. Dividing again by 100 would give 0.12 here (the M1 loader bug).
+    dat_path = tmp_path / "fixture.dat"
+    dat_path.write_text("2460002" + "2460002101" + "45" + "1.23" + chr(10), encoding="latin-1")
+
+    df = read_fixed_width(dat_path, fields)
+    assert df.loc[0, "PERWT23F"] == 1.23

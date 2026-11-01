@@ -79,3 +79,31 @@ def test_2022_positive_weight_count_matches_ahrq_documentation(con):
 def test_event_file_count_matches_ahrq_documentation(con, table, expected):
     actual = con.execute(f"SELECT COUNT(*) FROM raw.{table}").fetchone()[0]
     assert actual == expected
+
+
+# Regression test for the M1 loader bug found in M2 (#8). AHRQ stores event costs and weights
+# with literal decimal points, and an extra division by 10^decimals made them 100x and 10^6x too
+# small. Event-file totals must agree with the FYC service-category totals, and the weights must
+# sum to the US civilian non-institutionalised population (about 330 million).
+@pytest.mark.parametrize(
+    ("year", "suffix"),
+    [(2022, "22"), (2023, "23")],
+)
+def test_event_cost_and_weight_scale(year, suffix):
+    connection = duckdb.connect(str(DUCKDB_PATH), read_only=True)
+    try:
+        pairs = [
+            (f"office_based_{year}", f"OBXP{suffix}X", f"OBVEXP{suffix}"),
+            (f"outpatient_{year}", f"OPXP{suffix}X", f"OPTEXP{suffix}"),
+            (f"inpatient_{year}", f"IPXP{suffix}X", f"IPTEXP{suffix}"),
+        ]
+        for table, event_col, fyc_col in pairs:
+            events = connection.execute(f"SELECT SUM({event_col}) FROM raw.{table}").fetchone()[0]
+            fyc = connection.execute(f"SELECT SUM({fyc_col}) FROM raw.fyc_{year}").fetchone()[0]
+            assert events == pytest.approx(fyc, rel=0.001), table
+        weight_total = connection.execute(
+            f"SELECT SUM(PERWT{suffix}F) FROM raw.fyc_{year}"
+        ).fetchone()[0]
+        assert 300e6 < weight_total < 350e6
+    finally:
+        connection.close()

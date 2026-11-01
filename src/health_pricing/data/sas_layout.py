@@ -142,7 +142,7 @@ def read_fixed_width(dat_path: Path, fields: list[FieldSpec]) -> pd.DataFrame:
     types from fixed-width data, so the result matches what the SAS INPUT statement would
     produce: character fields stay strings, numeric fields with decimals follow SAS's implied
     decimal convention (e.g. a "13.6" informat means a 13-character field holding a value scaled
-    by 10^6, not a value with a literal decimal point in the text).
+    by 10^6 when the text has no decimal point, but a literal point in the text overrides this).
     """
     colspecs = [f.colspec for f in fields]
     names = [f.name for f in fields]
@@ -151,6 +151,13 @@ def read_fixed_width(dat_path: Path, fields: list[FieldSpec]) -> pd.DataFrame:
     for f in fields:
         if f.is_char:
             continue
-        numeric = pd.to_numeric(df[f.name].str.strip(), errors="coerce")
-        df[f.name] = numeric / (10**f.decimals) if f.decimals else numeric.astype("Int64")
+        text = df[f.name].str.strip()
+        numeric = pd.to_numeric(text, errors="coerce")
+        if not f.decimals:
+            df[f.name] = numeric.astype("Int64")
+            continue
+        # As in SAS, a literal decimal point in the text overrides the implied decimals. AHRQ's
+        # event files and weights are stored with literal points (e.g. "233.22" under 9.2).
+        has_point = text.str.contains(".", regex=False, na=False)
+        df[f.name] = numeric.where(has_point, numeric / (10**f.decimals))
     return df
