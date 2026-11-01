@@ -1,0 +1,143 @@
+version: 2
+
+# Column roles for the modelling table (issue #17). A rating_factor is a candidate for the final
+# rating structure. An analysis_only column may be studied but must never be a rating factor, and
+# tests/test_mart.py checks the lists. Race, income and education are deliberately absent.
+
+models:
+  - name: mart_person_year
+    description: >
+      One row per person-year in the modelling population (positive person weight), 2022 and 2023,
+      with rating factor candidates, exposure, PMI-scope claims and the survey weight.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [DUPERSID, year]
+    columns:
+      - name: DUPERSID
+        meta:
+          role: key
+        data_tests:
+          - not_null
+      - name: DUID
+        meta:
+          role: key
+        data_tests:
+          - not_null
+      - name: year
+        meta:
+          role: key
+        data_tests:
+          - not_null
+      - name: age
+        meta:
+          role: rating_factor
+      - name: region
+        meta:
+          role: rating_factor
+      - name: inscov
+        meta:
+          role: rating_factor
+      - name: rthlth
+        meta:
+          role: rating_factor
+      - name: mnhlth
+        meta:
+          role: rating_factor
+      - name: OFTSMK53
+        meta:
+          role: rating_factor
+      - name: PHYEXE53
+        meta:
+          role: rating_factor
+      - name: HIBPDX
+        meta:
+          role: rating_factor
+      - name: CHDDX
+        meta:
+          role: rating_factor
+      - name: ANGIDX
+        meta:
+          role: rating_factor
+      - name: MIDX
+        meta:
+          role: rating_factor
+      - name: OHRTDX
+        meta:
+          role: rating_factor
+      - name: STRKDX
+        meta:
+          role: rating_factor
+      - name: CHOLDX
+        meta:
+          role: rating_factor
+      - name: CANCERDX
+        meta:
+          role: rating_factor
+      - name: ARTHDX
+        meta:
+          role: rating_factor
+      - name: ASTHDX
+        meta:
+          role: rating_factor
+      - name: DIABDX_M18
+        meta:
+          role: rating_factor
+      - name: SEX
+        meta:
+          role: analysis_only
+      - name: age_source
+        meta:
+          role: analysis_only
+      - name: age_topcoded
+        meta:
+          role: analysis_only
+      - name: region_source
+        meta:
+          role: analysis_only
+      - name: left_survey_early
+        meta:
+          role: analysis_only
+      - name: VARSTR
+        meta:
+          role: analysis_only
+      - name: VARPSU
+        meta:
+          role: analysis_only
+      - name: er_stay_count
+        meta:
+          role: analysis_only
+      - name: er_stay_cost
+        meta:
+          role: analysis_only
+      - name: er_stay_cost_2023_prices
+        meta:
+          role: analysis_only
+      - name: exposure
+        meta:
+          role: exposure
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "> 0"
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= 1"
+      - name: claim_count
+        meta:
+          role: claim
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: claim_cost
+        meta:
+          role: claim
+      - name: claim_cost_2023_prices
+        meta:
+          role: claim
+      - name: perwt
+        meta:
+          role: weight
