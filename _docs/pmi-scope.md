@@ -122,34 +122,37 @@ in, and 26.5% and 28.7% if the psychotherapy visit category (4) is also removed.
 # Tables
 
 All tables below come from the generator. Year columns show the number of events and the share of that
-file's cost. The "Share captured" tables and the claimant tables use the approved definition (ER-originated
+file's cost. The event counts for emergency room, prescribed medicines and dental in the first
+tables come from the FYC count variables (`ERTOT`, `RXTOT`, `DVTOT`), because those event files are not
+loaded. For inpatient, outpatient and office-based, the FYC counts equal the event-file record counts.
+The "Share captured" tables and the claimant tables use the approved definition (ER-originated
 stays out).
 
 ### FYC spending by category, 2022
 
-| Category | Persons with spend | Cost | Share of cost | Weighted share |
-|---|---|---|---|---|
-| Inpatient (facility and physician) | 1,466 | 30,554,375 | 17.8% | 18.1% |
-| Hospital outpatient | 5,449 | 20,380,487 | 11.9% | 11.8% |
-| Office-based | 16,459 | 44,956,494 | 26.2% | 27.1% |
-| Emergency room | 2,933 | 5,336,861 | 3.1% | 3.3% |
-| Prescribed medicines | 13,587 | 42,774,666 | 25.0% | 23.8% |
-| Dental | 9,692 | 9,025,526 | 5.3% | 6.0% |
-| Other (home health, glasses, other medical) |  | 18,332,705 | 10.7% | 9.9% |
-| Total |  | 171,361,114 | 100.0% | 100.0% |
+| Category | Persons with spend | Events (FYC count) | Cost | Share of cost | Weighted share |
+|---|---|---|---|---|---|
+| Inpatient (facility and physician) | 1,466 | 1,933 | 30,554,375 | 17.8% | 18.1% |
+| Hospital outpatient | 5,449 | 23,349 | 20,380,487 | 11.9% | 11.8% |
+| Office-based | 16,459 | 151,263 | 44,956,494 | 26.2% | 27.1% |
+| Emergency room | 2,933 | 4,584 | 5,336,861 | 3.1% | 3.3% |
+| Prescribed medicines | 13,587 | 232,605 | 42,774,666 | 25.0% | 23.8% |
+| Dental | 9,692 | 22,529 | 9,025,526 | 5.3% | 6.0% |
+| Other (home health, glasses, other medical) |  |  | 18,332,705 | 10.7% | 9.9% |
+| Total |  |  | 171,361,114 | 100.0% | 100.0% |
 
 ### FYC spending by category, 2023
 
-| Category | Persons with spend | Cost | Share of cost | Weighted share |
-|---|---|---|---|---|
-| Inpatient (facility and physician) | 1,395 | 34,633,110 | 21.7% | 22.2% |
-| Hospital outpatient | 4,823 | 18,518,698 | 11.6% | 11.4% |
-| Office-based | 13,949 | 38,597,279 | 24.2% | 25.2% |
-| Emergency room | 2,702 | 5,207,674 | 3.3% | 3.5% |
-| Prescribed medicines | 11,846 | 38,347,816 | 24.1% | 22.7% |
-| Dental | 8,473 | 8,789,294 | 5.5% | 6.0% |
-| Other (home health, glasses, other medical) |  | 15,242,971 | 9.6% | 8.9% |
-| Total |  | 159,336,842 | 100.0% | 100.0% |
+| Category | Persons with spend | Events (FYC count) | Cost | Share of cost | Weighted share |
+|---|---|---|---|---|---|
+| Inpatient (facility and physician) | 1,395 | 1,830 | 34,633,110 | 21.7% | 22.2% |
+| Hospital outpatient | 4,823 | 20,720 | 18,518,698 | 11.6% | 11.4% |
+| Office-based | 13,949 | 135,096 | 38,597,279 | 24.2% | 25.2% |
+| Emergency room | 2,702 | 4,241 | 5,207,674 | 3.3% | 3.5% |
+| Prescribed medicines | 11,846 | 192,275 | 38,347,816 | 24.1% | 22.7% |
+| Dental | 8,473 | 19,599 | 8,789,294 | 5.5% | 6.0% |
+| Other (home health, glasses, other medical) |  |  | 15,242,971 | 9.6% | 8.9% |
+| Total |  |  | 159,336,842 | 100.0% | 100.0% |
 
 ### Event files, 2022
 

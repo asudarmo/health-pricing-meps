@@ -1,8 +1,8 @@
 """Evidence tables for the PMI-scope claim definition (decision gate 2, issue #8).
 
 Run `uv run python -m health_pricing.evidence.pmi_scope` to print every table in markdown.
-The tables are aggregated only. The proposal rules at the top are the single place the
-proposed definition is written down, so the share it captures is computed, not typed in.
+The tables are aggregated only. The rules at the top are the single place the approved
+definition is written down, so the share it captures is computed, not typed in.
 """
 
 from __future__ import annotations
@@ -23,13 +23,15 @@ LAYOUT_FILES = {
     "inpatient": Path("data/raw/h239dsu.txt"),
 }
 COST_PREFIX = {"office_based": "OBXP", "outpatient": "OPXP", "inpatient": "IPXP"}
+# Label, expenditure variable and the FYC count variable used for the events column. ER visits
+# and prescription fills have no event file loaded, so their event counts come from the FYC file.
 FYC_CATEGORIES = [
-    ("Inpatient (facility and physician)", "IPTEXP"),
-    ("Hospital outpatient", "OPTEXP"),
-    ("Office-based", "OBVEXP"),
-    ("Emergency room", "ERTEXP"),
-    ("Prescribed medicines", "RXEXP"),
-    ("Dental", "DVTEXP"),
+    ("Inpatient (facility and physician)", "IPTEXP", "IPDIS"),
+    ("Hospital outpatient", "OPTEXP", "OPTOTV"),
+    ("Office-based", "OBVEXP", "OBTOTV"),
+    ("Emergency room", "ERTEXP", "ERTOT"),
+    ("Prescribed medicines", "RXEXP", "RXTOT"),
+    ("Dental", "DVTEXP", "DVTOT"),
 ]
 
 # Proposed definition. Specialty codes are DRSPLTY_M18, visit categories are VSTCTGRY,
@@ -130,13 +132,14 @@ def fyc_category_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFram
     total_w = con.execute(f"SELECT SUM(TOTEXP{s} * PERWT{s}F) FROM raw.fyc_{year}").fetchone()[0]
     rows = []
     explicit = ""
-    for label, col in FYC_CATEGORIES:
+    for label, col, count_col in FYC_CATEGORIES:
         col_s = f"{col}{s}"
-        persons, cost, cost_w = con.execute(
-            f"SELECT COUNT(*) FILTER (WHERE {col_s} > 0), SUM({col_s}), SUM({col_s} * PERWT{s}F) "
-            f"FROM raw.fyc_{year}"
+        persons, events, cost, cost_w = con.execute(
+            f"SELECT COUNT(*) FILTER (WHERE {col_s} > 0), "
+            f"SUM({count_col}{s}) FILTER (WHERE {count_col}{s} > 0), "
+            f"SUM({col_s}), SUM({col_s} * PERWT{s}F) FROM raw.fyc_{year}"
         ).fetchone()
-        rows.append((label, persons, cost, cost / total, cost_w / total_w))
+        rows.append((label, persons, events, cost, cost / total, cost_w / total_w))
         explicit += f" - {col_s}"
     other, other_w = con.execute(
         f"SELECT SUM(TOTEXP{s}{explicit}), SUM((TOTEXP{s}{explicit}) * PERWT{s}F) "
@@ -146,14 +149,23 @@ def fyc_category_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFram
         (
             "Other (home health, glasses, other medical)",
             None,
+            None,
             other,
             other / total,
             other_w / total_w,
         )
     )
-    rows.append(("Total", None, total, 1.0, 1.0))
+    rows.append(("Total", None, None, total, 1.0, 1.0))
     return pd.DataFrame(
-        rows, columns=["Category", "Persons with spend", "Cost", "Share of cost", "Weighted share"]
+        rows,
+        columns=[
+            "Category",
+            "Persons with spend",
+            "Events (FYC count)",
+            "Cost",
+            "Share of cost",
+            "Weighted share",
+        ],
     )
 
 

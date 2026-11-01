@@ -82,3 +82,16 @@ def test_non_physician_list_is_physio_psychologist_technician_only():
     assert pmi_scope.NON_DOCTOR_IN == {10, 13, 15}
     assert pmi_scope.level_is_in("outpatient", "MEDPTYPE_M18", 15) is True
     assert pmi_scope.level_is_in("outpatient", "MEDPTYPE_M18", 8) is False
+
+
+def test_outpatient_rule_on_a_fixture(con):
+    con.execute(
+        "CREATE TABLE raw.outpatient_2022 AS SELECT * FROM (VALUES "
+        "('A', 20, -1, 2, 100.0), "  # orthopaedics, diagnosis: in
+        "('A', 8, -1, 2, 40.0), "  # general practice: out
+        "('B', -1, 15, 2, 25.0), "  # technician: in
+        "('B', -1, 8, 2, 15.0), "  # nurse: out
+        "('C', 28, -1, 1, 60.0)"  # psychiatrist but general checkup: out
+        ") t(DUPERSID, DRSPLTY_M18, MEDPTYPE_M18, VSTCTGRY, OPXP22X)"
+    )
+    assert _in_scope_cost(con, "outpatient", "OPXP22X") == 125.0
