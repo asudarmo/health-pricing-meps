@@ -116,3 +116,17 @@ Next: the user's decision on decision gate 4 (PCE-Health, proposed) and acceptan
 asked directly this session. M2 (validation and the modelling table) once the user accepts M1.
 
 Open questions: none beyond the two questions put to the user.
+
+## 2026-11-01 M2 started: #8 to #11 done, stopped at two questions for the user
+
+Done: #8 (PMI-scope evidence, gate 2 decided, two QA rounds), #9 (year-neutral FYC staging), #10 and #11
+(value-level rules for 43 variables in `dbt/models/staging/schema.yml`, `dbt_utils` pinned). Each passed
+QA in a fresh subagent and was closed. Found and fixed an M1 loader bug (event costs 100x and weights
+10^6x too small), with regression tests.
+
+Next: #12 (reserved-code treatment) is blocked on how to treat persons with year-end age -1 (195 in
+2022, 148 in 2023, 2.3% to 2.4% of total cost, all left the survey part-way through the year).
+`AGELAST` gives a valid age for all of them but is not on the gate 1 shortlist. #20 needs a PDF reader
+(a new dependency) to extract the AHRQ codebook frequencies. #13 to #21 follow in order.
+
+Open questions: both above, put to the user.
