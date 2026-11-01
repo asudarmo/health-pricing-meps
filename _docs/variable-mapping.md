@@ -230,9 +230,7 @@ decided here. It is a task for M2's validation layer.
 ## BMI: not available in the 2023 file
 
 2022 has `ADBMI42` (adult BMI) and `CHBMIX42` (child BMI), both round 4/2. The 2023 file
-(`h251su.txt`) has no BMI variable under any name or round suffix. This is not a round-labelling
-artefact, the comparable-round smoking variable (`ADSMOK42`) exists fine in both years, so BMI
-specifically was dropped from, or moved out of, the 2023 Full-Year Consolidated release.
+(`h251su.txt`) has no BMI variable under any name or round suffix.
 
 **Decision:** BMI is excluded from the pooled 2022+2023 model and the final rating structure. The
 main reason is that a factor absent from 2023 cannot be evaluated on the out-of-time test (plan

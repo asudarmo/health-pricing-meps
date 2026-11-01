@@ -13,6 +13,17 @@ This guide applies to all prose written for people to read.
 
 Code, code comments, docstrings, URLs and file paths are exempt, but keep comments plain.
 
+## How strictly to apply this guide
+
+- Only the em dash and semicolon rules are enforced, by the automated test below. Everything else is
+  guidance, not a pass/fail rule.
+- Aim for clear, plain British English. Do not nit-pick grammar (comma splices, sentence fragments, Oxford
+  commas, minor wording) and do not rewrite text only to polish it.
+- Follow the guide for text you write or change in the current task. Do not restyle existing text the task
+  does not otherwise touch.
+- The careful style review of reader-facing documents (README, notebooks, model documentation) happens
+  once, in M9 (write-up), not on every task.
+
 ## Rules
 
 1. Write plain British English (organise, modelling, utilisation). Prefer short sentences. Write for an
@@ -47,5 +58,5 @@ Before finishing any prose, search it for "—", ";" and for a colon followed by
 
 A pytest check (`tests/test_writing_style.py`, created in M1) fails if an em dash or a semicolon appears in
 Markdown files or notebook Markdown cells outside code. This file is excluded, because it quotes the
-characters it bans. Clause-joining colons cannot be detected reliably by
-a script, so QA checks them by reading.
+characters it bans. Clause-joining colons cannot be detected reliably by a script, so they are left to
+the writer and to the M9 review, and are never a reason to fail a task.
