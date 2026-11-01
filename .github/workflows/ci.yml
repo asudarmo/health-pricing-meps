@@ -24,8 +24,8 @@ jobs:
       - name: Format check
         run: uv run ruff format --check .
 
-      - name: dbt connectivity check
-        run: uv run dbt debug --project-dir dbt --profiles-dir dbt
-
       - name: Test
         run: uv run pytest
+
+      - name: dbt connectivity check
+        run: uv run dbt debug --project-dir dbt --profiles-dir dbt

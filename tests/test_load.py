@@ -3,6 +3,10 @@
 Needs the actual MEPS raw files (uv run python -m health_pricing.data.download) and the loader
 to have run (uv run python -m health_pricing.data.load) at least once. Both are git-ignored, so
 this skips rather than fails in CI or on a clean clone that has not pulled the data yet.
+
+The skip check looks for the raw.fyc_2022 table itself, not just the .duckdb file's existence,
+because `dbt debug` creates an empty .duckdb file as a side effect of testing the connection,
+which would otherwise make these tests appear "built" when no data has actually been loaded.
 """
 
 import duckdb
@@ -10,9 +14,23 @@ import pytest
 
 from health_pricing.data.load import DUCKDB_PATH
 
+
+def _raw_tables_are_loaded() -> bool:
+    if not DUCKDB_PATH.exists():
+        return False
+    connection = duckdb.connect(str(DUCKDB_PATH), read_only=True)
+    try:
+        row = connection.execute(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'raw'"
+        ).fetchone()
+        return row[0] > 0
+    finally:
+        connection.close()
+
+
 pytestmark = pytest.mark.skipif(
-    not DUCKDB_PATH.exists(),
-    reason="data/interim/meps.duckdb not built, run the download and load scripts",
+    not _raw_tables_are_loaded(),
+    reason="data/interim/meps.duckdb has no raw tables, run the download and load scripts",
 )
 
 # Person counts AHRQ documents for the Full-Year Consolidated files (AGENTS.md, _docs/plan.md).
