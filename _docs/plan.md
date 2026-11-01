@@ -87,6 +87,7 @@ Traps for the validation layer:
 1. Define "claims" as services UK PMI typically covers: inpatient (incl. day-case) stays and hospital
    outpatient/specialist care and diagnostics. Exclude routine GP, ER and most prescriptions (NHS-covered).
    Check whether office-based events can be split by provider specialty. If not, document the proxy used.
+   The starting definition and its rationale are in section 2.4.1.
 2. Report rating factors as relativities (age curve, condition and smoker loadings), not dollar levels.
 3. Simulated UK product layer (excess, outpatient limit, underwriting type) for rate-change and conversion.
 4. Conduct: build the analysis with sex, but exclude it from the final rating structure (UK gender-neutral
@@ -94,6 +95,43 @@ Traps for the validation layer:
    mimic full medical underwriting. Note the moratorium alternative.
 5. Survey weights: fit models unweighted on exposure, as an insurer would on its own book. Use `PERWT23F`
    only for population sanity checks.
+
+### 2.4.1 PMI-scope claims (starting position for decision gate 2)
+
+**What "PMI-scope" means.** MEPS records all of a person's health care. A UK private medical insurance
+(PMI) policy pays for only part of it, because the NHS provides the rest. "PMI-scope claims" are the MEPS
+events a UK PMI insurer would typically pay for. Only these count as claims in the frequency, severity and
+pure premium models. The final definition is set at decision gate 2 (`AGENTS.md`), based on the evidence
+tables, and recorded in `_docs/decisions.md`. This section is the starting position, not the decision.
+
+| MEPS event type | Typical UK PMI treatment | Starting position |
+|---|---|---|
+| Inpatient stays (incl. day-case) | Core PMI benefit | In |
+| Hospital outpatient department | Specialist consultations · diagnostics · scans | In |
+| Office-based visit, specialist physician | Private consultant appointment | In |
+| Office-based visit, GP or primary care | NHS GP | Out |
+| ER visit | NHS A&E | Out (an admission that follows still counts as inpatient) |
+| Prescribed medicines | Mostly NHS prescriptions | Out (drugs given during a stay are already in inpatient cost) |
+| Dental, optical, home health | Excluded or separate add-ons | Out |
+
+Guidance for the evidence review at the gate:
+
+- **Provider specialty (`DRSPLTY_M18`).** Family or general practice, general internal medicine and general
+  paediatrics act as US primary care, so they are out. Clear specialties (cardiology, orthopaedics,
+  dermatology, oncology and similar) are in.
+- **Visit category (`VSTCTGRY`).** Routine check-ups, immunisations and well-child visits are out, because
+  PMI does not cover preventive care. Pregnancy and maternity care is out, as it is usually excluded from
+  UK PMI. Diagnosis or treatment visits and follow-ups with specialists are in.
+- **Grey areas, decided explicitly at the gate rather than by default.** Non-physician providers such as
+  physiotherapists and psychologists (many policies cover therapies with limits), and psychiatric care
+  (often covered with limits).
+- **Sense check.** The definition should capture a clear minority to moderate share of total spending,
+  because prescriptions, ER, primary care and dental are excluded. A share close to 100% or close to 0%
+  signals a mistake.
+
+Known limitation (state it in the README rather than modelling it): real PMI also excludes cover by
+condition, such as chronic conditions and pre-existing conditions under a moratorium. MEPS cannot model
+this cleanly, so the PMI scope here is defined by event type, provider and visit category only.
 
 ### 2.5 Time periods, trend and validation design (added 31 Oct 2026)
 
