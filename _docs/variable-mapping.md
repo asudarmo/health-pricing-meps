@@ -85,19 +85,23 @@ the diabetes diagnosis question of all ages rather than adults only. The `_M23`-
 a `23` year suffix) did not apply to any variable in this shortlist, but the general `_Myy`
 convention does, and was misread the first time.
 
-### Smoking: two variables, different roles
+### Smoking: two variables, different roles, and different year availability
 
-| Role | Variable | Label | Use |
-|---|---|---|---|
-| Primary smoking factor | `OFTSMK53` | how often smoke cigarettes (>17), round 5/3, main interview (CAPI), all adults | rating factor |
-| Consistency check only | `ADSMOK42` | SAQ: currently smoke, round 4/2, self-administered questionnaire | cross-check against `OFTSMK53`, not a rating factor |
+| Role | Variable | Label | Years available | Use |
+|---|---|---|---|---|
+| Primary smoking factor | `OFTSMK53` | how often smoke cigarettes (>17), round 5/3, main interview (CAPI), all adults | 2022 and 2023, confirmed by grepping both raw files directly | rating factor |
+| Consistency check only, 2023 only | `ADSMOK42` | SAQ: currently smoke, round 4/2, self-administered questionnaire | **2023 only** | cross-check against `OFTSMK53` in 2023, not usable in 2022 or the pooled model |
 
-`OFTSMK53` is the main-interview variable asked of all adults, so it has fuller coverage.
-`ADSMOK42` comes from the self-administered questionnaire (SAQ), which a respondent can skip even
-if they complete the main interview, so it has a coverage gap that `OFTSMK53` does not. M2 should
-confirm the SAQ response rate for `ADSMOK42` before using it for anything beyond a consistency
-check against `OFTSMK53`. `ADNSMK42` (advised to quit) is dropped from the shortlist, since it is
-an SAQ follow-up with the same coverage gap and no rating-factor role of its own.
+Correction from an earlier version of this document, caught at QA, which claimed `ADSMOK42` was
+identical in both years. It is not, it does not exist anywhere in `h243su.txt` (2022), only in
+`h251su.txt` (2023). This is the same class of error the office-based/outpatient swap was (a
+2022/2023 availability mix-up), caught this time by QA rather than the user, which is why the
+acceptance criteria for this issue now explicitly require checking presence in both years for
+every listed variable, not just mapping the name. `OFTSMK53` is the main-interview variable asked
+of all adults in both years, so it is used as the rating factor. `ADSMOK42` can only support a
+2023-only consistency check, not a pooled one. `ADNSMK42` (advised to quit) is dropped from the
+shortlist, it is an SAQ follow-up with the same 2023-only availability and no rating-factor role
+of its own.
 
 ## Year-suffix mapping (22 to 23), same meaning
 
@@ -137,6 +141,28 @@ Before this check, `OBTOTV` (office-based) and `OPTOTV` (outpatient department) 
 confuse. Both exist in both years with these exact meanings, confirmed from the `LABEL` statements
 (`"# OFFICE-BASED PROVIDER VISITS"` for `OBTOTV`, `"# OUTPATIENT DEPT PROVIDER VISITS"` for
 `OPTOTV`).
+
+## Reserved negative codes and age top-coding
+
+Added at QA, which flagged that the acceptance criterion "reserved negative codes and top-coding
+confirmed for each variable" was only checked for the adult-only condition flags, not the rest of
+the shortlist.
+
+The reserved negative codes AHRQ documents in `AGENTS.md` section 2.2 (`-1` inapplicable, `-7`
+refused, `-8` don't know, `-15` cannot be computed) are a MEPS-wide convention, not specific to
+one variable. Checked directly in both years' `VALUE` statements, every numeric variable in this
+shortlist uses this same convention, with the subset actually usable per variable depending on
+how the question can fail. A count variable such as `OBTOTV23F` additionally carries `-15 =
+"CANNOT BE COMPUTED"` for cases that cannot be derived rather than simply refused. The one group
+with its own distinct meaning is the adult-only condition flags' `-1 = INAPPLICABLE`, documented
+separately above because it reflects a genuine age-based universe restriction, not just a missing
+answer.
+
+Age top-coding: confirmed directly in both years' `VALUE` statements. `AGE22XF` and `AGE23XF`
+both group the stored value as `65 - 85 = "65-85 AGE"`, meaning the underlying `AGE22X`/`AGE23X`
+value itself is capped at 85, anyone older is recorded as exactly 85, not that 65-85 is a single
+coded category. M2's validation layer needs to treat 85 as a top-coded ceiling, not a literal age,
+when using age as a continuous rating factor or computing age-related derived fields.
 
 ## Round-based, not year-based
 

@@ -206,7 +206,6 @@ Stretch (only if ahead):
 
 ### Risks
 
-- Event-file specialty split may not exist (fallback: document the proxy used)
 - 2022 vs 2023 variable naming (use IPUMS or a mapping table)
 - Small claimant counts for severity in thin segments (group levels, credibility-weight, or add 2019)
 - The same people in both years (state it, and group splits by household)

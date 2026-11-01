@@ -50,9 +50,9 @@ Decision: the shortlist and name mapping in `_docs/variable-mapping.md` is appro
 specific calls.
 - BMI (`ADBMI42`) is excluded from the pooled 2022+2023 model and the final rating structure. A
   2022-only BMI sensitivity analysis is moved to the stretch goals (plan section 5), not MVP.
-- `OFTSMK53` (main interview, all adults) is the primary smoking rating factor. `ADSMOK42` (SAQ)
-  is kept only as a consistency check against it, because the SAQ has a coverage gap `OFTSMK53`
-  does not.
+- `OFTSMK53` (main interview, all adults, present in both years) is the primary smoking rating
+  factor. `ADSMOK42` (SAQ) is kept only as a 2023-only consistency check against it, it does not
+  exist in the 2022 file at all, corrected at QA from an earlier claim that it was in both years.
 - `PHYEXE53` (moderate/vigorous exercise 5x a week) is confirmed present in both years and added
   as a candidate lifestyle factor.
 - Service-category expenditure variables (`IPTEXP`, `OPTEXP`, `OBVEXP`, `OBDRV`, `OBDEXP`,
@@ -75,3 +75,16 @@ Why:
   restricted. M2 must set an explicit coding rule for this, not decided here.
 Alternatives: checking a separate 2023 PUF (such as Preventive Care) for a BMI variable, rejected
 for now, can be revisited as a stretch goal if time allows.
+
+## 2026-11-01 Office-based events can be split by provider specialty
+Decision: office-based events do not need a proxy for the PMI-scope claim decision (decision gate
+2). `DRSPLTY_M18` (doctor's specialty) and `VSTCTGRY` (visit category) are both available in the
+office-based event file, confirmed in both 2022 (HC-239G) and 2023 (HC-248G).
+Why: grepped both years' raw SAS program statement files directly for the office-based event
+file. Both years carry identical variables and identical coded-value lists, e.g. `DRSPLTY_M18`
+runs from allergy/immunology through general practice, orthopedics, psychiatry and more, and
+`VSTCTGRY` covers general checkup, diagnosis/treatment, emergency, psychotherapy, follow-up,
+immunisations, vision exam, pregnancy-related, well-child and other. This resolves issue #5 and
+removes "event-file specialty split may not exist" from the open risks (`_docs/plan.md` section
+5), it exists.
+Alternatives: none needed, the specialty and visit-category fields were found on first check.
