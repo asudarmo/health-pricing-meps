@@ -147,7 +147,7 @@ confuse. Both exist in both years with these exact meanings, confirmed from the 
 Added at QA, which flagged that the acceptance criterion "reserved negative codes and top-coding
 confirmed for each variable" was only checked for the adult-only condition flags, not the rest of
 the shortlist. A first attempt at this section claimed the reserved-code convention applied to
-"every numeric variable in this shortlist", which a second QA re-check found false, `TOTEXP23`
+"every numeric variable in this shortlist". A second QA re-check found this false. `TOTEXP23`
 and `PERWT23F` carry no negative codes at all, confirmed directly in their `VALUE` statements.
 The corrected version below checks every shortlisted variable individually rather than asserting
 blanket coverage. An unchecked generalisation across the full shortlist is the same mistake the

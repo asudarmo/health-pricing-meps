@@ -108,6 +108,33 @@ def parse_reserved_codes(su_txt_path: Path) -> dict[str, set[str]]:
     return result
 
 
+def extract_value_block(su_txt_path: Path, variable: str) -> str:
+    """Return the raw text of one variable's own VALUE block, or "" if it has none.
+
+    Scoped to a single variable's block, not a whole-file substring search, because the same
+    coded-range text (e.g. a top-coding group label) can legitimately appear in several
+    variables' blocks, QA round 4 found a top-coding test that would still pass even if the
+    specific variable's own line were wrong, as long as some other variable in the file kept it.
+    """
+    var_to_format = parse_variable_to_format(su_txt_path)
+    format_name = var_to_format.get(variable)
+    if format_name is None:
+        return ""
+
+    lines: list[str] = []
+    in_block = False
+    for line in Path(su_txt_path).read_text(encoding="latin-1").splitlines():
+        if not in_block:
+            header = _VALUE_BLOCK_START_RE.match(line.strip())
+            if header and header.group(1) == format_name:
+                in_block = True
+            continue
+        if line.strip() == ";":
+            break
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def read_fixed_width(dat_path: Path, fields: list[FieldSpec]) -> pd.DataFrame:
     """Read an AHRQ fixed-width ASCII file using a parsed layout.
 
