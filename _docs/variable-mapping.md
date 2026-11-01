@@ -146,17 +146,40 @@ confuse. Both exist in both years with these exact meanings, confirmed from the 
 
 Added at QA, which flagged that the acceptance criterion "reserved negative codes and top-coding
 confirmed for each variable" was only checked for the adult-only condition flags, not the rest of
-the shortlist.
+the shortlist. A first attempt at this section claimed the reserved-code convention applied to
+"every numeric variable in this shortlist", which a second QA re-check found false, `TOTEXP23`
+and `PERWT23F` carry no negative codes at all, confirmed directly in their `VALUE` statements.
+The corrected version below checks every shortlisted variable individually rather than asserting
+blanket coverage, the same mistake the office-based/outpatient swap and the `ADSMOK42` error
+were, an unchecked generalisation across the full shortlist.
 
-The reserved negative codes AHRQ documents in `AGENTS.md` section 2.2 (`-1` inapplicable, `-7`
-refused, `-8` don't know, `-15` cannot be computed) are a MEPS-wide convention, not specific to
-one variable. Checked directly in both years' `VALUE` statements, every numeric variable in this
-shortlist uses this same convention, with the subset actually usable per variable depending on
-how the question can fail. A count variable such as `OBTOTV23F` additionally carries `-15 =
-"CANNOT BE COMPUTED"` for cases that cannot be derived rather than simply refused. The one group
-with its own distinct meaning is the adult-only condition flags' `-1 = INAPPLICABLE`, documented
-separately above because it reflects a genuine age-based universe restriction, not just a missing
-answer.
+Checked directly in both years' `VALUE` statements for every variable in this shortlist, two
+groups exist.
+
+**Carry the reserved-code convention** (`-1` inapplicable, `-7` refused, `-8` don't know, `-15`
+cannot be computed, from `AGENTS.md` section 2.2), because they come directly from a survey
+question that can go unanswered or not apply:
+
+| Variables | Codes present |
+|---|---|
+| `SEX`, `RTHLTH31/42/53`, `MNHLTH31/42/53`, `OFTSMK53`, `PHYEXE53` | all four (`-15`, `-8`, `-7`, `-1`) |
+| `AGE22X`/`AGE23X`, `REGION22`/`23`, `INSCOV22`/`23` | `-1` only |
+| `OBTOTV`, `OPTOTV`, `ERTOT`, `IPDIS`, `OBDRV` (both years) | `-15` only, for counts that cannot be derived |
+| The adult-only condition flags (`HIBPDX` etc.) | all four, confirmed on `CHDDXF`, with `-1`'s age-restriction meaning documented separately above |
+
+**Carry no reserved codes**, because they are continuous or fully-imputed derived quantities that
+are never negative, confirmed directly, not assumed:
+
+| Variables | Why |
+|---|---|
+| `TOTEXP`, `TOTSLF`, `TOTMCR`, `TOTMCD`, `TOTPRV`, `TOTPTR` (both years) | imputed dollar totals, `VALUE TOTEXP23F` etc. start at `0`, no negative codes |
+| `OBVEXP`, `OBDEXP`, `OPTEXP`, `ERTEXP`, `IPTEXP`, `RXEXP` (both years) | same, service-category dollar totals |
+| `PERWT22F`/`PERWT23F` | survey weight, `VALUE PERWT23FF` starts at `0`, no negative codes |
+| `IPNGTD`, `RXTOT` (both years) | counts, but unlike `OBTOTV`/`OPTOTV`/`ERTOT`/`IPDIS`/`OBDRV` these specifically do not carry `-15` either, confirmed by the same check |
+
+M2's validation layer needs this distinction, a rule that nulls out `-1`/`-7`/`-8`/`-15` on every
+numeric column would silently corrupt `TOTEXP23` or `PERWT23F` if those values ever legitimately
+appeared (they are at or above zero by construction, so this is a low-risk but real trap).
 
 Age top-coding: confirmed directly in both years' `VALUE` statements. `AGE22XF` and `AGE23XF`
 both group the stored value as `65 - 85 = "65-85 AGE"`, meaning the underlying `AGE22X`/`AGE23X`
