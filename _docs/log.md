@@ -130,3 +130,16 @@ Next: #12 (reserved-code treatment) is blocked on how to treat persons with year
 (a new dependency) to extract the AHRQ codebook frequencies. #13 to #21 follow in order.
 
 Open questions: both above, put to the user.
+
+## 2026-11-01 M2 continued: #12, #13 and #20 done, stopped at gate 3 for #14
+
+Done: #12 (reserved-code treatment, `AGELAST` on the shortlist, adult `unknown` level), #13 (exposure at
+month resolution) and #20 (codebook frequency checks, `pypdf` dev dependency). Each passed QA in a fresh
+subagent and was closed. 241 tests passed before #20, 251 after.
+
+Next: #14 is at decision gate 3. Zero-weight persons are 3.0% (2022) and 2.4% (2023) of persons and
+1.3% and 1.1% of cost. A second finding for the user: 343 people who left part-way have no year-end
+`region`, and region is a rating factor. Earlier-round `REGION31/42/53` would fill it, but they are not
+on the shortlist. #15 to #19 and #21 follow #14, and #16 also needs the BEA key check.
+
+Open questions: both above, put to the user.
