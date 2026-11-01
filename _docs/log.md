@@ -172,3 +172,18 @@ Next: the user reviews M2. M3 (GLMs) is next. The M3 row now includes a leakage 
 level, and M5 includes the ER-originated stays sensitivity.
 
 Open questions: none. Non-blocking QA notes for the M9 review are in the issue comments.
+
+## 2026-11-01 Data dictionary for mart_person_year (#22)
+
+Done: all 37 columns of `mart_person_year` have a description and `source_vars`, `derivation` and
+`decision_ref` meta in `dbt/models/marts/schema.yml`. `uv run python -m health_pricing.data_dictionary`
+generates `_docs/data-dictionary.md`. `tests/test_data_dictionary.py` fails on a missing description or meta
+key, on a `decision_ref` that is not a real `decisions.md` heading, and on a stale generated file. QA passed
+in a fresh subagent. No SQL changed. `pyyaml` was already a main dependency, so `pyproject.toml` is unchanged.
+
+Next: the user reviews M2, then M3 (GLMs).
+
+Open questions: (1) `dbt docs generate` was run against a copy of the database because another process held
+`data/interim/meps.duckdb`. Rerun it on the real file once the lock is released. (2) The user's uncommitted
+edit to `notebooks/02_eda.ipynb` adds a cell that prints `DUPERSID`, so `tests/test_notebooks.py` fails until
+that cell is removed or its output cleared.
