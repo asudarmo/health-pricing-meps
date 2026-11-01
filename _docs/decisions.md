@@ -86,5 +86,5 @@ runs from allergy/immunology through general practice, orthopedics, psychiatry a
 `VSTCTGRY` covers general checkup, diagnosis/treatment, emergency, psychotherapy, follow-up,
 immunisations, vision exam, pregnancy-related, well-child and other. This resolves issue #5 and
 removes "event-file specialty split may not exist" from the open risks (`_docs/plan.md` section
-5), it exists.
+5), because the specialty split does exist.
 Alternatives: none needed, the specialty and visit-category fields were found on first check.
