@@ -74,3 +74,45 @@ Next: the user reviews M1, then M2 (validation and the modelling table) once the
 Decision gate 4 (price index, PCE-Health recommended) is still only proposed, not confirmed.
 
 Open questions: none beyond the user's M1 review and the decision gate 4 sign-off.
+
+## 2026-11-01 Fresh QA re-verification of the fixes, and a deeper issue #3
+
+Done: per `_docs/process.md`'s lifecycle, a fix after a FAIL needs a fresh QA pass before the
+task is genuinely closed, not just the engineer's own re-check. Ran fresh QA subagents on issues
+#1, #3 and #5.
+
+Issues #1 and #5 passed cleanly on the fresh re-check (#1's fix was reproduced directly, QA moved
+the duckdb file aside, ran `dbt debug`, confirmed the test correctly skips rather than falsely
+passing). Issue #3 did not. It took four QA rounds in total, each catching a genuine factual
+error in the "reserved negative codes confirmed for each variable" acceptance criterion.
+
+1. `ADSMOK42`/`ADNSMK42` wrongly claimed present in both years (2023 only)
+2. The "every numeric variable uses this convention" claim was false for `TOTEXP23`/`PERWT23F`
+   and the other derived/imputed quantities
+3. `PID` carries codes in 2022 but not 2023 (year-dependent), and `ASTHDX`/`DIABDX_M18`/
+   `ADSMOK42`/`ADBMI42`/`CHBMIX42` were missing from both tables entirely
+4. The fix for round 3, meant to close this out, repeated the exact same mistake one level down,
+   the executable test added only sampled the groups it claimed to cover (2 of 9 condition
+   flags, one round of `RTHLTH`/`MNHLTH`), and the age top-coding test did an unscoped
+   whole-file substring search that would pass even if the specific variable's own line were
+   wrong
+
+The pattern across all four rounds is the same: checking a sample and asserting it for the whole
+group, in prose and then in a test. The eventual fix was to stop writing claims by hand and
+instead encode every variable `_docs/plan.md` section 2.2 covers as data in
+`tests/test_reserved_codes.py` (158 assertions, generated from loops over verified groups, not
+hand-picked), with `extract_value_block` added to `sas_layout.py` to scope the top-coding check
+to the specific variable's own block. Building the generator itself caught one more bug before
+commit (`ENDRFM22`/`ELGRND22` are year-specific like `OBTOTV22`, not present in both years like
+the round-pair forms), which is the point of converting this to a test, drift now fails a test
+run instead of waiting for a human or an AI to re-read prose carefully enough.
+
+The user asked not to be over-strict on grammar or writing-style nitpicking partway through this
+work. A fifth QA subagent round on issue #3 was skipped as a result, the executable test is a
+materially stronger guarantee than another manual re-check would add, and the session's own full
+suite (190 passed) and a real GitHub Actions run confirm it holds.
+
+Next: the user's decision on decision gate 4 (PCE-Health, proposed) and acceptance of M1, both
+asked directly this session. M2 (validation and the modelling table) once the user accepts M1.
+
+Open questions: none beyond the two questions put to the user.
