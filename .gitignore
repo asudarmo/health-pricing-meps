@@ -32,3 +32,6 @@ Thumbs.db
 
 # Environement variable
 .env
+
+# Notebook scratch work
+notebooks/scratch
