@@ -63,6 +63,51 @@ def parse_layout(su_txt_path: Path) -> list[FieldSpec]:
     return fields
 
 
+_FORMAT_ASSIGNMENT_RE = re.compile(r"^\s*(?:FORMAT\s+)?(\$?\w+)\s+(\$?\w+F)\.\s*$")
+_VALUE_BLOCK_START_RE = re.compile(r"^VALUE\s+(\$?\w+)\s*$")
+_NEGATIVE_CODE_RE = re.compile(r"^\s*(-\d+)\s*=")
+
+
+def parse_variable_to_format(su_txt_path: Path) -> dict[str, str]:
+    """Map each variable name to its SAS FORMAT name, from the FORMAT statement block."""
+    mapping: dict[str, str] = {}
+    for line in Path(su_txt_path).read_text(encoding="latin-1").splitlines():
+        match = _FORMAT_ASSIGNMENT_RE.match(line)
+        if match:
+            mapping[match.group(1)] = match.group(2)
+    return mapping
+
+
+def parse_reserved_codes(su_txt_path: Path) -> dict[str, set[str]]:
+    """Map each variable name to the set of reserved negative codes its VALUE statement lists.
+
+    This replaces hand-written claims about which variables carry AGENTS.md's reserved-code
+    convention (-1/-7/-8/-15), after three rounds of QA catching such claims wrong for a subset
+    of variables. A variable absent from the result has no negative code in its VALUE block, or
+    no VALUE block at all. Only covers the standard numeric convention, not a variable's own
+    character reserved marker (e.g. FAMID's "'0' = NON-RESPONSE").
+    """
+    var_to_format = parse_variable_to_format(su_txt_path)
+    format_to_var = {fmt: var for var, fmt in var_to_format.items()}
+
+    result: dict[str, set[str]] = {}
+    current_var: str | None = None
+    for line in Path(su_txt_path).read_text(encoding="latin-1").splitlines():
+        header = _VALUE_BLOCK_START_RE.match(line.strip())
+        if header:
+            current_var = format_to_var.get(header.group(1))
+            continue
+        if current_var is None:
+            continue
+        if line.strip() == ";":
+            current_var = None
+            continue
+        negative = _NEGATIVE_CODE_RE.match(line)
+        if negative:
+            result.setdefault(current_var, set()).add(negative.group(1))
+    return result
+
+
 def read_fixed_width(dat_path: Path, fields: list[FieldSpec]) -> pd.DataFrame:
     """Read an AHRQ fixed-width ASCII file using a parsed layout.
 
