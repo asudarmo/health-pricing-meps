@@ -56,6 +56,11 @@ def _cell(value: object) -> str:
 
 
 def render(model: dict | None = None) -> str:
+    return HEADER + render_table(model)
+
+
+def render_table(model: dict | None = None) -> str:
+    """The dictionary table alone, for the EDA notebook."""
     model = model or load_model()
     lines = [
         "| Name | Description | Source variables | Derivation | Decision reference |",
@@ -71,7 +76,7 @@ def render(model: dict | None = None) -> str:
             _cell(meta.get("decision_ref", "")),
         ]
         lines.append("| " + " | ".join(cells) + " |")
-    return HEADER + "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n"
 
 
 def main() -> None:
