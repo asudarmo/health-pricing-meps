@@ -237,7 +237,8 @@ exclusion (rejected by the user, because the rule defines the population).
 Decision: `REGION31`, `REGION42` and `REGION53` are added to the shortlist (gate 1, approved by the user).
 `region` is the year-end region where valid, else the latest round with a valid region, with `region_source`
 (`year_end` or `last_round`). It affects 195 people in 2022 and 148 in 2023, and none are left without a
-region. The #9, #10 and #12 tests and rules were updated and pass.
+region. Seven people in each year are also zero-weight, so 188 (2022) and 141 (2023) region-filled people
+remain in the modelling population. The #9, #10 and #12 tests and rules were updated and pass.
 - **Pre-approved pattern, for the future with no gate needed.** A person-level characteristic whose
   year-end value is -1 because the person left part-way takes the latest valid round value plus a `_source`
   flag. A question asked in the last round only keeps an `unknown` level instead. This is recorded in
@@ -249,3 +250,21 @@ Why: the 343 people carry about 2.3% to 2.4% of total spending, and region is a 
 people moved during the year, so the latest round is a small approximation.
 Alternatives: an `unknown` region level (rejected, it would act as a leaver indicator) and excluding
 them (rejected, over 1% of cost).
+
+## 2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16)
+Decision: `int_person_claims` gives each person-year a claim count and cost under the approved definition.
+A claim is one in-scope event record, and its cost is the event expenditure (`IPXP`, `OPXP`, `OBXP`). People
+with no in-scope events stay in with zeros. Inpatient stays that began in the emergency room, and were not
+birth related, are kept in `er_stay_count` and `er_stay_cost` and are not in `claim_count` or `claim_cost`,
+so the M5 sensitivity needs no rebuild.
+- Costs are on-levelled to 2023 prices with PCE-Health: factor = 113.121 / 110.256 = 1.02599 (BEA Table
+  2.5.4 line 37, annual averages, downloaded 2026-11-01). 2022 costs are multiplied by it and 2023 costs
+  are unchanged. Both the nominal and on-levelled costs are kept.
+- Event-file totals agree with the FYC category totals (`IPTEXP`, `OPTEXP`, `OBVEXP`) to within 0.001%
+  in every year and event type, so the 1% tolerance is not close to being used.
+- Event costs carry cents and `TOTEXP` is rounded to whole dollars, so 64 people have a claim cost above
+  `TOTEXP` by less than one dollar (the largest is 0.87). The check allows less than one dollar.
+Why: counting event records matches the frequency model's unit, and keeping the emergency room stays
+separate lets the M5 sensitivity add them back without re-running the claim logic.
+Alternatives: counting visits per person-day (the files do not give a stable day key), and dropping the
+emergency room stays from the data (rejected, the sensitivity needs them).

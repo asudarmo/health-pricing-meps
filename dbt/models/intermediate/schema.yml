@@ -415,3 +415,57 @@ models:
                 expression: "> 0"
               config:
                 severity: warn
+
+  - name: price_index_factor
+    description: >
+      PCE-Health on-level factor from 2022 to 2023 prices, from the committed BEA download in
+      data/reference/pce_health.csv.
+    columns:
+      - name: factor
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1.00
+                max_value: 1.10
+                inclusive: false
+
+  - name: int_person_claims
+    description: >
+      PMI-scope claim count and cost per person-year under the approved definition, with costs also
+      on-levelled to 2023 prices. Stays that began in the emergency room are in the er_stay columns.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [DUPERSID, year]
+    columns:
+      - name: claim_count
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: claim_cost
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: claim_cost_2023_prices
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: er_stay_count
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: er_stay_cost
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

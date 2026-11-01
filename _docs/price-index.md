@@ -65,3 +65,16 @@ pipeline stays reproducible if AHRQ revises the series.
   physician and outpatient facility spend, Table 3 columns 3-11) would more precisely track the
   PMI-scope claim mix, but adds complexity disproportionate to a portfolio project. Noted here as
   a possible refinement if time allows, not pursued for M1/M2.
+
+## Values and factor (added in M2, issue #16)
+
+Downloaded on 2026-11-01 through the BEA API (`uv run --env-file .env python -m
+health_pricing.data.price_index`), saved as `data/reference/pce_health.csv` with its checksum and
+request in `data/reference/pce_health.meta.json`. The key is read from `BEA_API_KEY` and is never
+saved.
+
+| Item | Value |
+|---|---|
+| PCE-Health index, 2022 | 110.256 |
+| PCE-Health index, 2023 | 113.121 |
+| On-level factor, 2022 to 2023 prices | 113.121 / 110.256 = 1.02599 |

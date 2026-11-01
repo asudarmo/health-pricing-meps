@@ -1,0 +1,13 @@
+{
+  "source": "Bureau of Economic Analysis, NIPA Table 2.5.4, line 37 (Health)",
+  "table_name": "T20504",
+  "index": "Fisher price index, 2017 = 100, annual",
+  "request_url": "https://apps.bea.gov/api/data?UserID=<BEA_API_KEY>&method=GetData&DatasetName=NIPA&TableName=T20504&Frequency=A&Year=ALL&ResultFormat=JSON",
+  "retrieved_on": "2026-11-01",
+  "file": "pce_health.csv",
+  "sha256": "c9768d0d7fb0fbfb9c3c00dcf50be4570551c1051c2a4baef0414c578f58eeb9",
+  "years": [
+    1929,
+    2025
+  ]
+}
