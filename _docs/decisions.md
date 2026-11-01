@@ -88,3 +88,55 @@ immunisations, vision exam, pregnancy-related, well-child and other. This resolv
 removes "event-file specialty split may not exist" from the open risks (`_docs/plan.md` section
 5), because the specialty split does exist.
 Alternatives: none needed, the specialty and visit-category fields were found on first check.
+
+## 2026-11-01 PMI-scope claim definition (decision gate 2, approved)
+Decision: a PMI-scope claim is an event that meets the rule for its file. The evidence, tables and the
+level by level lists are in `_docs/pmi-scope.md`, and the rules are implemented once in
+`src/health_pricing/evidence/pmi_scope.py`.
+- **Inpatient.** All stays except birth and pregnancy stays (`RSNINHOS` 4, 5, 6) and stays that began
+  in the emergency room (`EMERROOM` = 1). ER-originated stays are flagged, not dropped from the data.
+- **Hospital outpatient and office-based, one rule for both.** The provider must qualify and the visit
+  category must not be excluded.
+  - Doctors qualify unless `DRSPLTY_M18` is 6 (family practice), 8 (general practice), 14 (internal
+    medicine), 24 (paediatrician) or unknown (-8, -7).
+  - Non-physicians qualify only if `MEDPTYPE_M18` is 10 (physical or occupational therapist), 13
+    (psychologist) or 15 (technician). Nurses (8) and every other type are out, because MEPS has no
+    specialist-nurse category.
+  - `VSTCTGRY` 1, 6, 7, 8, 9 and 10 (general checkup, immunisations, vision exam, pregnancy-related,
+    well-child exam, laser eye surgery) are out.
+- **Psychiatric care.** Psychiatry (specialty 28) and psychologist visits are in, including visit
+  category 4 (psychotherapy). Mental health limits belong to the product layer.
+- **Everything else is out.** ER events not followed by admission, prescribed medicines, dental, vision,
+  home health and other medical spending.
+- **Cost.** The event expenditure variable (`IPXP`, `OPXP`, `OBXP`).
+What it captures with ER-originated stays out: 27.5% (2022) and 29.6% (2023) of total spending, 49.1% and
+51.4% of the cost of the three event files, and 40.4% (9,073 of 22,431) and 41.8% (7,907 of 18,919) of
+persons with a claim. With them included (the M5 sensitivity), the shares are 36.4% and 39.3% of total
+spending, 65.1% and 68.3% of the event files, and 41.5% and 43.0% of persons.
+Why:
+- Hospital outpatient was blanket "in" in the starting position. The evidence showed 28.5% (2022) and
+  29.3% (2023) of outpatient cost fails the same specialty and visit rules, mainly general checkups,
+  primary-care specialties, nurses and physician's assistants. The user approved applying the office-based
+  rules to both files.
+- Technicians are in for both files, because diagnostics are covered by PMI. The first proposal's
+  outpatient argument wrongly named technicians. It was corrected before approval.
+- Stays that began in the ER are out because UK emergency admissions are normally NHS and PMI generally
+  covers elective care. This overrides the "an admission that follows still counts as inpatient" note in
+  plan section 2.4.1. They were 51.0% (2022) and 45.4% (2023) of inpatient cost.
+- Birth and pregnancy stays are 7.3% and 6.4% of inpatient cost, and UK PMI usually excludes maternity.
+- Physiotherapy, occupational therapy and psychology are in because UK PMI covers them. Session limits
+  are handled later in the product layer, not in the claim definition.
+Alternatives: counting ER-originated stays (kept as an M5 sensitivity), treating all hospital outpatient
+as in (rejected on the evidence above), excluding all non-physicians (would cut the captured share to
+21.2% and 23.4% of total spending), and excluding psychotherapy visits (small effect, about one point).
+Consequence for issue #15: the per-person claim table keeps a count and cost of ER-originated stays, so
+the M5 sensitivity needs no rebuild.
+
+## 2026-11-01 Loader correction (found in M2 task #8)
+Decision: when a fixed-width numeric field contains a literal decimal point, the loader keeps the value
+as written and applies the SAS implied decimals only when there is no point.
+Why: AHRQ stores event costs and weights with literal points. The M1 loader divided them again by
+10^decimals, so event costs were 100 times and weights 10^6 times too small. After the fix, event-file
+totals agree with the FYC category totals to within 0.01% and the weights sum to about 333 million.
+Alternatives: none. The earlier behaviour was a bug. Regression tests were added in `tests/test_sas_layout.py`
+and `tests/test_load.py`.

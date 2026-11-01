@@ -63,10 +63,15 @@ def _sql_list(values: set[int]) -> str:
     return ", ".join(str(v) for v in sorted(values))
 
 
-def in_scope_condition(event_type: str) -> str:
-    """SQL condition that is true when an event is PMI-scope under the proposed definition."""
+def in_scope_condition(event_type: str, include_er_stays: bool = False) -> str:
+    """SQL condition that is true when an event is PMI-scope under the approved definition.
+
+    Stays that began in the emergency room are out of the base definition (decision gate 2,
+    2026-11-01). Pass include_er_stays=True for the sensitivity that puts them back in.
+    """
     if event_type == "inpatient":
-        return f"RSNINHOS NOT IN ({_sql_list(EXCLUDED_INPATIENT_REASONS)})"
+        condition = f"RSNINHOS NOT IN ({_sql_list(EXCLUDED_INPATIENT_REASONS)})"
+        return condition if include_er_stays else f"{condition} AND EMERROOM <> 1"
     visit = f"VSTCTGRY NOT IN ({_sql_list(EXCLUDED_VISIT_CATEGORIES)})"
     doctor = f"(DRSPLTY_M18 > 0 AND DRSPLTY_M18 NOT IN ({_sql_list(PRIMARY_CARE_SPECIALTIES)}))"
     non_doctor = f"(DRSPLTY_M18 = -1 AND MEDPTYPE_M18 IN ({_sql_list(NON_DOCTOR_IN)}))"
@@ -100,10 +105,12 @@ def definition_table(event_type: str, variable: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["Code", "Level", "Proposal"])
 
 
-def claimant_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFrame:
+def claimant_table(
+    con: duckdb.DuckDBPyConnection, year: int, include_er_stays: bool = False
+) -> pd.DataFrame:
     s = YEARS[year]
     union = " UNION ".join(
-        f"SELECT DUPERSID FROM raw.{t}_{year} WHERE {in_scope_condition(t)}"
+        f"SELECT DUPERSID FROM raw.{t}_{year} WHERE {in_scope_condition(t, include_er_stays)}"
         for t in ("inpatient", "outpatient", "office_based")
     )
     claimants = con.execute(f"SELECT COUNT(*) FROM ({union})").fetchone()[0]
@@ -201,7 +208,9 @@ def breakdown_table(event_type: str, variable: str, where: str = "TRUE") -> pd.D
     return out.reset_index(drop=True)
 
 
-def captured_share_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFrame:
+def captured_share_table(
+    con: duckdb.DuckDBPyConnection, year: int, include_er_stays: bool = False
+) -> pd.DataFrame:
     s = YEARS[year]
     total = con.execute(f"SELECT SUM(TOTEXP{s}) FROM raw.fyc_{year}").fetchone()[0]
     rows = []
@@ -215,7 +224,7 @@ def captured_share_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFr
         all_events, all_cost = con.execute(f"SELECT COUNT(*), SUM({cost}) FROM {table}").fetchone()
         n, c, p = con.execute(
             f"SELECT COUNT(*), SUM({cost}), COUNT(DISTINCT DUPERSID) FROM {table} "
-            f"WHERE {in_scope_condition(event_type)}"
+            f"WHERE {in_scope_condition(event_type, include_er_stays)}"
         ).fetchone()
         rows.append((label, all_events, n, all_cost, c, c / all_cost, c / total, p))
     df = pd.DataFrame(
@@ -245,6 +254,36 @@ def captured_share_table(con: duckdb.DuckDBPyConnection, year: int) -> pd.DataFr
         None,
     ]
     return df
+
+
+def er_sensitivity_table(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+    """Captured share and claimant share with ER-originated stays out (base) and in."""
+    rows = []
+    for year in YEARS:
+        for label, include in (("Out (base)", False), ("In (sensitivity)", True)):
+            total = captured_share_table(con, year, include).iloc[-1]
+            claimants = claimant_table(con, year, include).iloc[0]
+            rows.append(
+                (
+                    str(year),
+                    label,
+                    total["In-scope cost"],
+                    total["Share of event-type cost"],
+                    total["Share of TOTEXP"],
+                    claimants["Share"],
+                )
+            )
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "Year",
+            "ER-originated stays",
+            "In-scope cost",
+            "Share of the three event files",
+            "Share of TOTEXP",
+            "Persons with a claim",
+        ],
+    )
 
 
 def to_markdown(df: pd.DataFrame) -> str:
@@ -281,6 +320,7 @@ def main() -> None:
             _section(f"Share captured by the proposal, {year}", captured_share_table(con, year))
         for year in YEARS:
             _section(f"Persons with an in-scope claim, {year}", claimant_table(con, year))
+        _section("Sensitivity: ER-originated stays out (base) and in", er_sensitivity_table(con))
     finally:
         con.close()
     for title, event_type, variable, where in (
