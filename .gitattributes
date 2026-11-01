@@ -1,0 +1,2 @@
+# Keep the committed price index byte for byte, its checksum is tested
+data/reference/* -text
