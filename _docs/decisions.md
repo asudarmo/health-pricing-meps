@@ -268,3 +268,34 @@ Why: counting event records matches the frequency model's unit, and keeping the 
 separate lets the M5 sensitivity add them back without re-running the claim logic.
 Alternatives: counting visits per person-day (the files do not give a stable day key), and dropping the
 emergency room stays from the data (rejected, the sensitivity needs them).
+
+## 2026-11-01 Modelling table and rating factor candidates (issue #17)
+Decision: `mart_person_year` is the modelling table, one row per person-year in the modelling population
+(`int_person_retained` joined to `int_person_claims`). Column roles are declared in
+`dbt/models/marts/schema.yml` and tested in `tests/test_mart.py`.
+- **Rating factor candidates** are `age`, `region`, `inscov`, `rthlth`, `mnhlth`, `OFTSMK53`, `PHYEXE53` and
+  the 11 condition flags. This is a candidate list from the approved shortlist, not the final rating
+  structure. Which of them are permitted UK rating factors, and how levels are grouped, are decided at
+  gates 6 and 7.
+- **Analysis only:** `SEX`, `age_source`, `age_topcoded`, `region_source`, `left_survey_early`, `VARSTR`,
+  `VARPSU` and the `er_stay` columns. Sex and `left_survey_early` must never be rating factors.
+- Race, income, education and poverty variables are not in the table.
+Why: a declared role for every column lets a test stop a column such as sex or the leaver flag drifting
+into the rating structure.
+
+## 2026-11-01 Household-grouped split within 2022 (issue #18)
+Decision: the `split` column in `mart_person_year` takes `train`, `test` or `out_of_time`. Every 2023 row is
+`out_of_time`. A 2022 household (`DUID`) is `train` if the first 8 hex digits of `md5(DUID || '|split-v1')`,
+read as a number modulo 100, are below 80, and `test` otherwise. There is no random state, so the split is
+the same on every run and machine. The rule is the dbt macro `household_split` and an independent Python copy
+in `tests/test_split.py` checks that they agree.
+- 2022 shares: 80.9% of persons and 79.6% of claim cost are train, 19.1% and 20.4% are test (targets 80 and
+  20, each within 2 points). 8,566 train and 2,090 test households.
+- 4,005 of the 15,565 households appear in both years. This is the same-people overlap (8,284 people) stated
+  in the 2026-10-31 time periods decision. It is acceptable for the out-of-time test because households
+  stay in MEPS for two years and renew like policyholders, and the within-year split is grouped by
+  household so no household is on both sides of it.
+Why: grouping by household stops leakage between family members. The salt `split-v1` was the first one tried
+and met the 2 point tolerance, so no other salt was tried.
+Alternatives: a random split by person (leaks within households), and a seeded random generator (a hash is
+simpler and has nothing to seed).

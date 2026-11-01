@@ -7,6 +7,11 @@ select
     person.DUPERSID,
     person.DUID,
     person.year,
+    -- 2022 households are split train or test, all of 2023 is the out-of-time set
+    case
+        when person.year = 2023 then 'out_of_time'
+        else {{ household_split('person.DUID') }}
+    end as split,
 
     -- Rating factor candidates
     person.age,

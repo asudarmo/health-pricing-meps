@@ -33,7 +33,7 @@ def test_every_column_has_a_role_and_rating_factors_are_the_allowed_list():
     rating = {name for name, role in roles.items() if role == "rating_factor"}
     assert rating == RATING_FACTORS
     assert set(roles.values()) <= {
-        "key", "rating_factor", "analysis_only", "exposure", "claim", "weight"
+        "key", "split", "rating_factor", "analysis_only", "exposure", "claim", "weight"
     }  # fmt: skip
 
 

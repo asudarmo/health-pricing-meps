@@ -29,6 +29,14 @@ models:
           role: key
         data_tests:
           - not_null
+      - name: split
+        meta:
+          role: split
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['train', 'test', 'out_of_time']
       - name: age
         meta:
           role: rating_factor
