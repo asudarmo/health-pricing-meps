@@ -18,6 +18,21 @@ Why: validation goes forward in time, as in real pricing. Grouping by household 
 Decision: on-level severity with the price index AHRQ recommends for MEPS expenditure (confirm in M1).
 Estimate frequency trend from the data (year term). State the assumptions and show low and high sensitivity.
 
+## 2026-11-01 Price index for on-levelling and projection (decision gate 4, part 1, proposed)
+Decision: use the Personal Consumption Expenditure Health index (PCE-Health, Bureau of Economic
+Analysis). Recommended, pending the user's sign-off. See `_docs/price-index.md` for the full
+evidence.
+Why: AHRQ's own price index page recommends PCE-Health or the Personal Health Care Index (PHC)
+specifically for projecting an expenditure estimate from one year to another, which is our
+on-levelling and rating-period projection use case. Two AI summaries of that page disagreed with
+each other (one said GDP, one said PHC/PCE-Health), so the page was downloaded and read directly
+rather than trusting either summary, since this is a decision gate. PCE-Health is picked over PHC
+only because it is a single public BEA table, PHC needs a CMS zip file.
+Alternatives: GDP price index, rejected, that is AHRQ's recommendation for a different objective
+(broad macro expenditure-level comparisons). CPI-M, rejected, AHRQ says it only reflects
+out-of-pocket expenses. PHC, a valid equal alternative, not used only for convenience. A custom
+blend of PHC service-type components, noted as a possible refinement, not pursued for M1/M2.
+
 ## 2026-10-31 UK framing
 Decision:
 - PMI-scope claims only (inpatient/day-case, hospital outpatient/specialist, diagnostics)

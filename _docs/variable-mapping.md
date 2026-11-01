@@ -30,6 +30,24 @@ Needed for the scripted download in issue #4.
 | Outpatient department visits | HC-239F | HC-248F |
 | Hospital inpatient stays | HC-239D | HC-248D |
 
+## Office-based events can be split by provider specialty (issue #5)
+
+Checked directly in the 2022 office-based event file's SAS program statements
+(`https://meps.ahrq.gov/data_stats/download_data/pufs/h239g/h239gsu.txt`, same variables present
+in the 2023 file). Office-based visit records carry both the doctor's specialty and, for visits
+to a non-doctor, the type of person seen.
+
+| Variable | Label | Notes |
+|---|---|---|
+| `DRSPLTY_M18` | doctor's specialty | full specialty list: allergy/immunology, anesthesiology, cardiology, dermatology, endocrinology, family practice, gastroenterology, general practice, general surgery, geriatrics, gynecology/obstetrics, haematology, internal medicine, nephrology, neurology, oncology, ophthalmology, orthopedics, osteopathy, ENT, pathology, and more, `-1` when inapplicable (not a doctor visit) |
+| `MEDPTYPE_M18` | type of medical person seen, when not a doctor | e.g. nurse practitioner, physician assistant |
+| `VSTCTGRY` | best category for care received on the visit | general checkup, diagnosis or treatment, emergency, psychotherapy/mental health counselling, follow-up or post-operative, immunisations, vision exam, pregnancy-related, well-child exam, laser eye surgery, other |
+
+This means the PMI-scope claim decision (decision gate 2) does not need a proxy for office-based
+events, specialty and visit category are both directly available and can be used to decide which
+office-based visits count as PMI-scope claims (e.g. specialist visits, excluding routine GP and
+well-child checkups).
+
 ## Identical name in both years
 
 | Role | Variable | Label |
