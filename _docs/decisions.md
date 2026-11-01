@@ -195,6 +195,7 @@ eligible (`ELGRND` = 1), using `BEGRFM`, `BEGRFY`, `ENDRFM` and `ENDRFY` for rou
   counts to December. Months shared by two rounds count once.
 - A round in which the person is not in a household unit (`ELGRND` = 4) adds no months, so people with a
   gap (181 in 2023 were eligible in rounds 3/1 and 5/3 only) get fewer months.
+- The combined year-level `ENDRFM`/`ENDRFY`/`ELGRND` are kept in `int_person_clean` only as a cross-check.
 - `exposure` = months in scope / 12, so it lies in [0, 1]. A partly covered month counts in full, because
   the file has no day-level dates.
 Why:

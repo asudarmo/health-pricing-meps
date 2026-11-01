@@ -87,6 +87,24 @@ MANIFEST: list[RawFile] = [
 ]
 
 
+# AHRQ codebooks (PDF, with unweighted frequencies for every variable). Kept apart from MANIFEST,
+# which the loader reads to build the raw tables. Used by the codebook count tests (issue #20).
+CODEBOOKS: list[RawFile] = [
+    RawFile(
+        "codebook_2022",
+        "HC-243",
+        "https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf",
+        3_527_542,
+    ),
+    RawFile(
+        "codebook_2023",
+        "HC-251",
+        "https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf",
+        3_459_840,
+    ),
+]
+
+
 class DownloadSizeError(RuntimeError):
     pass
 
@@ -129,7 +147,7 @@ def download_one(raw_file: RawFile, *, force: bool = False) -> Path:
 
 
 def download_all(*, force: bool = False) -> list[Path]:
-    return [download_one(raw_file, force=force) for raw_file in MANIFEST]
+    return [download_one(raw_file, force=force) for raw_file in [*MANIFEST, *CODEBOOKS]]
 
 
 if __name__ == "__main__":
