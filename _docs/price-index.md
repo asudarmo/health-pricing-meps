@@ -2,7 +2,7 @@
 
 Decision gate 4 (`AGENTS.md`), the price index part (the frequency trend part was already
 decided, see `_docs/decisions.md`, "2026-10-31 Trend"). This is the supporting evidence for issue
-#6. Recorded 2026-11-01, pending the user's sign-off.
+#6. Confirmed by the user 2026-11-01.
 
 ## Method
 
