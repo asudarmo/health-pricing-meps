@@ -208,3 +208,44 @@ Why:
 Alternatives: using only the year-end reference period `ENDRFM`/`ENDRFY` (ignores gaps and late entry),
 using `PERWT` or person-time from the weight (the weight is a survey weight, not exposure), and counting
 partial months as half months (no day information to support it).
+
+## 2026-11-01 Modelling population and exclusions (issue #14, decision gate 3)
+Decision: the modelling population is person-years with a positive person weight. Persons with `PERWT` = 0
+are moved to quarantine with the reason code `not_in_person_level_analytic_population` (text: "not in
+person-level analytic population"). This is a definition of the modelling population, not a data-quality
+exclusion. The user approved it on 2026-11-01.
+- 684 of 22,431 persons in 2022 (3.0%, 1.3% of `TOTEXP`) and 456 of 18,919 in 2023 (2.4%, 1.1% of
+  `TOTEXP`) are quarantined. The modelling population is 21,747 (2022) and 18,463 (2023) person-years.
+- The other rules found nothing in either year. They are no duplicate `DUPERSID` within a year, no
+  missing age, sex, region or coverage, no zero or null exposure and no negative expenditure.
+- `exclusion_log` lists every rule by year with persons flagged, persons quarantined and the shares of
+  persons and `TOTEXP`. `dbt/tests/exclusions_above_1_percent_are_decided.sql` fails if a rule over 1%
+  has no recorded decision, and `retained_plus_quarantined_equals_raw_persons.sql` checks that no
+  person-year is lost.
+- 8,284 people appear in both years, out of 33,066 distinct people in 41,350 person-years. Within-year
+  splits are grouped by household (see the 2026-10-31 time periods decision).
+Why:
+- Zero weight is AHRQ's marker for people outside the surveyed population or without a full response.
+  They average 0.79 years of exposure against 0.99, a cost of about 3,200 to 3,800 against 7,800 to
+  8,500, and about 40% have no spending or visits. Their records are less complete, so keeping them would
+  dilute frequency and exposure.
+- Weights are used only for sanity checks, so this does not change the reconciliation in #19.
+Alternatives: keeping them (rejected, incomplete records), and treating the rule as a data-quality
+exclusion (rejected by the user, because the rule defines the population).
+
+## 2026-11-01 Region for people who left part-way, and the pre-approved pattern (follow-up under #14)
+Decision: `REGION31`, `REGION42` and `REGION53` are added to the shortlist (gate 1, approved by the user).
+`region` is the year-end region where valid, else the latest round with a valid region, with `region_source`
+(`year_end` or `last_round`). It affects 195 people in 2022 and 148 in 2023, and none are left without a
+region. The #9, #10 and #12 tests and rules were updated and pass.
+- **Pre-approved pattern, for the future with no gate needed.** A person-level characteristic whose
+  year-end value is -1 because the person left part-way takes the latest valid round value plus a `_source`
+  flag. A question asked in the last round only keeps an `unknown` level instead. This is recorded in
+  `AGENTS.md`.
+- **`left_survey_early`** (true when the person was no longer eligible at the end of the year, `ELGRND` = 3)
+  marks those people for analysis only. It must never be used as a rating factor. It equals
+  `age_source = 'last_eligible'` in both years.
+Why: the 343 people carry about 2.3% to 2.4% of total spending, and region is a rating factor. About 1% of
+people moved during the year, so the latest round is a small approximation.
+Alternatives: an `unknown` region level (rejected, it would act as a leaver indicator) and excluding
+them (rejected, over 1% of cost).

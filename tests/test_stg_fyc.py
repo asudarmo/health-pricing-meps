@@ -30,7 +30,7 @@ pytestmark = pytest.mark.skipif(
 # The shortlist from _docs/variable-mapping.md, in the year-neutral names.
 EXPECTED_COLUMNS = {
     "year", "AGELAST", "DUID", "PID", "DUPERSID", "PANEL", "VARSTR", "VARPSU", "famid", "perwt",
-    "age", "SEX",
+    "age", "SEX", "REGION31", "REGION42", "REGION53",
     "region", "inscov", "ENDRFM", "ENDRFY", "ELGRND", "OFTSMK53", "PHYEXE53", "HIBPDX", "CHDDX",
     "ANGIDX", "MIDX", "OHRTDX", "STRKDX", "CHOLDX", "CANCERDX", "ARTHDX", "ASTHDX", "ASSTIL31",
     "DIABDX_M18", "OBTOTV", "OPTOTV", "ERTOT", "IPDIS", "IPNGTD", "RXTOT", "OBDRV", "TOTEXP",

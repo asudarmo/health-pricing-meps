@@ -38,6 +38,18 @@ models:
       - name: age_topcoded
         data_tests:
           - not_null
+      - name: region_source
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['year_end', 'last_round']
+      - name: left_survey_early
+        description: >
+          Analysis only. True when the person was no longer eligible at the end of the year. It
+          must never be used as a rating factor.
+        data_tests:
+          - not_null
       - name: SEX
         data_tests:
           - accepted_values:

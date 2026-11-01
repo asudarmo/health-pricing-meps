@@ -14,14 +14,29 @@ aged as (
         case
             when age >= 0 then 'year_end'
             when AGELAST >= 0 then 'last_eligible'
-        end as age_source
+        end as age_source,
+        -- Year-end region where valid, else the latest round with a valid region (people who left
+        -- part-way), the pattern approved for any characteristic with a year-end -1
+        case
+            when region between 1 and 4 then region
+            when REGION53 between 1 and 4 then REGION53
+            when REGION42 between 1 and 4 then REGION42
+            when REGION31 between 1 and 4 then REGION31
+        end as region_clean,
+        case
+            when region between 1 and 4 then 'year_end'
+            when REGION53 between 1 and 4 then 'last_round'
+            when REGION42 between 1 and 4 then 'last_round'
+            when REGION31 between 1 and 4 then 'last_round'
+        end as region_source
     from stacked
 ),
 
 recoded as (
     select
-        * exclude (age),
-        age_clean as age
+        * exclude (age, region),
+        age_clean as age,
+        region_clean as region
     from aged
 )
 
@@ -39,7 +54,11 @@ select
     age_source,
     age = 85 as age_topcoded,
     {{ null_reserved('SEX') }} as SEX,
-    {{ null_reserved('region') }} as region,
+    region,
+    region_source,
+    -- Analysis only, never a rating factor. True when the person was no longer eligible at the
+    -- end of the year, which is why their year-end age and region were -1.
+    ELGRND = 3 as left_survey_early,
     {{ null_reserved('inscov') }} as inscov,
     {{ latest_round('RTHLTH') }} as rthlth,
     {{ latest_round_source('RTHLTH') }} as rthlth_round,

@@ -24,7 +24,7 @@ RENAMED = {"age": "AGE{yy}X", "region": "REGION{yy}", "inscov": "INSCOV{yy}"}
 # The variables issue #10 names, in the staged names.
 ISSUE_10_VARIABLES = {
     "DUPERSID", "DUID", "PID", "PANEL", "VARSTR", "VARPSU", "age", "AGELAST",
-    "SEX", "region", "inscov",
+    "SEX", "region", "REGION31", "REGION42", "REGION53", "inscov",
     "OFTSMK53", "PHYEXE53", "ASTHDX", "DIABDX_M18", "HIBPDX", "CHDDX", "ANGIDX", "MIDX",
     "OHRTDX", "STRKDX", "CHOLDX", "CANCERDX", "ARTHDX",
     *(f"{stem}{rnd}" for stem in ("RTHLTH", "MNHLTH") for rnd in (31, 42, 53)),

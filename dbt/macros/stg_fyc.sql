@@ -20,6 +20,9 @@
     AGELAST,
     SEX,
     REGION{{ yy }} as region,
+    REGION31,
+    REGION42,
+    REGION53,
     INSCOV{{ yy }} as inscov,
     {% for stem in ['RTHLTH', 'MNHLTH', 'BEGRFM', 'BEGRFY', 'ENDRFM', 'ENDRFY', 'ELGRND'] %}
     {% for rnd in [31, 42, 53] %}

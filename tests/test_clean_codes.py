@@ -48,6 +48,12 @@ CASES = {
     "age_missing_both": dict(age=-1, AGELAST=-1),
     "rounds_latest": dict(age=40, AGELAST=40, RTHLTH53=-1, RTHLTH42=3, RTHLTH31=1, MNHLTH53=4),
     "rounds_all_null": dict(age=40, AGELAST=40, RTHLTH53=-1, RTHLTH42=-7, RTHLTH31=-8),
+    "region_year_end": dict(age=40, AGELAST=40, region=2, REGION53=3, ELGRND=1),
+    "region_left": dict(
+        age=-1, AGELAST=60, region=-1, REGION53=-1, REGION42=4, REGION31=1, ELGRND=3
+    ),
+    "region_left_round1_only": dict(age=-1, AGELAST=60, region=-1, REGION31=3, ELGRND=3),
+    "region_none": dict(age=40, AGELAST=40, region=-1, REGION31=-7),
     "other_codes": dict(
         age=40, AGELAST=40, region=-1, SEX=-7, ENDRFM53=-1, ENDRFM42=-8, ELGRND53=-1
     ),
@@ -190,3 +196,24 @@ def test_region_minus_1_is_null_and_round_dates_keep_minus_1_but_drop_minus_8(cl
 def test_both_years_are_stacked(cleaned):
     assert set(cleaned["year"]) == {2022, 2023}
     assert _value(cleaned, "y2023", "HIBPDX") == "1"
+
+
+def test_region_uses_the_year_end_value_when_valid(cleaned):
+    assert _value(cleaned, "region_year_end", "region") == 2
+    assert _value(cleaned, "region_year_end", "region_source") == "year_end"
+
+
+def test_region_for_a_leaver_uses_the_latest_valid_round_and_is_flagged(cleaned):
+    assert _value(cleaned, "region_left", "region") == 4
+    assert _value(cleaned, "region_left", "region_source") == "last_round"
+    assert _value(cleaned, "region_left_round1_only", "region") == 3
+
+
+def test_region_stays_null_when_no_round_has_a_valid_region(cleaned):
+    assert _value(cleaned, "region_none", "region") is None
+    assert _value(cleaned, "region_none", "region_source") is None
+
+
+def test_left_survey_early_follows_the_year_end_eligibility(cleaned):
+    assert bool(cleaned.loc["region_left", "left_survey_early"]) is True
+    assert bool(cleaned.loc["region_year_end", "left_survey_early"]) is False

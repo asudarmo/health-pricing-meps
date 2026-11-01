@@ -63,6 +63,13 @@ Do not decide these alone. Present the evidence and options, recommend one, and 
 7. GLM vs GBM model choice, and the final rating structure
 8. Any change to the plan's scope or the published output contract (section 6)
 
+Pre-approved patterns (no gate needed, log each use in `_docs/decisions.md`):
+
+- A person-level characteristic whose year-end value is -1 because the person left the survey part-way
+  takes the latest valid round value, with a `_source` flag (as done for `age` and `region`). A question
+  asked in the last round only keeps an `unknown` level instead.
+- `left_survey_early` marks those people for analysis only. It must never be used as a rating factor.
+
 ## Verification
 
 - Reconcile the data layer to published figures: person counts against the MEPS documentation, and weighted

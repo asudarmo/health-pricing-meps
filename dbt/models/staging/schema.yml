@@ -77,6 +77,24 @@ models:
               arguments:
                 values: [-1, 1, 2, 3, 4]
                 quote: false
+      - name: REGION31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: REGION42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: REGION53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
       - name: inscov
         data_tests:
           - accepted_values:
@@ -371,6 +389,24 @@ models:
                 values: [-15, -8, -7, -1, 1, 2]
                 quote: false
       - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: REGION31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: REGION42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: REGION53
         data_tests:
           - accepted_values:
               arguments:
