@@ -155,3 +155,20 @@ AHRQ's $6,765). (2) #21 needs notebook dependencies (matplotlib, nbformat, nbcli
 in `pyproject.toml`.
 
 Next: close #19 and do #21, then M2 is ready for the user's review. Then M3.
+
+## 2026-11-01 M2 complete, waiting for the user's review
+
+Done: #19 (reconciliation, closed with the 2023 band check as the user decided) and #21 (EDA notebook, with
+`matplotlib`, `nbformat`, `nbclient`, `ipykernel` and `jupyterlab` as approved dev dependencies). All 14 M2
+issues (#8 to #21) are closed, each after QA in a fresh subagent. Only #8 failed QA once. 330 tests pass and
+`dbt build` passes (235 checks).
+
+M2 done-when check: one row per person-year with exposure, rating factors, claim count and cost
+(`mart_person_year`), every exclusion logged (`exclusion_log`), weighted totals reconciled to AHRQ's published
+figures (the 2023 mean has no published figure, see `_docs/reconciliation.md`), `dbt build` with zero values
+outside the declared rules, and unweighted counts matching the AHRQ codebook.
+
+Next: the user reviews M2. M3 (GLMs) is next. The M3 row now includes a leakage check on the adult "unknown"
+level, and M5 includes the ER-originated stays sensitivity.
+
+Open questions: none. Non-blocking QA notes for the M9 review are in the issue comments.
