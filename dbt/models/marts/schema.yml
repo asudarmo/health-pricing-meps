@@ -3,6 +3,11 @@ version: 2
 # Column roles for the modelling table (issue #17). A rating_factor is a candidate for the final
 # rating structure. An analysis_only column may be studied but must never be a rating factor, and
 # tests/test_mart.py checks the lists. Race, income and education are deliberately absent.
+#
+# Descriptions and meta (issue #22). Each column has source_vars, derivation and decision_ref.
+# decision_ref is "none" or the exact heading of a _docs/decisions.md entry, and several entries
+# are separated by " · ". _docs/data-dictionary.md is generated from this file by
+# `uv run python -m health_pricing.data_dictionary`, and tests/test_data_dictionary.py checks it.
 
 models:
   - name: mart_person_year
@@ -15,115 +20,385 @@ models:
             combination_of_columns: [DUPERSID, year]
     columns:
       - name: DUPERSID
+        description: >
+          Person identifier, the household identifier followed by the person number. Text. A person
+          who is in both years has the same value in both rows.
         meta:
           role: key
+          source_vars: "DUPERSID (2022 and 2023)"
+          derivation: "none"
+          decision_ref: "2026-10-31 MEPS variable shortlist and 2022-23 mapping (decision gate 1)"
         data_tests:
           - not_null
       - name: DUID
+        description: >
+          Household identifier, a number. All members of a household share it. The 2022 train and test split is made on this column, so a household is never on both
+          sides.
         meta:
           role: key
+          source_vars: "DUID (2022 and 2023)"
+          derivation: "none"
+          decision_ref: "2026-11-01 Household-grouped split within 2022 (issue #18)"
         data_tests:
           - not_null
       - name: year
+        description: >
+          Survey year of the row, 2022 or 2023. Together with DUPERSID it identifies a row.
         meta:
           role: key
+          source_vars: "none, set from the file (HC-243 is 2022 and HC-251 is 2023)"
+          derivation: "A constant added in the staging models stg_fyc_2022 and stg_fyc_2023."
+          decision_ref: "2026-10-31 Time periods and validation design"
         data_tests:
           - not_null
       - name: split
+        description: >
+          Which part of the data the row belongs to. Valid values are train, test and out_of_time.
+          Every 2023 row is out_of_time. A 2022 household is train for about 80 percent of
+          households and test for the rest.
         meta:
           role: split
+          source_vars: "DUID (2022 rows), year"
+          derivation: >
+            2023 rows are out_of_time. For 2022 the first 8 hex digits of md5(DUID || '|split-v1'),
+            read as a number modulo 100, give train below 80 and test otherwise (macro
+            household_split). There is no random state.
+          decision_ref: "2026-11-01 Household-grouped split within 2022 (issue #18)"
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ['train', 'test', 'out_of_time']
       - name: age
+        description: >
+          Age in whole years at 31 December, from 0 to 85. 85 means 85 or older, because AHRQ caps
+          the value. For a person who left the survey part-way through the year it is the age at the
+          last round they were eligible. Never missing in this table. age_source says which applies.
         meta:
           role: rating_factor
+          source_vars: "AGE22X (2022), AGE23X (2023), AGELAST (2022 and 2023, fallback)"
+          derivation: >
+            The year-end age where it is valid (0 or more). Otherwise AGELAST, the age at the last
+            eligible round, for people whose year-end age is -1 because they left part-way.
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: region
+        description: >
+          US census region. 1 is Northeast, 2 is Midwest, 3 is South and 4 is West. Stored as a
+          number. For a person who left part-way it is the region in the latest round that has one.
+          Never missing in this table. region_source says which applies.
         meta:
           role: rating_factor
+          source_vars: >
+            REGION22 (2022), REGION23 (2023), then REGION53, REGION42 and REGION31 (both years,
+            fallbacks)
+          derivation: >
+            The year-end region where it is 1 to 4. Otherwise the first valid value of REGION53,
+            REGION42 and REGION31, in that order, for people whose year-end region is -1.
+          decision_ref: "2026-11-01 Region for people who left part-way, and the pre-approved pattern (follow-up under #14)"
       - name: inscov
+        description: >
+          Health insurance coverage during the year. 1 is any private, 2 is public only and 3 is
+          uninsured. Stored as a number. Never missing in this table.
         meta:
           role: rating_factor
+          source_vars: "INSCOV22 (2022), INSCOV23 (2023)"
+          derivation: "Reserved codes -15, -8, -7 and -1 become null. No row has one."
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: rthlth
+        description: >
+          Perceived health status. 1 is excellent, 2 very good, 3 good, 4 fair and 5 poor. Stored as
+          a number. It is the answer in the latest round that has a valid one. Missing for a small
+          number of people with no valid answer in any round.
         meta:
           role: rating_factor
+          source_vars: "RTHLTH53, RTHLTH42, RTHLTH31 (both years)"
+          derivation: >
+            The first valid value (1 to 5) of round 5/3, then 4/2, then 3/1. Reserved codes are not
+            valid, so they fall through to the earlier round or give null.
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: mnhlth
+        description: >
+          Perceived mental health status. 1 is excellent, 2 very good, 3 good, 4 fair and 5 poor.
+          Stored as a number. It is the answer in the latest round that has a valid one. Missing for
+          a small number of people with no valid answer in any round.
         meta:
           role: rating_factor
+          source_vars: "MNHLTH53, MNHLTH42, MNHLTH31 (both years)"
+          derivation: >
+            The first valid value (1 to 5) of round 5/3, then 4/2, then 3/1. Reserved codes are not
+            valid, so they fall through to the earlier round or give null.
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: OFTSMK53
+        description: >
+          How often the person smokes cigarettes, asked of adults in round 5/3. Text levels. 1 is
+          every day, 2 some days and 3 not at all. not_applicable means a child under 18, who was not
+          asked. unknown means an adult who was not asked, for example someone who left before the
+          round. Null means refused, don't know or cannot be computed. The unknown level may act as a
+          leaver indicator, so it is checked for leakage before any use in a rating structure.
         meta:
           role: rating_factor
+          source_vars: "OFTSMK53 (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. Other codes keep their value as text (macro category_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: PHYEXE53
+        description: >
+          Whether the person does moderate or vigorous physical exercise five times a week, asked of
+          adults in round 5/3. Text levels. 1 is yes and 0 is no. not_applicable means a child under
+          18. unknown means an adult who was not asked. Null means refused, don't know or cannot be
+          computed.
         meta:
           role: rating_factor
+          source_vars: "PHYEXE53 (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: HIBPDX
+        description: >
+          High blood pressure diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "HIBPDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: CHDDX
+        description: >
+          Coronary heart disease diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is
+          not. not_applicable means a child under 18. unknown means an adult who was not asked. Null
+          means refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "CHDDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: ANGIDX
+        description: >
+          Angina diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "ANGIDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: MIDX
+        description: >
+          Heart attack (myocardial infarction) diagnosis, asked of adults. Text levels. 1 is
+          diagnosed and 0 is not. not_applicable means a child under 18. unknown means an adult who
+          was not asked. Null means refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "MIDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: OHRTDX
+        description: >
+          Other heart disease diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "OHRTDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: STRKDX
+        description: >
+          Stroke diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "STRKDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: CHOLDX
+        description: >
+          High cholesterol diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "CHOLDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: CANCERDX
+        description: >
+          Cancer diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "CANCERDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: ARTHDX
+        description: >
+          Arthritis diagnosis, asked of adults. Text levels. 1 is diagnosed and 0 is not.
+          not_applicable means a child under 18. unknown means an adult who was not asked. Null means
+          refused, don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "ARTHDX (2022 and 2023)"
+          derivation: >
+            -1 becomes not_applicable when age is under 18 and unknown otherwise. -7, -8 and -15
+            become null. 1 becomes '1' and 2 becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: ASTHDX
+        description: >
+          Asthma diagnosis, asked at any age. Text levels. 1 is diagnosed and 0 is not. unknown means
+          the person was not asked. There is no not_applicable level. Null means refused, don't know
+          or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "ASTHDX (2022 and 2023)"
+          derivation: >
+            -1 becomes unknown for everyone. -7, -8 and -15 become null. 1 becomes '1' and 2
+            becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: DIABDX_M18
+        description: >
+          Diabetes diagnosis, asked at any age. Text levels. 1 is diagnosed and 0 is not. unknown
+          means the person was not asked. There is no not_applicable level. Null means refused,
+          don't know or cannot be computed.
         meta:
           role: rating_factor
+          source_vars: "DIABDX_M18 (2022 and 2023)"
+          derivation: >
+            -1 becomes unknown for everyone. -7, -8 and -15 become null. 1 becomes '1' and 2
+            becomes '0' (macro yes_no_level).
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: SEX
+        description: >
+          Sex as recorded in the survey. 1 is male and 2 is female. Stored as a number. For analysis
+          only. It is not a permitted rating factor.
         meta:
           role: analysis_only
+          source_vars: "SEX (2022 and 2023)"
+          derivation: "Reserved codes -15, -8, -7 and -1 become null. No row has one."
+          decision_ref: "2026-11-01 Modelling table and rating factor candidates (issue #17)"
       - name: age_source
+        description: >
+          Where age came from. year_end means the year-end age was valid. last_eligible means it was
+          not, so age is the age at the last eligible round. For analysis only.
         meta:
           role: analysis_only
+          source_vars: "AGE22X (2022), AGE23X (2023), AGELAST"
+          derivation: "year_end when the year-end age is 0 or more, else last_eligible."
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: age_topcoded
+        description: >
+          True when age is 85, which means 85 or older because AHRQ caps the value. False otherwise.
+          For analysis only.
         meta:
           role: analysis_only
+          source_vars: "AGE22X (2022), AGE23X (2023), AGELAST"
+          derivation: "True when the cleaned age equals 85."
+          decision_ref: "2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist"
       - name: region_source
+        description: >
+          Where region came from. year_end means the year-end region was valid. last_round means it
+          was not, so region is the one in the latest round that has a valid value. For analysis
+          only.
         meta:
           role: analysis_only
+          source_vars: "REGION22 (2022), REGION23 (2023), REGION53, REGION42, REGION31"
+          derivation: "year_end when the year-end region is 1 to 4, else last_round."
+          decision_ref: "2026-11-01 Region for people who left part-way, and the pre-approved pattern (follow-up under #14)"
       - name: left_survey_early
+        description: >
+          True when the person was no longer eligible at the end of the year, which is why their
+          year-end age and region were -1. It equals age_source = last_eligible in both years. For
+          analysis only. It must never be used as a rating factor.
         meta:
           role: analysis_only
+          source_vars: "ELGRND22 (2022), ELGRND23 (2023)"
+          derivation: >
+            True when the year-level eligibility status ELGRND equals 3, "person is not eligible".
+          decision_ref: "2026-11-01 Region for people who left part-way, and the pre-approved pattern (follow-up under #14)"
       - name: VARSTR
+        description: >
+          Variance estimation stratum from the survey design, a number from 2001 to 2117. For
+          analysis only. It is not a rating factor.
         meta:
           role: analysis_only
+          source_vars: "VARSTR (2022 and 2023)"
+          derivation: "none"
+          decision_ref: "2026-11-01 Modelling table and rating factor candidates (issue #17)"
       - name: VARPSU
+        description: >
+          Variance estimation primary sampling unit within the stratum, a number from 1 to 8 in 2022
+          and 1 to 6 in 2023. For analysis only. It is not a rating factor.
         meta:
           role: analysis_only
+          source_vars: "VARPSU (2022 and 2023)"
+          derivation: "none"
+          decision_ref: "2026-11-01 Modelling table and rating factor candidates (issue #17)"
       - name: er_stay_count
+        description: >
+          Number of inpatient stays in the year that began in the emergency room and were not birth
+          related. These stays are not in claim_count under the approved claim definition. Kept for
+          the M5 sensitivity. Zero when there are none. For analysis only.
         meta:
           role: analysis_only
+          source_vars: "Inpatient stay files HC-239D (2022) and HC-248D (2023), EMERROOM and RSNINHOS"
+          derivation: >
+            Count of stays with EMERROOM = 1 and RSNINHOS not 4, 5 or 6 (birth and pregnancy), per
+            person-year. Zero when the person has no such stay.
+          decision_ref: "2026-11-01 PMI-scope claim definition (decision gate 2, approved)"
       - name: er_stay_cost
+        description: >
+          Total payments, in dollars of the survey year, for the stays counted in er_stay_count.
+          Zero when there are none. 2022 values are at 2022 prices. For analysis only.
         meta:
           role: analysis_only
+          source_vars: "Inpatient stay files HC-239D (2022) and HC-248D (2023), IPXP22X and IPXP23X"
+          derivation: "Sum of the stay expenditure over the stays counted in er_stay_count. No price adjustment."
+          decision_ref: "2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16)"
       - name: er_stay_cost_2023_prices
+        description: >
+          er_stay_cost in 2023 dollars. 2022 values are multiplied by 1.02599 and 2023 values are
+          unchanged. For analysis only.
         meta:
           role: analysis_only
+          source_vars: >
+            Inpatient stay files (IPXP22X, IPXP23X) and the PCE-Health price index
+            (data/reference/pce_health.csv)
+          derivation: "er_stay_cost times the on-level factor, 113.121 / 110.256 for 2022 and 1 for 2023."
+          decision_ref: "2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16) · 2026-11-01 Price index for on-levelling and projection (decision gate 4, part 1, confirmed)"
       - name: exposure
+        description: >
+          Years the person was in scope in the calendar year, from 1/12 to 1. Counted in whole
+          months, divided by 12. A full year is 1. Part-year exposure comes from births, deaths, late
+          entry, gaps and leaving the survey. Always above 0 in this table.
         meta:
           role: exposure
+          source_vars: >
+            BEGRFM, BEGRFY, ENDRFM, ENDRFY and ELGRND for rounds 31, 42 and 53 (both years)
+          derivation: >
+            A calendar month counts when it lies inside the reference period of a round in which the
+            person is eligible (ELGRND = 1). Months shared by two rounds count once. Exposure is the
+            months counted divided by 12.
+          decision_ref: "2026-11-01 Exposure derivation (issue #13)"
         data_tests:
           - not_null
           - dbt_utils.expression_is_true:
@@ -133,19 +408,56 @@ models:
               arguments:
                 expression: "<= 1"
       - name: claim_count
+        description: >
+          Number of PMI-scope claims in the year, 0 or more. A claim is one in-scope event record
+          from the inpatient, hospital outpatient or office-based event files. Zero when the person
+          has none. Emergency-room-originated stays are not counted, see er_stay_count.
         meta:
           role: claim
+          source_vars: >
+            Event files HC-239D, HC-239F and HC-239G (2022) and HC-248D, HC-248F and HC-248G (2023)
+          derivation: >
+            Count of events that meet the PMI-scope rule for their file, per person-year. Inpatient
+            stays count unless they are birth related or began in the emergency room. Outpatient and
+            office-based visits count when the provider qualifies and the visit category is not
+            excluded.
+          decision_ref: "2026-11-01 PMI-scope claim definition (decision gate 2, approved) · 2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16)"
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 0
       - name: claim_cost
+        description: >
+          Total payments, in dollars of the survey year, for the claims counted in claim_count, from
+          all payment sources. Zero when there are no claims. 2022 values are at 2022 prices.
         meta:
           role: claim
+          source_vars: >
+            Event expenditure IPXP22X, OPXP22X and OBXP22X (2022) and IPXP23X, OPXP23X and OBXP23X
+            (2023)
+          derivation: "Sum of the event expenditure over the in-scope events. No price adjustment."
+          decision_ref: "2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16)"
       - name: claim_cost_2023_prices
+        description: >
+          claim_cost in 2023 dollars. 2022 values are multiplied by 1.02599 and 2023 values are
+          unchanged. This is the cost the severity models use.
         meta:
           role: claim
+          source_vars: >
+            Event expenditure (as for claim_cost) and the PCE-Health price index
+            (data/reference/pce_health.csv)
+          derivation: "claim_cost times the on-level factor, 113.121 / 110.256 for 2022 and 1 for 2023."
+          decision_ref: "2026-11-01 PMI-scope claim counts and on-levelled costs (issues #15 and #16) · 2026-11-01 Price index for on-levelling and projection (decision gate 4, part 1, confirmed)"
       - name: perwt
+        description: >
+          Final person weight from the survey, above 0 for every row in this table. The number of US
+          people the person represents. Used for sanity checks against published figures only. The
+          models are fitted unweighted.
         meta:
           role: weight
+          source_vars: "PERWT22F (2022), PERWT23F (2023)"
+          derivation: >
+            None to the value. Persons with a weight of 0 are held out of the table as a definition
+            of the modelling population.
+          decision_ref: "2026-11-01 Modelling population and exclusions (issue #14, decision gate 3)"
