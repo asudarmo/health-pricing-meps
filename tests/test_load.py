@@ -37,6 +37,18 @@ pytestmark = pytest.mark.skipif(
 EXPECTED_PERSON_COUNTS = {"fyc_2022": 22_431, "fyc_2023": 18_919}
 EXPECTED_POSITIVE_WEIGHT_COUNTS = {"fyc_2022": 21_747, "fyc_2023": 18_463}
 
+# Event record counts AHRQ documents on each file's own doc.shtml page (fetched directly,
+# quoted word for word there, e.g. h248gdoc.shtml: "This OB PUF contains 135,096 office-based
+# provider event records").
+EXPECTED_EVENT_COUNTS = {
+    "office_based_2022": 151_263,
+    "office_based_2023": 135_096,
+    "outpatient_2022": 23_349,
+    "outpatient_2023": 20_720,
+    "inpatient_2022": 1_933,
+    "inpatient_2023": 1_830,
+}
+
 
 @pytest.fixture
 def con():
@@ -61,3 +73,9 @@ def test_2023_positive_weight_count_matches_ahrq_documentation(con):
 def test_2022_positive_weight_count_matches_ahrq_documentation(con):
     actual = con.execute("SELECT COUNT(*) FROM raw.fyc_2022 WHERE PERWT22F > 0").fetchone()[0]
     assert actual == EXPECTED_POSITIVE_WEIGHT_COUNTS["fyc_2022"]
+
+
+@pytest.mark.parametrize("table,expected", EXPECTED_EVENT_COUNTS.items())
+def test_event_file_count_matches_ahrq_documentation(con, table, expected):
+    actual = con.execute(f"SELECT COUNT(*) FROM raw.{table}").fetchone()[0]
+    assert actual == expected
