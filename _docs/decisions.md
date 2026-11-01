@@ -164,7 +164,7 @@ reserved codes as follows. The value rules after treatment are in `dbt/models/in
   rule applies to them as well. The issue named only the nine flags.
 - **Health status.** `rthlth` and `mnhlth` take the latest round with a valid answer (5/3, then 4/2, then
   3/1), with the round in `rthlth_round` and `mnhlth_round`. 84 people (2022) and 60 (2023) have no valid
-  answer in any round and stay null.
+  `rthlth` in any round, and 88 and 59 have no valid `mnhlth`. They stay null.
 - **Round dates and eligibility** (`BEGRF*`, `ENDRF*`, `ELGRND*`) keep `-1`, which means "not in that
   round" and feeds the exposure measure in #13. Their `-7`, `-8` and `-15` become null.
 Why:
@@ -186,3 +186,24 @@ health_pricing.evidence.clean_checks`):
 Alternatives: dropping people with no year-end age (rejected, 2.3% of cost), treating adult `-1` as null
 (rejected by the user, it hides the leaver signal), keeping children's `-1` as null instead of
 `not_applicable` (rejected, it would mix children with adults who were not asked).
+
+## 2026-11-01 Exposure derivation (issue #13)
+Decision: `int_person_exposure` gives each person-year an exposure in years, at month resolution. A
+calendar month counts when it lies inside the reference period of a round in which the person is
+eligible (`ELGRND` = 1), using `BEGRFM`, `BEGRFY`, `ENDRFM` and `ENDRFY` for rounds 3/1, 4/2 and 5/3.
+- A reference period that starts before the year counts from January, and one that ends after the year
+  counts to December. Months shared by two rounds count once.
+- A round in which the person is not in a household unit (`ELGRND` = 4) adds no months, so people with a
+  gap (181 in 2023 were eligible in rounds 3/1 and 5/3 only) get fewer months.
+- `exposure` = months in scope / 12, so it lies in [0, 1]. A partly covered month counts in full, because
+  the file has no day-level dates.
+Why:
+- Months are the finest resolution available. The combined `ENDRFM22`/`ENDRFM23` alone would ignore gaps
+  and late entry (births and new members start in months 2 to 11 of the year).
+- Every person has at least one eligible round with valid dates in both years, so no person has zero or
+  null exposure. 21,740 of 22,431 (2022) and 18,394 of 18,919 (2023) have the full 12 months.
+- Zero-weight persons still get an exposure from their rounds. Whether to keep them is the gate 3
+  decision in #14, not an exposure question.
+Alternatives: using only the year-end reference period `ENDRFM`/`ENDRFY` (ignores gaps and late entry),
+using `PERWT` or person-time from the weight (the weight is a survey weight, not exposure), and counting
+partial months as half months (no day information to support it).
