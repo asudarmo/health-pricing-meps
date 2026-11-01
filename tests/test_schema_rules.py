@@ -45,10 +45,22 @@ def _test_args(test):
     return name, body["arguments"], body.get("config", {})
 
 
+# The variables issue #11 names, in the staged names. The first five carry -15 (cannot be
+# computed) in the codebook. The rest carry no reserved code at all.
+ISSUE_11_COUNTS_WITH_RESERVED = {"OBTOTV", "OPTOTV", "ERTOT", "IPDIS", "OBDRV"}
+ISSUE_11_NO_RESERVED = {
+    "IPNGTD", "RXTOT", "TOTEXP", "TOTSLF", "TOTMCR", "TOTMCD", "TOTPRV", "TOTPTR", "OBVEXP",
+    "OBDEXP", "OPTEXP", "ERTEXP", "IPTEXP", "RXEXP", "perwt",
+}  # fmt: skip
+ISSUE_11_VARIABLES = ISSUE_11_COUNTS_WITH_RESERVED | ISSUE_11_NO_RESERVED
+RENAMED["perwt"] = "PERWT{yy}F"
+RENAMED.update({c: c + "{yy}" for c in ISSUE_11_VARIABLES - {"perwt"}})
+
+
 def test_every_issue_10_variable_has_a_rule_in_both_years():
     rules = _rules()
     for year in (2022, 2023):
-        assert set(rules[f"stg_fyc_{year}"]) == ISSUE_10_VARIABLES
+        assert set(rules[f"stg_fyc_{year}"]) == ISSUE_10_VARIABLES | ISSUE_11_VARIABLES
 
 
 @needs_codebook
@@ -60,7 +72,16 @@ def test_rules_match_the_codebook(year):
         shaped = [_test_args(t) for t in tests if isinstance(t, dict)]
         assert shaped, column
         name, args, config = shaped[0]
-        if expected.ranges:
+        if column in ISSUE_11_VARIABLES:
+            # Zero or more, with the codebook's own reserved codes allowed and nothing else.
+            assert name == "dbt_utils.accepted_range", column
+            assert (args["min_value"], "max_value" in args) == (0, False), column
+            assert expected.reserved == ((-15,) if column in ISSUE_11_COUNTS_WITH_RESERVED else ())
+            if expected.reserved:
+                assert config["where"] == f"{column} not in (-15)", column
+            else:
+                assert "where" not in config, column
+        elif expected.ranges:
             assert name == "dbt_utils.accepted_range", column
             low = min(r[0] for r in expected.ranges)
             high = max(r[1] for r in expected.ranges)
@@ -157,4 +178,4 @@ def test_good_values_pass(tmp_path):
 def test_bad_values_fail(tmp_path, row):
     code, output = _run_dbt_test(tmp_path, [(30, 1), row])
     assert code != 0, output
-    assert "Done. PASS=" in output and "FAIL=0" not in output, output
+    assert "FAIL 1" in output, output
