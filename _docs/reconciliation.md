@@ -12,13 +12,16 @@ unweighted.
 | Persons on the file | 22,431, ours 22,431 | 18,919, ours 18,919 | HC-243 and HC-251 documentation, opening paragraph |
 | Persons with a positive weight | 21,747, ours 21,747 | 18,463, ours 18,463 | Same paragraph. The modelling table has the same counts. |
 | Weighted population (sum of `PERWT`) | 333,053,243, ours 333,053,243 | 334,530,273, ours 334,530,273 | Codebook, Total line of the `SEX` table (weighted by `PERWT22F`, `PERWT23F`) |
-| Mean total expenditure per person (weighted) | $6,765, ours $6,764.68 | Not found, see below | 2022: Statistical Brief #560, Figure 2 "Overall" (average expenditure per person, 2022) |
+| Mean total expenditure per person (weighted) | $6,765, ours $6,764.68 | Ours $7,487.26, computed, no published figure | 2022: Statistical Brief #560, Figure 2 "Overall" (average expenditure per person, 2022) |
 | Persons by `TOTEXP` band, unweighted and weighted | All 5 bands equal | All 5 bands equal | Codebook, `TOTEXP22` and `TOTEXP23` tables |
 
 Persons equal exactly. The weighted population equals the codebook total to the whole person. The
 2022 weighted mean is $6,764.68 and AHRQ publishes $6,765 to the dollar.
 
 ## The 2023 weighted mean
+
+Decision (user, 2026-11-01): #19 is closed with the band check for 2023. The computed mean of $7,487.26 is
+recorded in the table above and labelled as computed, with no published figure to compare it with.
 
 No AHRQ publication with a 2023 mean total expenditure per person was found.
 

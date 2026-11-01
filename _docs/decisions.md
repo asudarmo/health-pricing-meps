@@ -300,3 +300,14 @@ Why: grouping by household stops leakage between family members. The salt `split
 and met the 2 point tolerance, so no other salt was tried.
 Alternatives: a random split by person (leaks within households), and a seeded random generator (a hash is
 simpler and has nothing to seed).
+
+## 2026-11-01 Reconciliation to published figures (issue #19)
+Decision: the data layer is reconciled to AHRQ's published person counts, weighted population, the 2022
+weighted mean total expenditure ($6,765, Statistical Brief #560) and the `TOTEXP` band counts in both
+codebooks. All match (`_docs/reconciliation.md`). No published 2023 mean total expenditure per person was
+found, so 2023 is checked by the five `TOTEXP` bands (unweighted and weighted, all equal) and the computed
+2023 mean of $7,487.26 is recorded as "computed, no published figure". The user accepted this on 2026-11-01.
+Why: a remembered or computed number is not a published figure, and the band check covers the whole weighted
+expenditure distribution for 2023. Alternative: the user downloading the mean from AHRQ's dashboard
+(declined as unnecessary).
+
