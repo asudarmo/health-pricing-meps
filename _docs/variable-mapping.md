@@ -166,6 +166,7 @@ question that can go unanswered or not apply:
 | `AGE22X`/`AGE23X`, `REGION22`/`23`, `INSCOV22`/`23` | `-1` only |
 | `OBTOTV`, `OPTOTV`, `ERTOT`, `IPDIS`, `OBDRV` (both years) | `-15` only, for counts that cannot be derived |
 | The adult-only condition flags (`HIBPDX` etc.) | all four, confirmed on `CHDDXF`, with `-1`'s age-restriction meaning documented separately above |
+| `BEGRFM`/`BEGRFY` (round-pair only), `ENDRFM`/`ENDRFY`/`ELGRND` (round-pair and combined-year forms), `ASSTIL31` | all four |
 
 **Carry no reserved codes**, because they are continuous or fully-imputed derived quantities that
 are never negative, confirmed directly, not assumed:
@@ -176,6 +177,9 @@ are never negative, confirmed directly, not assumed:
 | `OBVEXP`, `OBDEXP`, `OPTEXP`, `ERTEXP`, `IPTEXP`, `RXEXP` (both years) | same, service-category dollar totals |
 | `PERWT22F`/`PERWT23F` | survey weight, `VALUE PERWT23FF` starts at `0`, no negative codes |
 | `IPNGTD`, `RXTOT` (both years) | counts, but unlike `OBTOTV`/`OPTOTV`/`ERTOT`/`IPDIS`/`OBDRV` these specifically do not carry `-15` either, confirmed by the same check |
+| `VARSTR`, `VARPSU` | survey-design variables, confirmed no `VALUE` statement includes a negative code, never missing by construction |
+| `DUID`, `PID`, `DUPERSID`, `PANEL` | identifiers, confirmed valid-ID ranges only, no reserved codes |
+| `FAMID22`/`23` | not the standard numeric convention, uses its own character code `'0' = "NON-RESPONSE"` instead, confirmed on `$FAMID23F` |
 
 M2's validation layer needs this distinction, a rule that nulls out `-1`/`-7`/`-8`/`-15` on every
 numeric column would silently corrupt `TOTEXP23` or `PERWT23F` if those values ever legitimately
@@ -196,8 +200,9 @@ year) rather than a year suffix, and the pattern is the same in both years.
 |---|---|---|
 | Perceived health status | `RTHLTH31`, `RTHLTH42`, `RTHLTH53` | one value per round-pair, pick the latest round in scope or define a priority order in M2 |
 | Perceived mental health | `MNHLTH31`, `MNHLTH42`, `MNHLTH53` | same pattern |
-| Reference period start/end | `BEGRFM`/`BEGRFY`/`ENDRFM`/`ENDRFY` at `31`/`42`/`53`, plus a combined `22`/`23` version | the building block for the exposure (months in scope) offset |
-| Eligible this round | `ELGRND31`/`ELGRND42`/`ELGRND53`, plus a combined `22`/`23` version | part-year eligibility |
+| Reference period start | `BEGRFM31`/`BEGRFM42`/`BEGRFM53`, `BEGRFY31`/`BEGRFY42`/`BEGRFY53` | round-pair only, confirmed no combined `22`/`23` version exists for the start date, corrected from an earlier version of this document that wrongly claimed one did |
+| Reference period end | `ENDRFM31`/`42`/`53`, `ENDRFY31`/`42`/`53`, plus a combined `ENDRFM22`/`23` and `ENDRFY22`/`23` | the end date does get a combined-year version, the start date does not, this asymmetry is the building block for the exposure (months in scope) offset |
+| Eligible this round | `ELGRND31`/`42`/`53`, plus a combined `ELGRND22`/`23` | part-year eligibility |
 | Asthma, still have | `ASSTIL31` | only one round-pair asks this question |
 
 ## Adult-only condition flags are coded -1 for children
