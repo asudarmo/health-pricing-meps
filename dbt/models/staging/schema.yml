@@ -1,0 +1,372 @@
+version: 2
+
+# Value-level rules for the year-neutral FYC staging models (issue #10).
+# Each rule is the variable's VALUE block in AHRQ's SAS program statements for that year,
+# including the reserved codes it allows. tests/test_schema_rules.py checks this file
+# against those statement files, so a drifting rule fails a test.
+
+models:
+  - name: stg_fyc_2022
+    description: Year-neutral names for the shortlisted 2022 Full-Year Consolidated variables, one row per person.
+    columns:
+      - name: DUPERSID
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'2460002101'"
+                max_value: "'2799700101'"
+      - name: DUID
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 2460002
+                max_value: 2799700
+      - name: PID
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 101
+                max_value: 503
+              config:
+                where: "PID not in (-15, -8, -7, -1)"
+      - name: PANEL
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [24, 26, 27]
+                quote: false
+      - name: VARSTR
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 2001
+                max_value: 2117
+      - name: VARPSU
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 8
+      - name: age
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 85
+              config:
+                where: "age not in (-1)"
+      - name: SEX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: inscov
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3]
+                quote: false
+      - name: RTHLTH31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: RTHLTH42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: RTHLTH53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: OFTSMK53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3]
+                quote: false
+      - name: PHYEXE53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ASTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: DIABDX_M18
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: HIBPDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CHDDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ANGIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: MIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: OHRTDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: STRKDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CHOLDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CANCERDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ARTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+  - name: stg_fyc_2023
+    description: Year-neutral names for the shortlisted 2023 Full-Year Consolidated variables, one row per person.
+    columns:
+      - name: DUPERSID
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'2790002101'"
+                max_value: "'2819793102'"
+      - name: DUID
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 2790002
+                max_value: 2819793
+      - name: PID
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 101
+                max_value: 401
+      - name: PANEL
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [27, 28]
+                quote: false
+      - name: VARSTR
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 2001
+                max_value: 2117
+      - name: VARPSU
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 6
+      - name: age
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 85
+              config:
+                where: "age not in (-1)"
+      - name: SEX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: inscov
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3]
+                quote: false
+      - name: RTHLTH31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: RTHLTH42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: RTHLTH53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: MNHLTH53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3, 4, 5]
+                quote: false
+      - name: OFTSMK53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2, 3]
+                quote: false
+      - name: PHYEXE53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ASTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: DIABDX_M18
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: HIBPDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CHDDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ANGIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: MIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: OHRTDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: STRKDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CHOLDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: CANCERDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false
+      - name: ARTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-15, -8, -7, -1, 1, 2]
+                quote: false

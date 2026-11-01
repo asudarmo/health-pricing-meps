@@ -16,7 +16,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 BANNED_CHARS = {"—": "em dash", ";": "semicolon"}
 
 EXCLUDED_MARKDOWN = {REPO_ROOT / "_docs" / "writing-style.md"}
-EXCLUDED_DIR_NAMES = {".venv", "node_modules", ".git", ".ruff_cache", ".pytest_cache"}
+EXCLUDED_DIR_NAMES = {
+    ".venv",
+    "node_modules",
+    ".git",
+    ".ruff_cache",
+    ".pytest_cache",
+    "dbt_packages",  # third-party dbt packages installed by dbt deps
+    "target",
+}
 
 
 def _strip_code(markdown_text: str) -> str:

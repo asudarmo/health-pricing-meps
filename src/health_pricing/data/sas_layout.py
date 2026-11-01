@@ -161,3 +161,41 @@ def read_fixed_width(dat_path: Path, fields: list[FieldSpec]) -> pd.DataFrame:
         has_point = text.str.contains(".", regex=False, na=False)
         df[f.name] = numeric.where(has_point, numeric / (10**f.decimals))
     return df
+
+
+_SINGLE_CODE_RE = re.compile(r"^\s*(-?\d+|'[^']*')\s*=")
+_RANGE_RE = re.compile(r"^\s*(-?\d+|'[^']*')\s*-\s*(-?\d+|'[^']*')\s*=")
+
+
+@dataclass(frozen=True)
+class ValueRules:
+    """What a variable's VALUE block allows, split into single codes and ranges.
+
+    Numeric codes are ints. Character ID ranges keep their quotes, as dbt needs them.
+    """
+
+    singles: tuple[int, ...]
+    ranges: tuple[tuple[int | str, int | str], ...]
+
+    @property
+    def reserved(self) -> tuple[int, ...]:
+        return tuple(code for code in self.singles if code < 0)
+
+
+def _as_code(token: str) -> int | str:
+    return token if token.startswith("'") else int(token)
+
+
+def parse_value_rules(block_text: str) -> ValueRules:
+    """Parse the text returned by extract_value_block into single codes and ranges."""
+    singles: list[int] = []
+    ranges: list[tuple[int | str, int | str]] = []
+    for line in block_text.splitlines():
+        range_match = _RANGE_RE.match(line)
+        if range_match:
+            ranges.append((_as_code(range_match.group(1)), _as_code(range_match.group(2))))
+            continue
+        single_match = _SINGLE_CODE_RE.match(line)
+        if single_match:
+            singles.append(_as_code(single_match.group(1)))
+    return ValueRules(singles=tuple(sorted(singles)), ranges=tuple(ranges))

@@ -93,3 +93,26 @@ def test_read_fixed_width_literal_decimal_point_overrides_implied_decimals(tmp_p
 
     df = read_fixed_width(dat_path, fields)
     assert df.loc[0, "PERWT23F"] == 1.23
+
+
+def test_parse_value_rules_splits_singles_and_ranges():
+    from health_pricing.data.sas_layout import parse_value_rules
+
+    block = """\
+  -1 = "-1 INAPPLICABLE"
+  0 - 4 = "0-4 AGE"
+  65 - 85 = "65-85 AGE"
+"""
+    rules = parse_value_rules(block)
+    assert rules.singles == (-1,)
+    assert rules.reserved == (-1,)
+    assert rules.ranges == ((0, 4), (65, 85))
+
+
+def test_parse_value_rules_handles_character_id_ranges_and_negative_range_end():
+    from health_pricing.data.sas_layout import parse_value_rules
+
+    rules = parse_value_rules("  '2790002101' - '2819793102' = \"VALID ID\"\n  1 = \"YES\"")
+    assert rules.ranges == (("'2790002101'", "'2819793102'"),)
+    assert rules.singles == (1,)
+    assert rules.reserved == ()

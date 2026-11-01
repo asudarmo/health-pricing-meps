@@ -18,6 +18,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
 
+      - name: Install dbt packages
+        run: uv run dbt deps --project-dir dbt --profiles-dir dbt
+
       - name: Lint
         run: uv run ruff check .
 
