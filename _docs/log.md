@@ -41,3 +41,36 @@ now well-supported by the office-based specialty data found in issue #5.
 
 Open questions: decision gate 4 (price index) is proposed, not yet confirmed by the user. QA has
 not verified issues #1-#7, all are implemented but open per `_docs/process.md`.
+
+## 2026-11-01 QA pass on all M1 issues, M1 ready for review
+
+Done: QA ran independently on each of the seven M1 issues (fresh subagents per
+`_docs/process.md`). Four passed cleanly (#2, #4, #6, #7), with minor non-blocking gaps noted for
+follow-up (writing-style.md's en-dash-for-ranges rule isn't covered by the automated test, a
+plain hyphen is used in several docs where the style guide wants an en dash · no test for the
+download script's size-mismatch failure path · no test asserts event-file row counts against
+AHRQ documentation).
+
+Three failed and were fixed.
+- Issue #1: CI never actually ran `dbt debug`. Added the step, then found a second bug it
+  exposed, `dbt debug` creates an empty `.duckdb` file as a side effect, which was defeating
+  `test_load.py`'s skip-if-no-data check and failing CI's `Test` step on tables that don't exist
+  in that empty database. Reordered CI and hardened the skip condition to check for the `raw`
+  schema's tables, not just file existence.
+- Issue #3: `ADSMOK42`/`ADNSMK42` were wrongly claimed present in both years, they only exist in
+  2023, the same class of error as the earlier office-based/outpatient swap. Corrected the
+  shortlist (`OFTSMK53` is the primary smoking factor, present both years). Also added the
+  MEPS-wide reserved-code convention and age-85 top-coding confirmation across the shortlist,
+  the acceptance criteria asked for this for every variable, not only the condition flags.
+- Issue #5: the specialty finding was never recorded in `_docs/decisions.md`, only in
+  `_docs/variable-mapping.md` and a GitHub comment. Added the entry, removed the now-resolved
+  risk line from `_docs/plan.md`.
+
+All fixes re-verified (tests, lint, `dbt build`, and a real GitHub Actions run) before closing.
+All seven M1 issues are now closed. The GitHub milestone itself is left open, per the plan's rule
+that work pauses at the end of each milestone for the user's review.
+
+Next: the user reviews M1, then M2 (validation and the modelling table) once they're satisfied.
+Decision gate 4 (price index, PCE-Health recommended) is still only proposed, not confirmed.
+
+Open questions: none beyond the user's M1 review and the decision gate 4 sign-off.
