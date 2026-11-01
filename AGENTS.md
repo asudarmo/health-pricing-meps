@@ -14,6 +14,8 @@ To be confirmed and updated by Task 1. Keep this section accurate.
 - `uv sync` - install dependencies
 - `uv run pytest` - the whole test suite
 - `uv run pytest tests/test_<name>.py` - one test file
+- `uv run python -m health_pricing.data.download` - download the MEPS raw files (data/raw/)
+- `uv run python -m health_pricing.data.load` - load the raw files into DuckDB (data/interim/)
 - `uv run dbt build --project-dir dbt --profiles-dir dbt` - build and test the dbt models
 - `uv run ruff check . && uv run ruff format --check .` - lint and format check
 - `uv run jupyter lab` - notebooks
