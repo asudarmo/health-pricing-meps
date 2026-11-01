@@ -201,6 +201,13 @@ value itself is capped at 85, anyone older is recorded as exactly 85, not that 6
 coded category. M2's validation layer needs to treat 85 as a top-coded ceiling, not a literal age,
 when using age as a continuous rating factor or computing age-related derived fields.
 
+## AGELAST added to the shortlist (2026-11-01, user approved in M2)
+
+`AGELAST` (age at the last eligible round) has the same name and coding in both years and holds a
+valid age (13 to 85) for every person whose year-end age (`AGE22X`, `AGE23X`) is `-1`. Those are
+people who left the survey part-way through the year (195 in 2022 and 148 in 2023). It is used only
+to fill in the age of those people, with an `age_source` flag. See `_docs/decisions.md`.
+
 ## Round-based, not year-based
 
 These follow a round-pair suffix (`31`, `42` or `53`, one per overlapping panel in that calendar

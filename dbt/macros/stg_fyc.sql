@@ -17,6 +17,7 @@
     FAMID{{ yy }} as famid,
     PERWT{{ yy }}F as perwt,
     AGE{{ yy }}X as age,
+    AGELAST,
     SEX,
     REGION{{ yy }} as region,
     INSCOV{{ yy }} as inscov,

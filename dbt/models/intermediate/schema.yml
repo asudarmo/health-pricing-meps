@@ -1,0 +1,374 @@
+version: 2
+
+# Value-level rules after the reserved-code treatment (issue #12). No reserved negative code is
+# allowed on a cleaned column. The only negative value left is -1 on the round dates and
+# eligibility columns, where it means "not in that round" and feeds the exposure measure (#13).
+# The treatment itself is logged in _docs/decisions.md (2026-11-01, reserved-code treatment).
+
+models:
+  - name: int_person_clean
+    description: One row per person-year for 2022 and 2023 with reserved codes treated.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [DUPERSID, year]
+    columns:
+      - name: year
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [2022, 2023]
+                quote: false
+      - name: DUPERSID
+        data_tests:
+          - not_null
+      - name: age
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 85
+      - name: age_source
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['year_end', 'last_eligible']
+      - name: age_topcoded
+        data_tests:
+          - not_null
+      - name: SEX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+                quote: false
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+      - name: inscov
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+      - name: rthlth
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: mnhlth
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: rthlth_round
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [31, 42, 53]
+                quote: false
+      - name: mnhlth_round
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [31, 42, 53]
+                quote: false
+      - name: OFTSMK53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '3', 'not_applicable', 'unknown']
+                quote: true
+      - name: PHYEXE53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: HIBPDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: CHDDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: ANGIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: MIDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: OHRTDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: STRKDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: CHOLDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: CANCERDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: ARTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'not_applicable', 'unknown']
+                quote: true
+      - name: ASTHDX
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'unknown']
+                quote: true
+      - name: DIABDX_M18
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '0', 'unknown']
+                quote: true
+      - name: ASSTIL31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+                quote: false
+      - name: BEGRFM31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: BEGRFY31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ENDRFM31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: ENDRFY31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ELGRND31
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: BEGRFM42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: BEGRFY42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ENDRFM42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: ENDRFY42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ELGRND42
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: BEGRFM53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: BEGRFY53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ENDRFM53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: ENDRFY53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 2021, 2022, 2023, 2024]
+                quote: false
+      - name: ELGRND53
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: ENDRFM
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false
+      - name: ENDRFY
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [2022, 2023]
+                quote: false
+      - name: ELGRND
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [-1, 1, 2, 3, 4]
+                quote: false
+      - name: OBTOTV
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: OPTOTV
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ERTOT
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: IPDIS
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: OBDRV
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: IPNGTD
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: RXTOT
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTSLF
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTMCR
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTMCD
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTPRV
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTPTR
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: OBVEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: OBDEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: OPTEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ERTEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: IPTEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: RXEXP
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: perwt
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

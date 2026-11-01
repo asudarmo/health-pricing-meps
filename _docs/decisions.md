@@ -140,3 +140,49 @@ Why: AHRQ stores event costs and weights with literal points. The M1 loader divi
 totals agree with the FYC category totals to within 0.01% and the weights sum to about 333 million.
 Alternatives: none. The earlier behaviour was a bug. Regression tests were added in `tests/test_sas_layout.py`
 and `tests/test_load.py`.
+
+## 2026-11-01 Reserved-code treatment (issue #12) and AGELAST added to the shortlist
+Decision: the cleaned person model `int_person_clean` (one row per person-year, both years) treats
+reserved codes as follows. The value rules after treatment are in `dbt/models/intermediate/schema.yml`.
+- **Shortlist change (gate 1, approved by the user).** `AGELAST` is added to the shortlist. It has the same
+  name in both years.
+- **Age.** `age` is the year-end age (`AGE22X`, `AGE23X`) where valid, else `AGELAST`. `age_source` says
+  which (`year_end` or `last_eligible`). 195 people in 2022 and 148 in 2023 have no year-end age because
+  they left the survey part-way through the year, and all of them get an age from `AGELAST`. For the
+  22,236 (2022) and 18,771 (2023) people who have both, the two agree for 100.0% and 99.9%. In 2023, 14
+  differ by one year. Age 85 is kept and `age_topcoded` flags it.
+- **`-1` on adult-only questions** (`OFTSMK53`, `PHYEXE53` and the nine condition flags `HIBPDX`, `CHDDX`,
+  `ANGIDX`, `MIDX`, `OHRTDX`, `STRKDX`, `CHOLDX`, `CANCERDX`, `ARTHDX`). `-1` for a person under 18 is
+  `not_applicable`. `-1` for an adult is `unknown`, a separate level. The user approved this change to the
+  first proposal, which would have treated all adult `-1` codes as missing.
+- **`-1` on `ASTHDX` and `DIABDX_M18`**, which are asked at any age, is `unknown` for everyone.
+- **`-7`, `-8`, `-15`** become null on every treated variable. `-1` on `SEX`, `region`, `inscov` and
+  `ASSTIL31` becomes null. `-15` on the five visit and discharge counts becomes null.
+- **Levels** are text, so the levels sit together. Yes/no questions use `'1'` (yes), `'0'` (no),
+  `not_applicable` and `unknown`. `OFTSMK53` uses `'1'` (every day), `'2'` (some days), `'3'` (not at
+  all), `not_applicable` and `unknown`. Smoking and exercise are adult-only questions, so the children
+  rule applies to them as well. The issue named only the nine flags.
+- **Health status.** `rthlth` and `mnhlth` take the latest round with a valid answer (5/3, then 4/2, then
+  3/1), with the round in `rthlth_round` and `mnhlth_round`. 84 people (2022) and 60 (2023) have no valid
+  answer in any round and stay null.
+- **Round dates and eligibility** (`BEGRF*`, `ENDRF*`, `ELGRND*`) keep `-1`, which means "not in that
+  round" and feeds the exposure measure in #13. Their `-7`, `-8` and `-15` become null.
+Why:
+- The adult `unknown` level is not noise. It marks adults who were never asked, for example people who
+  left before round 5/3 or died before the priority-conditions section. The table shows the cost is
+  concentrated, so the level may act as a leaver or death indicator. It is checked for leakage in M3
+  before it can enter a rating structure.
+- Using `AGELAST` keeps people who left part-way, who carry 2.4% (2022) and 2.3% (2023) of total spending,
+  instead of dropping them, and avoids a gate 3 exclusion of more than 1% of cost.
+Adults at the `unknown` level, per variable (the full table is `uv run python -m
+health_pricing.evidence.clean_checks`):
+
+| Variable | 2022 | 2023 |
+|---|---|---|
+| `OFTSMK53` and `PHYEXE53` | 253 (1.4% of adults, 3.8% of cost) | 209 (1.4% of adults, 4.2% of cost) |
+| The nine adult-only condition flags (each) | 175 (1.0% of adults, 0.4% of cost) | 134 (0.9% of adults, 0.5% of cost) |
+| `ASTHDX` and `DIABDX_M18` (each) | 67 (0.4% of adults, 0.2% of cost) | 55 (0.4% of adults, 0.4% of cost) |
+
+Alternatives: dropping people with no year-end age (rejected, 2.3% of cost), treating adult `-1` as null
+(rejected by the user, it hides the leaver signal), keeping children's `-1` as null instead of
+`not_applicable` (rejected, it would mix children with adults who were not asked).

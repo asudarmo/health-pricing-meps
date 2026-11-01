@@ -17,3 +17,5 @@ models:
   health_pricing:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: view
