@@ -9,7 +9,7 @@ from health_pricing.data.load import DUCKDB_PATH
 
 SALT = "split-v1"
 TRAIN_PERCENT = 80
-TOLERANCE = 0.02  # percentage points as a share, 2 points
+TOLERANCE = 0.02  # 2 percentage points, as a share
 
 
 def python_split(duid: int) -> str:

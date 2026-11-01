@@ -16,7 +16,7 @@ from pathlib import Path
 from pypdf import PdfReader
 
 _ROW_RE = re.compile(r"^\s*(?P<label>\S.*?)\s{2,}(?P<unweighted>[\d,]+)\s+(?P<weighted>[\d,]+)\s*$")
-_LEVEL_RE = re.compile(r"^(-?\d+(?:\s*-\s*\d+)?)\b")
+_LEVEL_RE = re.compile(r"^\$?(-?[\d,]*\d)(?:\s*-\s*\$?([\d,]*\d))?")
 _NAME_RE = re.compile(r"^\s*Name:\s+(\S+)\s*$")
 
 
@@ -29,15 +29,22 @@ def level_key(label: str) -> str:
     match = _LEVEL_RE.match(label.strip())
     if not match:
         raise CodebookParseError(f"no leading code in value label {label!r}")
-    return re.sub(r"\s+", "", match.group(1))
+    low = match.group(1).replace(",", "")
+    high = match.group(2)
+    return f"{low}-{high.replace(',', '')}" if high else low
 
 
 def _to_int(text: str) -> int:
     return int(text.replace(",", ""))
 
 
-def _parse_page(lines: list[str], wanted: set[str]) -> dict[str, dict[str, int]]:
-    """Blocks on one page, bottom to top: Total, rows, Value header, End, Start, ..., Name."""
+def _parse_page(
+    lines: list[str], wanted: set[str], weighted: bool = False
+) -> dict[str, dict[str, int]]:
+    """Blocks on one page, bottom to top: Total, rows, Value header, End, Start, ..., Name.
+
+    Reads the unweighted column, or the weighted column when weighted is true.
+    """
     found: dict[str, dict[str, int]] = {}
     rows: list[tuple[str, int]] = []
     total: int | None = None
@@ -46,7 +53,7 @@ def _parse_page(lines: list[str], wanted: set[str]) -> dict[str, dict[str, int]]
         stripped = line.strip()
         if stripped.startswith("Total:"):
             numbers = re.findall(r"[\d,]{1,}", stripped.replace("Total:", ""))
-            total = _to_int(numbers[0]) if numbers else None
+            total = _to_int(numbers[1 if weighted else 0]) if len(numbers) > 1 else None
             rows = []
             in_block = True
             continue
@@ -57,7 +64,9 @@ def _parse_page(lines: list[str], wanted: set[str]) -> dict[str, dict[str, int]]
                 counts = {level_key(label): count for label, count in rows}
                 if len(counts) != len(rows):
                     raise CodebookParseError(f"{variable}: repeated value code in {rows}")
-                if total is None or sum(counts.values()) != total:
+                # Each weighted figure is rounded to a whole number, so allow one unit per row
+                slack = len(rows) if weighted else 0
+                if total is None or abs(sum(counts.values()) - total) > slack:
                     raise CodebookParseError(
                         f"{variable}: counts add to {sum(counts.values())}, printed total {total}"
                     )
@@ -69,12 +78,18 @@ def _parse_page(lines: list[str], wanted: set[str]) -> dict[str, dict[str, int]]
         if in_block and "Unweighted" not in line:
             row = _ROW_RE.match(line)
             if row and not row.group("label").startswith("Total"):
-                rows.append((row.group("label"), _to_int(row.group("unweighted"))))
+                column = "weighted" if weighted else "unweighted"
+                rows.append((row.group("label"), _to_int(row.group(column))))
     return found
 
 
-def read_counts(pdf_path: Path, variables: set[str]) -> dict[str, dict[str, int]]:
-    """Unweighted count per value code for each requested variable, checked against its Total."""
+def read_counts(
+    pdf_path: Path, variables: set[str], weighted: bool = False
+) -> dict[str, dict[str, int]]:
+    """Count per value code for each requested variable, checked against its printed Total.
+
+    The unweighted column by default, the column weighted by the person weight if asked.
+    """
     reader = PdfReader(str(pdf_path))
     remaining = set(variables)
     result: dict[str, dict[str, int]] = {}
@@ -85,7 +100,7 @@ def read_counts(pdf_path: Path, variables: set[str]) -> dict[str, dict[str, int]
         flat = re.sub(r"\s+", "", text)
         if not any(f"Name:{v}" in flat for v in remaining):
             continue
-        found = _parse_page(text.splitlines(), remaining)
+        found = _parse_page(text.splitlines(), remaining, weighted)
         result.update(found)
         remaining -= set(found)
         if not remaining:

@@ -1,0 +1,28 @@
+year,measure,level,value,source,location
+2022,persons_on_file,,22431,HC-243 documentation,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243doc.shtml (opening paragraph)
+2022,persons_positive_weight,,21747,HC-243 documentation,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243doc.shtml (opening paragraph)
+2023,persons_on_file,,18919,HC-251 documentation,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251doc.shtml (opening paragraph)
+2023,persons_positive_weight,,18463,HC-251 documentation,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251doc.shtml (opening paragraph)
+2022,weighted_population,,333053243,"HC-243 codebook, SEX Total line (weighted by PERWT22F)",https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_unweighted_persons,8104-1338276,4760,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_weighted_persons,8104-1338276,61945225,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_unweighted_persons,2442-8103,4758,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_weighted_persons,2442-8103,68402040,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_unweighted_persons,686-2441,4759,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_weighted_persons,686-2441,74768309,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_unweighted_persons,1-685,4764,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_weighted_persons,1-685,77227612,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_unweighted_persons,0,3390,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2022,totexp_band_weighted_persons,0,50710056,HC codebook TOTEXP22,https://meps.ahrq.gov/data_stats/download_data/pufs/h243/h243cb.pdf
+2023,weighted_population,,334530273,"HC-251 codebook, SEX Total line (weighted by PERWT23F)",https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_unweighted_persons,8728-574675,4065,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_weighted_persons,8728-574675,63019417,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_unweighted_persons,2669-8727,4066,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_weighted_persons,2669-8727,70895788,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_unweighted_persons,739-2668,4065,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_weighted_persons,739-2668,76275581,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_unweighted_persons,1-738,4068,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_weighted_persons,1-738,76002874,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_unweighted_persons,0,2655,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2023,totexp_band_weighted_persons,0,48336613,HC codebook TOTEXP23,https://meps.ahrq.gov/data_stats/download_data/pufs/h251/h251cb.pdf
+2022,mean_totexp_per_person,,6765,"AHRQ Statistical Brief #560, Figure 2, Overall (average expenditure per person, 2022)",https://meps.ahrq.gov/data_files/publications/st560/stat560.shtml

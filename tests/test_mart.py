@@ -106,12 +106,14 @@ def test_key_is_unique_and_claims_agree_with_the_claims_table():
         mismatch = con.execute(
             "SELECT COUNT(*) FROM mart_person_year m "
             "JOIN int_person_claims c USING (year, DUPERSID) "
-            "WHERE m.claim_count <> c.claim_count OR m.claim_cost <> c.claim_cost "
-            "OR m.claim_cost_2023_prices <> c.claim_cost_2023_prices"
+            "WHERE m.claim_count <> c.claim_count "
+            "OR abs(m.claim_cost - c.claim_cost) > 1e-6 "
+            "OR abs(m.claim_cost_2023_prices - c.claim_cost_2023_prices) > 1e-6"
         ).fetchone()[0]
         assert mismatch == 0
-        # Every rating factor candidate has a value or a documented level for every row, except
-        # the health status items that are null when every round was invalid.
+        # Float sums can differ in the last digits between runs, so costs are compared with a
+        # tolerance. The core rating factors, exposure and claim count are never null. Health
+        # status items are null when every round was invalid, so they are not checked here.
         nulls = con.execute(
             "SELECT COUNT(*) FROM mart_person_year WHERE age IS NULL OR region IS NULL "
             "OR inscov IS NULL OR exposure IS NULL OR claim_count IS NULL"

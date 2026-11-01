@@ -143,3 +143,15 @@ Next: #14 is at decision gate 3. Zero-weight persons are 3.0% (2022) and 2.4% (2
 on the shortlist. #15 to #19 and #21 follow #14, and #16 also needs the BEA key check.
 
 Open questions: both above, put to the user.
+
+## 2026-11-01 M2 continued: #14 to #18 done, #19 and #21 waiting on the user
+
+Done: #14 (modelling population, quarantine and exclusion log, region fill for leavers), #15 and #16 (PMI-scope
+claims, PCE-Health on-levelling), #17 (modelling table), #18 (household split). Each passed QA in a fresh
+subagent and was closed. #19 is built and open. 296 tests pass.
+
+Waiting on the user: (1) #19 has no published 2023 mean total expenditure per person (the 2022 mean matches
+AHRQ's $6,765). (2) #21 needs notebook dependencies (matplotlib, nbformat, nbclient, ipykernel) that are not
+in `pyproject.toml`.
+
+Next: close #19 and do #21, then M2 is ready for the user's review. Then M3.

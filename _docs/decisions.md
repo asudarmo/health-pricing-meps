@@ -291,8 +291,9 @@ the same on every run and machine. The rule is the dbt macro `household_split` a
 in `tests/test_split.py` checks that they agree.
 - 2022 shares: 80.9% of persons and 79.6% of claim cost are train, 19.1% and 20.4% are test (targets 80 and
   20, each within 2 points). 8,566 train and 2,090 test households.
-- 4,005 of the 15,565 households appear in both years. This is the same-people overlap (8,284 people) stated
-  in the 2026-10-31 time periods decision. It is acceptable for the out-of-time test because households
+- 4,005 of the 15,565 households appear in both years, and 8,109 people appear in both years after the
+  exclusions (8,284 before them). This is the same-people overlap stated in the 2026-10-31 time periods
+  decision. It is acceptable for the out-of-time test because households
   stay in MEPS for two years and renew like policyholders, and the within-year split is grouped by
   household so no household is on both sides of it.
 Why: grouping by household stops leakage between family members. The salt `split-v1` was the first one tried
