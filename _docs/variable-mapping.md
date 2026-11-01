@@ -44,7 +44,7 @@ to a non-doctor, the type of person seen.
 | `VSTCTGRY` | best category for care received on the visit | general checkup, diagnosis or treatment, emergency, psychotherapy/mental health counselling, follow-up or post-operative, immunisations, vision exam, pregnancy-related, well-child exam, laser eye surgery, other |
 
 This means the PMI-scope claim decision (decision gate 2) does not need a proxy for office-based
-events, specialty and visit category are both directly available and can be used to decide which
+events. Specialty and visit category are both directly available and can be used to decide which
 office-based visits count as PMI-scope claims (e.g. specialist visits, excluding routine GP and
 well-child checkups).
 
@@ -93,15 +93,15 @@ convention does, and was misread the first time.
 | Consistency check only, 2023 only | `ADSMOK42` | SAQ: currently smoke, round 4/2, self-administered questionnaire | **2023 only** | cross-check against `OFTSMK53` in 2023, not usable in 2022 or the pooled model |
 
 Correction from an earlier version of this document, caught at QA, which claimed `ADSMOK42` was
-identical in both years. It is not, it does not exist anywhere in `h243su.txt` (2022), only in
+identical in both years. It is not. It does not exist anywhere in `h243su.txt` (2022), only in
 `h251su.txt` (2023). This is the same class of error the office-based/outpatient swap was (a
 2022/2023 availability mix-up), caught this time by QA rather than the user, which is why the
 acceptance criteria for this issue now explicitly require checking presence in both years for
 every listed variable, not just mapping the name. `OFTSMK53` is the main-interview variable asked
 of all adults in both years, so it is used as the rating factor. `ADSMOK42` can only support a
 2023-only consistency check, not a pooled one. `ADNSMK42` (advised to quit) is dropped from the
-shortlist, it is an SAQ follow-up with the same 2023-only availability and no rating-factor role
-of its own.
+shortlist, because it is an SAQ follow-up with the same 2023-only availability and no
+rating-factor role of its own.
 
 ## Year-suffix mapping (22 to 23), same meaning
 
@@ -150,8 +150,8 @@ the shortlist. A first attempt at this section claimed the reserved-code convent
 "every numeric variable in this shortlist", which a second QA re-check found false, `TOTEXP23`
 and `PERWT23F` carry no negative codes at all, confirmed directly in their `VALUE` statements.
 The corrected version below checks every shortlisted variable individually rather than asserting
-blanket coverage, the same mistake the office-based/outpatient swap and the `ADSMOK42` error
-were, an unchecked generalisation across the full shortlist.
+blanket coverage. An unchecked generalisation across the full shortlist is the same mistake the
+office-based/outpatient swap and the `ADSMOK42` error both were.
 
 Checked directly in both years' `VALUE` statements for every variable in this shortlist, two
 groups exist.
@@ -167,6 +167,16 @@ question that can go unanswered or not apply:
 | `OBTOTV`, `OPTOTV`, `ERTOT`, `IPDIS`, `OBDRV` (both years) | `-15` only, for counts that cannot be derived |
 | The adult-only condition flags (`HIBPDX` etc.) | all four, confirmed on `CHDDXF`, with `-1`'s age-restriction meaning documented separately above |
 | `BEGRFM`/`BEGRFY` (round-pair only), `ENDRFM`/`ENDRFY`/`ELGRND` (round-pair and combined-year forms), `ASSTIL31` | all four |
+| `ASTHDX`, `DIABDX_M18` (both years) | all four, same pattern as the age-restricted condition flags, confirmed directly even though these two have no age restriction |
+| `ADSMOK42` (2023 only, see the smoking section above) | all four |
+| `ADBMI42` (2022 only, excluded from the model, see the BMI section below) | all four |
+| `CHBMIX42` (2022 only, child BMI, excluded from the model) | `-15` and `-1` only, not the full set unlike `ADBMI42`, confirmed on `CHBMIX42F` |
+
+A third-round correction: `PID` does not belong in the no-codes group below for both years.
+`PIDF` in 2022 carries the full reserved-code set before its `101-503 = VALID ID` range, but
+`PIDF` in 2023 has no reserved codes at all, only `101-401 = VALID ID`. This difference is
+genuinely year-dependent and was confirmed directly on both files, not assumed from one year.
+`DUID`, `DUPERSID` and `PANEL` are ID-range-only in both years.
 
 **Carry no reserved codes**, because they are continuous or fully-imputed derived quantities that
 are never negative, confirmed directly, not assumed:
@@ -178,7 +188,7 @@ are never negative, confirmed directly, not assumed:
 | `PERWT22F`/`PERWT23F` | survey weight, `VALUE PERWT23FF` starts at `0`, no negative codes |
 | `IPNGTD`, `RXTOT` (both years) | counts, but unlike `OBTOTV`/`OPTOTV`/`ERTOT`/`IPDIS`/`OBDRV` these specifically do not carry `-15` either, confirmed by the same check |
 | `VARSTR`, `VARPSU` | survey-design variables, confirmed no `VALUE` statement includes a negative code, never missing by construction |
-| `DUID`, `PID`, `DUPERSID`, `PANEL` | identifiers, confirmed valid-ID ranges only, no reserved codes |
+| `DUID`, `DUPERSID`, `PANEL` | identifiers, confirmed valid-ID ranges only, no reserved codes. `PID` is excluded from this row, see above |
 | `FAMID22`/`23` | not the standard numeric convention, uses its own character code `'0' = "NON-RESPONSE"` instead, confirmed on `$FAMID23F` |
 
 M2's validation layer needs this distinction, a rule that nulls out `-1`/`-7`/`-8`/`-15` on every
@@ -201,7 +211,7 @@ year) rather than a year suffix, and the pattern is the same in both years.
 | Perceived health status | `RTHLTH31`, `RTHLTH42`, `RTHLTH53` | one value per round-pair, pick the latest round in scope or define a priority order in M2 |
 | Perceived mental health | `MNHLTH31`, `MNHLTH42`, `MNHLTH53` | same pattern |
 | Reference period start | `BEGRFM31`/`BEGRFM42`/`BEGRFM53`, `BEGRFY31`/`BEGRFY42`/`BEGRFY53` | round-pair only, confirmed no combined `22`/`23` version exists for the start date, corrected from an earlier version of this document that wrongly claimed one did |
-| Reference period end | `ENDRFM31`/`42`/`53`, `ENDRFY31`/`42`/`53`, plus a combined `ENDRFM22`/`23` and `ENDRFY22`/`23` | the end date does get a combined-year version, the start date does not, this asymmetry is the building block for the exposure (months in scope) offset |
+| Reference period end | `ENDRFM31`/`42`/`53`, `ENDRFY31`/`42`/`53`, plus a combined `ENDRFM22`/`23` and `ENDRFY22`/`23` | the end date gets a combined-year version but the start date does not, and this asymmetry is the building block for the exposure (months in scope) offset |
 | Eligible this round | `ELGRND31`/`42`/`53`, plus a combined `ELGRND22`/`23` | part-year eligibility |
 | Asthma, still have | `ASSTIL31` | only one round-pair asks this question |
 
@@ -215,7 +225,7 @@ of this group). `ASTHDX` and `DIABDX_M18` have no age restriction and so are val
 M2 needs an explicit coding rule for the `-1` values on the age-restricted flags, for example
 whether a child is coded as "no diagnosis" (0) rather than left as a reserved negative code, and
 how that interacts with the general reserved-code-to-null rule in plan section 2.2. This is not
-decided here, it is a task for M2's validation layer.
+decided here. It is a task for M2's validation layer.
 
 ## BMI: not available in the 2023 file
 
@@ -226,7 +236,7 @@ specifically was dropped from, or moved out of, the 2023 Full-Year Consolidated 
 
 **Decision:** BMI is excluded from the pooled 2022+2023 model and the final rating structure. The
 main reason is that a factor absent from 2023 cannot be evaluated on the out-of-time test (plan
-section 2.5), there is no 2023 BMI to check ranking, relativity stability or A/E against, so a
+section 2.5). There is no 2023 BMI to check ranking, relativity stability or A/E against, so a
 2022-only BMI relativity has no way to pass the validation design this project relies on. It would
 also distort the pooled fit, since it is only present in half the pooled data.
 

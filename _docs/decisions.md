@@ -51,13 +51,14 @@ specific calls.
 - BMI (`ADBMI42`) is excluded from the pooled 2022+2023 model and the final rating structure. A
   2022-only BMI sensitivity analysis is moved to the stretch goals (plan section 5), not MVP.
 - `OFTSMK53` (main interview, all adults, present in both years) is the primary smoking rating
-  factor. `ADSMOK42` (SAQ) is kept only as a 2023-only consistency check against it, it does not
-  exist in the 2022 file at all, corrected at QA from an earlier claim that it was in both years.
+  factor. `ADSMOK42` (SAQ) is kept only as a 2023-only consistency check against it, because it
+  does not exist in the 2022 file at all, corrected at QA from an earlier claim that it was in
+  both years.
 - `PHYEXE53` (moderate/vigorous exercise 5x a week) is confirmed present in both years and added
   as a candidate lifestyle factor.
 - Service-category expenditure variables (`IPTEXP`, `OPTEXP`, `OBVEXP`, `OBDRV`, `OBDEXP`,
-  `ERTEXP`, `RXEXP`, both years) are added to the shortlist, they cost the PMI-scope claim
-  categories directly from the FYC file.
+  `ERTEXP`, `RXEXP`, both years) are added to the shortlist, because they cost the PMI-scope
+  claim categories directly from the FYC file.
 Why:
 - `ADBMI42` and `CHBMIX42` exist in the 2022 Full-Year Consolidated file (HC-243) but no BMI
   variable exists in the 2023 file (HC-251) under any name or round suffix, confirmed by grepping
@@ -68,7 +69,7 @@ Why:
   restriction. AHRQ's own documentation defines `_Myy` as marking the collection year a variable's
   definition changed, so `_M18` means "changed in collection year 2018", corrected after the user
   challenged it and a label comparison confirmed `DIABDX_M18` has no "(>17)" age qualifier unlike
-  every other condition flag in the shortlist. No decision changes as a result, `DIABDX_M18` is
+  every other condition flag in the shortlist. No decision changes as a result. `DIABDX_M18` is
   still used as-is, but the mapping note is corrected.
 - Adult-only condition flags (`HIBPDX`, `CHDDX`, `ANGIDX`, `MIDX`, `OHRTDX`, `STRKDX`, `CHOLDX`,
   `CANCERDX`, `ARTHDX`) are coded `-1 = INAPPLICABLE` for children, since the question is age
