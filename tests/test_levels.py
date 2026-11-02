@@ -256,3 +256,4 @@ def test_the_real_decided_grouping_has_the_approved_references():
     grouping = levels.decided_grouping(mf.load_frames())
     assert len(grouping.mapping["age"]) == 86 and grouping.reference["age"] == "05-14"
     assert len(set(grouping.mapping["age"].values())) == 16
+    assert levels.presentation_age_reference(mf.load_frames(), grouping) == "65-69"

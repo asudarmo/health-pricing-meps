@@ -400,6 +400,6 @@ and is built by `levels.decided_grouping`. Evidence is in `notebooks/03_glm.ipyn
 Why: levels with few claimants give unstable relativities, and the `unknown` level is a leaver marker for the two
 lifestyle questions, so merging it would distort every relativity for that factor. The 2 percent test makes the
 treatment of `unknown` a measured rule and not a judgement for each variable.
-Alternatives: ten-year age bands (same minimum claimant count, but they hide slope inside a band, for example 49 to
-56 percent claimant rate across ages 55 to 64), and merging `unknown` for the lifestyle questions (rejected because
+Alternatives: ten-year age bands (same minimum claimant count, but they hide slope inside a band, for example a claimant rate of 49
+percent at ages 55 to 59 and 56 percent at 60 to 64 in one band), and merging `unknown` for the lifestyle questions (rejected because
 of the distortion above).
