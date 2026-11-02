@@ -1,0 +1,6 @@
+component,ratio,change_percent,lower_95_percent,upper_95_percent,share_of_log_gap,pricing_treatment
+Mix of people (modelled factors),1.001474623658502,0.1474623658501928,-2.0831588305053383,2.4234528486882345,0.009446088823193704,Not a level change. The rating structure prices the mix.
+Frequency (actual over expected claimants),1.0273270801972316,2.7327080197231624,0.2099438694166178,5.330067866221655,0.17282897404232855,A level change if it persists. It is a trend on the base rate.
+Severity beyond the price index,1.139344545191626,13.934454519162598,5.595061320524364,22.981040324985578,0.8362677859547819,A level change if it persists. It is a trend on the base rate.
+Large-claim contribution,0.9971115979053556,-0.288840209464436,-4.473910000009996,3.7855921026381356,-0.018542848820308263,Not a level change. The large-claim load covers it.
+"Total, cost per exposure year",1.168819720835858,16.881972083585794,5.910804494528943,29.34156707885094,1.0,The total gap. The level change is frequency and severity.

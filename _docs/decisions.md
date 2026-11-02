@@ -657,3 +657,30 @@ of the chosen model and the final tariff, and a lift chart of the final tariff w
 - The internal option names `all_factors`, `option_1`, `final` and `final_tariff` are not renamed.
 Why: a reviewer needs to check what is fitted, and the letters alone did not say.
 Alternatives: keep the short keys in tables, or rename the option names too.
+
+## 2026-11-02 Frequency trend and the 2023 gap: evidence for the gate (decision gate 4, part 2, issue #43)
+Decision: none yet. This is the evidence and a recommendation, and the choice is the user's. Evidence is in the "Frequency
+trend and the forecast assumption" section of `notebooks/04_monitoring.ipynb` and in `outputs/m5_draft/`. The code is
+`health_pricing.models.trend` and `health_pricing.data.urr`.
+- **Rule.** The forecast trend for the out-of-time test is set without looking at 2023. The trend that the 2022 to 2023 data
+  imply is a diagnostic only, and is never used as a forecast, because that would make the 2023 A/E close to 1 by construction.
+  A trend is a factor on the claim hazard (`1 - (1 - p)^f`), so the claim probability stays below 1.
+- **External source.** CMS Unified Rate Review public use file, plan year 2023, Worksheet I, file
+  `PY2023_WKSH1_PUF_20221027.csv` in `2023-urr-puf.zip` (CMS update of 1 November 2022, size 9,755,168 bytes, SHA-256
+  `e1eb4a1533c406a79245851b1e619fc56b087dd94f941f7379a767ba6f53caad`). Filings made in 2022. 713 filings with a
+  calendar-year 2021 experience period and a projection from 1 January 2023, 275.5 million member months. The Year 2 trend runs
+  from 2022 to 2023. Member-month weighted median utilization trend 1.5 percent (inpatient), 2.5 percent (outpatient) and
+  1.9 percent blended by experience claims share (quartiles 0.8 and 3.1 percent). The measure is utilization per member
+  for US commercial filings, which is not the same as the share of person-years with a claim.
+- **Context, not an input.** CMS National Health Expenditure actuals for 2023 (Health Affairs, 18 December 2024) show real growth
+  of 4.4 percent in 2023 against 1.4 percent in 2022, mainly from use and intensity. The June 2023 CMS projection had private
+  health insurance spending rising 7.7 percent in 2023.
+- **The gap.** Cost per exposure year rose 16.9 percent (5.9 to 29.3). Mix 0.1 percent, frequency 2.7 percent (0.2 to 5.3),
+  severity beyond the price index 13.9 percent (5.6 to 23.0), large claims -0.3 percent. Frequency and severity are
+  changes in the cost of the same people and are level-change candidates if they persist. Mix and large claims are not.
+- **A/E on 2023.** Technical model 1.167 with no trend, 1.155 with the external median, 1.139 with the trend the data imply
+  (diagnostic only). The tariff gives the same figures. The choice of forecast moves A/E by about one point.
+- **Large-claim load.** The 2023 cost over the cap is 6.2 percent of capped cost against the provisional 6.5 percent, so no part
+  of the gap is consistent with the load. Nothing is tuned for it.
+Recommendation: the external median of 1.9 percent as the central forecast, with 0.8 and 3.1 percent as the range. None (0
+percent) gives the same conclusion within one point of A/E.
