@@ -374,3 +374,32 @@ procedure flag is the only direct indicator. A plain inpatient versus visit spli
 outpatient.
 Alternatives: inpatient stays only versus all visits (rejected by the user in favour of the procedure flag), and
 treating office-based procedures as outpatient (a possible sensitivity, since they are 5% of office events).
+
+## 2026-11-02 Rating-factor level grouping (decision gate 6, issue #26)
+Decision: the user approved the grouping for the 18 rating-factor candidates, with two additions. The map is
+saved as `outputs/m3_draft/level_grouping.csv` (one row per factor and level, with a flag for the reference group)
+and is built by `levels.decided_grouping`. Evidence is in `notebooks/03_glm.ipynb`, using the 2022 train split.
+- **Age.** Five-year bands: 0 to 4, 5 to 14, 15 to 17, 18 to 24, then five-year bands to 75 to 79, and 80 and over
+  (16 bands, age capped at 85). The fewest claimants in any band is 108. The technical reference is 5 to 14, the
+  band with the most exposure. For presentation only, age relativities are rebased to the adult band with the most
+  exposure, which is 65 to 69 (1,300 exposure years). The rebasing does not change the fitted model.
+- **`not_applicable` and null answers.** Merge into the reference level. No factor has more than 165 null
+  person-years.
+- **`unknown`.** Kept as a level in the fit only, and priced at the reference, where merging it into the reference
+  would move the reference cost per exposure year by more than 2 percent. Merging changes the reference cost by
+  +5.8 percent for `OFTSMK53` and +12.2 percent for `PHYEXE53`, so those two keep it. For the other 11 variables
+  the change is under 1 percent (HIBPDX -0.8, CHOLDX -0.8, ARTHDX -0.7, the rest -0.6 or less, ASTHDX and DIABDX_M18
+  about 0), so `unknown` merges into the reference. `levels.unknown_rule_table` shows the figures and a test checks
+  that the kept levels are exactly those above 2 percent.
+- **Thin levels.** Any other level with fewer than 30 train claimants merges into the reference. No real answer level
+  is thin today, so this changes nothing now.
+- **Reference level.** The real answer with the most exposure, never a placeholder.
+- **Raised for gate 7.** `inscov` is kept at three levels for now. Its two options are in the notebook and are decided at
+  gate 7: restrict the modelling population to privately insured persons, or keep everyone with `inscov` as a control
+  priced at the private level.
+Why: levels with few claimants give unstable relativities, and the `unknown` level is a leaver marker for the two
+lifestyle questions, so merging it would distort every relativity for that factor. The 2 percent test makes the
+treatment of `unknown` a measured rule and not a judgement for each variable.
+Alternatives: ten-year age bands (same minimum claimant count, but they hide slope inside a band, for example 49 to
+56 percent claimant rate across ages 55 to 64), and merging `unknown` for the lifestyle questions (rejected because
+of the distortion above).

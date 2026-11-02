@@ -2,15 +2,18 @@
 
 The evidence tables describe each level on the 2022 train split. `build_grouping` turns a set of
 rules into a map from every value in the data to one group, and `apply_grouping` recodes the
-train and test frames with it. The rules are proposals until the user decides at the gate.
+train and test frames with it. The user approved the rules at decision gate 6 on 2026-11-02 and
+`decided_grouping` applies them.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
+from health_pricing.models import leakage
 from health_pricing.models.frame import FACTORS, Frames, _as_text, _level_key
 
 THIN_CLAIMANTS = 30
@@ -19,8 +22,15 @@ CHILD_LEVEL = "not_applicable"
 UNKNOWN_LEVEL = "unknown"
 PLACEHOLDERS = (CHILD_LEVEL, UNKNOWN_LEVEL, MISSING)
 # The leakage check (issue #25) found `unknown` is a leaver marker for these two questions. The
-# level stays in the fit as a control and is priced at the reference. Elsewhere it merges.
+# level stays in the fit as a control and is priced at the reference. Elsewhere it merges. Gate 6
+# set the test: keep it where merging would move the reference cost by more than 2%. Only these
+# two do, and `unknown_rule_table` shows the figure for every variable.
 KEEP_UNKNOWN = ("OFTSMK53", "PHYEXE53")
+UNKNOWN_CONTROL_LIMIT = 0.02
+AGE_OPTION = "five_year"  # approved at gate 6
+LEVEL_GROUPING_PATH = (
+    Path(__file__).resolve().parents[3] / "outputs" / "m3_draft" / "level_grouping.csv"
+)
 
 TOP_AGE = 85  # AHRQ caps age at 85, so the last band is open ended
 
@@ -97,9 +107,14 @@ class Grouping:
     reference: dict[str, str]  # factor -> reference group
 
     def table(self) -> pd.DataFrame:
-        """The map as a table with one row per factor and level."""
+        """The map as a table with one row per factor and level, flagging the reference group."""
         rows = [
-            {"factor": f, "level": level, "group": group}
+            {
+                "factor": f,
+                "level": level,
+                "group": group,
+                "reference": group == self.reference[f],
+            }
             for f, levels in self.mapping.items()
             for level, group in levels.items()
         ]
@@ -203,3 +218,63 @@ def grouping_summary(frames: Frames, grouping: Grouping) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def decided_grouping(frames: Frames) -> Grouping:
+    """The grouping approved at gate 6: five-year age bands and the rules in `build_grouping`."""
+    return build_grouping(frames, AGE_BANDS[AGE_OPTION])
+
+
+def save_grouping(grouping: Grouping, path: Path = LEVEL_GROUPING_PATH) -> Path:
+    """Write the level map (no person-level data, one row per factor and level) as a csv."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    grouping.table().to_csv(path, index=False)
+    return path
+
+
+def presentation_age_reference(frames: Frames, grouping: Grouping) -> str:
+    """The adult age band with the most train exposure, for showing age relativities.
+
+    The technical reference (`grouping.reference["age"]`) stays the band with the most exposure
+    overall. Rebasing changes only how relativities are shown, not the fitted model.
+    """
+    ages = frames.train["age"].astype(int)
+    adult = ages >= leakage.ADULT_AGE
+    bands = ages[adult].astype(str).map(grouping.mapping["age"])
+    exposure = frames.train.loc[adult, "exposure"].groupby(bands).sum()
+    return sorted(exposure.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+
+def unknown_rule_table(
+    frame: pd.DataFrame | None = None, variables: list[str] = leakage.UNKNOWN_VARIABLES
+) -> pd.DataFrame:
+    """For each variable with an `unknown` level, the reference cost change if it were merged.
+
+    `frame` is the adult train frame from `leakage.load_leakage_frame`. `exceeds_limit` is the
+    gate 6 test and `kept_as_control` is the rule in force, so the two should agree.
+    """
+    frame = leakage.load_leakage_frame() if frame is None else frame
+    table = leakage.merge_effect_table(frame, variables)
+    table["exceeds_limit"] = table["change_after_merge"].abs() > UNKNOWN_CONTROL_LIMIT
+    table["kept_as_control"] = table["variable"].isin(KEEP_UNKNOWN)
+    return table
+
+
+def inscov_table(frame: pd.DataFrame) -> pd.DataFrame:
+    """Each `inscov` level: size, claimant rate, cost, age mix, and share of the frame's totals."""
+    age = frame["age"].astype(int)
+    work = frame.assign(over_65=age >= 65, under_18=age < 18, age_years=age)
+    table = work.groupby(level_series(work, "inscov")).agg(
+        person_years=("exposure", "size"),
+        exposure=("exposure", "sum"),
+        claimants=("claimant", "sum"),
+        cost=("cost", "sum"),
+        mean_age=("age_years", "mean"),
+        share_over_65=("over_65", "mean"),
+        share_under_18=("under_18", "mean"),
+    )
+    table["claimant_rate"] = table["claimants"] / table["person_years"]
+    table["cost_per_exposure_year"] = table["cost"] / table["exposure"]
+    for column in ("person_years", "exposure", "claimants", "cost"):
+        table[f"{column}_share"] = table[column] / table[column].sum()
+    return table.drop(columns="cost").reset_index(names="level")
