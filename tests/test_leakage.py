@@ -90,11 +90,35 @@ def test_the_loader_takes_only_2022_train_adults():
     columns = ", ".join(f"'x' AS {v}" for v in leakage.UNKNOWN_VARIABLES)
     con.execute(
         "CREATE TABLE mart_person_year AS "
-        f"SELECT * FROM (VALUES (2022, 'train', 30), (2022, 'train', 17), (2022, 'test', 40), "
+        f"SELECT * FROM (VALUES (2022, 'train', 30), (2022, 'train', 17), (2022, 'train', 18), (2022, 'test', 40), "
         f"(2023, 'out_of_time', 40)) AS t(year, split, age), "
         f"(SELECT {columns}, true AS left_survey_early, 1.0 AS exposure, 1 AS claim_count, "
         f"5.0 AS claim_cost_2023_prices)"
     )
     frame = leakage.load_leakage_frame(con)
-    assert frame["age"].tolist() == [30]
+    assert sorted(frame["age"]) == [18, 30]  # 18 is an adult, 17 is not
     assert {"left_survey_early", "exposure", "claim_count", "cost"} <= set(frame.columns)
+
+
+def test_not_applicable_is_never_an_answer_and_never_unknown():
+    frame = pd.DataFrame(
+        {
+            "age": [40, 50], "left_survey_early": [False, False], "exposure": [1.0, 1.0],
+            "claim_count": [0, 0], "cost": [0.0, 0.0], "OFTSMK53": ["3", "not_applicable"],
+        }
+    )  # fmt: skip
+    table = leakage.unknown_level_table(frame, ["OFTSMK53"]).set_index("group")
+    assert table.loc["answered", "person_years"] == 1
+    assert table.loc["unknown", "person_years"] == 0
+
+
+def test_the_part_year_share_counts_exposure_below_one_not_at_one():
+    frame = pd.DataFrame(
+        {
+            "age": [40, 50, 60], "left_survey_early": [False, False, False],
+            "exposure": [1.0, 0.99, 0.5], "claim_count": [0, 0, 0], "cost": [0.0, 0.0, 0.0],
+            "OFTSMK53": ["3", "3", "3"],
+        }
+    )  # fmt: skip
+    table = leakage.unknown_level_table(frame, ["OFTSMK53"]).set_index("group")
+    assert table.loc["answered", "share_exposure_under_1"] == pytest.approx(2 / 3)
