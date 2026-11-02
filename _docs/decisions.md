@@ -573,12 +573,12 @@ the final structure" sections of `notebooks/03_glm.ipynb`, and in `outputs/m3_dr
   a heavy tail and the provisional load, and is not tuned away.
 - **A/E by level.** Rating factors have 7 of 38 levels outside 0.85 to 1.15 on train and 19 of 37 on test. On train the
   four age bands up to 24 are over-predicted by about 20 to 35 percent, which is consistent with self-rated health being
-  analysis-only and a single rebalancing factor. On test the pattern is noise and the condition flags show some
-  over-spreading.
+  analysis-only and a single rebalancing factor. On test the pattern is mostly noise. 18 of the 19 household bands contain 1, and the condition flags lean towards
+  over-spreading only weakly.
 - **Lift and over-spreading.** On test the all-factor model over-predicts the top group by 27.5 percent and the final
-  set does not (A/E 1.02), so the factor selection removed that over-fitting. The lowest group is over-predicted on
+  set does not (A/E 1.02), so the final set does not show it, although the household bands overlap and the difference is not established. The lowest group is over-predicted on
   train in both (0.49 final, 0.63 all factors), which points to the form of the model, and is too noisy to read on test.
-  Over-spreading is not present in the final set on this evidence, so no penalised GLM is proposed. It remains an option
+  Over-spreading is weak or mixed in the final set on this evidence, so no penalised GLM is proposed. It remains an option
   at a later gate if the user asks.
 - **Relativities.** Frequency and severity relativities are saved with 95 percent bounds, and the combined pure premium
   relativity is their product with bounds that treat the two as independent (approximate). Age is also shown against the
