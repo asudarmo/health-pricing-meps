@@ -461,3 +461,58 @@ models:
             None to the value. Persons with a weight of 0 are held out of the table as a definition
             of the modelling population.
           decision_ref: "2026-11-01 Modelling population and exclusions (issue #14, decision gate 3)"
+
+  - name: mart_person_year_benefit
+    description: >
+      One row per person-year per benefit type, for the stacked candidate model (issue #24). The benefit
+      types are inpatient_daycase and outpatient. Every person-year in mart_person_year has both rows,
+      with zeros where there are no in-scope events. Event counts and costs add up to the claim columns
+      of mart_person_year. The rating factors are carried through unchanged.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [DUPERSID, year, benefit_type]
+    columns:
+      - name: benefit_type
+        description: inpatient_daycase for inpatient stays and surgical visits, outpatient for all other visits.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['inpatient_daycase', 'outpatient']
+      - name: split
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['train', 'test', 'out_of_time']
+      - name: exposure
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "> 0"
+      - name: event_count
+        description: In-scope events of this benefit type in the person-year.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: claimant
+        description: 1 when event_count is at least 1, else 0.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: cost
+        description: Event payments in dollars of the survey year, 0 when there are no events.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: cost_2023_prices
+        description: cost in 2023 dollars. 2022 values are multiplied by the PCE-Health factor.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

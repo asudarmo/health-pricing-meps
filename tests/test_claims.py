@@ -24,7 +24,7 @@ MODELS = REPO / "dbt" / "models" / "intermediate"
 IP_COLUMNS = "DUPERSID VARCHAR, EVNTIDX VARCHAR, IPXP{yy}X DOUBLE, RSNINHOS BIGINT, EMERROOM BIGINT"
 VISIT_COLUMNS = (
     "DUPERSID VARCHAR, EVNTIDX VARCHAR, {prefix}{yy}X DOUBLE, DRSPLTY_M18 BIGINT, "
-    "MEDPTYPE_M18 BIGINT, VSTCTGRY BIGINT"
+    "MEDPTYPE_M18 BIGINT, VSTCTGRY BIGINT, SURGPROC BIGINT"
 )
 
 PEOPLE = [
@@ -42,18 +42,18 @@ EVENTS = {
         ("mixed", "i4", 300.0, 5, 1),  # baby stay that began in the ER, birth so in neither
     ],
     "outpatient_2022": [
-        ("mixed", "o1", 40.25, -1, 15, 2),  # technician, in
-        ("mixed", "o2", 60.0, -1, 8, 2),  # nurse, out
+        ("mixed", "o1", 40.25, -1, 15, 2, 2),  # technician, in
+        ("mixed", "o2", 60.0, -1, 8, 2, 2),  # nurse, out
     ],
     "office_based_2022": [
-        ("only_out", "b1", 80.0, 8, -1, 2),  # general practice, out
-        ("only_out", "b2", 90.0, 19, -1, 1),  # specialist but general checkup, out
-        ("mixed", "b3", 100.5, 19, -1, 2),  # specialist diagnosis, in
-        ("mixed", "b4", 20.0, 6, -1, 2),  # family practice, out
+        ("only_out", "b1", 80.0, 8, -1, 2, 2),  # general practice, out
+        ("only_out", "b2", 90.0, 19, -1, 1, 2),  # specialist but general checkup, out
+        ("mixed", "b3", 100.5, 19, -1, 2, 2),  # specialist diagnosis, in
+        ("mixed", "b4", 20.0, 6, -1, 2, 2),  # family practice, out
     ],
     "inpatient_2023": [("mixed", "i5", 2000.0, 2, 2)],
     "outpatient_2023": [],
-    "office_based_2023": [("mixed", "b5", 10.0, 3, -1, 5)],
+    "office_based_2023": [("mixed", "b5", 10.0, 3, -1, 5, 2)],
 }
 
 
@@ -97,7 +97,7 @@ def claims(tmp_path_factory):
         else:
             prefix = "OPXP" if kind == "outpatient" else "OBXP"
             ddl = VISIT_COLUMNS.format(prefix=prefix, yy=yy)
-            marks = "?, ?, ?, ?, ?, ?"
+            marks = "?, ?, ?, ?, ?, ?, ?"
         con.execute(f"CREATE TABLE main.fx_{table} ({ddl})")
         if rows:
             con.executemany(f"INSERT INTO main.fx_{table} VALUES ({marks})", rows)

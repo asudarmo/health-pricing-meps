@@ -2,6 +2,9 @@
 -- PMI-scope flags from the approved definition (issue #15). Read through the staging models.
 -- er_originated_stay marks inpatient stays that began in the emergency room. They are out of the
 -- base definition and kept as their own columns so the M5 sensitivity needs no rebuild.
+-- benefit_type (issue #24) splits claims for the stacked M3 candidate. Inpatient stays and any
+-- outpatient or office-based visit where a surgical procedure was performed (SURGPROC = 1) are
+-- inpatient_daycase, all other visits are outpatient.
 with inpatient as (
     select 2022 as year, DUPERSID, EVNTIDX, 'inpatient' as event_type, IPXP22X as cost,
            {{ pmi_stay_not_birth() }} as not_birth, EMERROOM = 1 as er_originated
@@ -14,27 +17,32 @@ with inpatient as (
 
 visits as (
     select 2022 as year, DUPERSID, EVNTIDX, 'outpatient' as event_type, OPXP22X as cost,
-           {{ pmi_visit_in_scope() }} as in_scope
+           {{ pmi_visit_in_scope() }} as in_scope, coalesce(SURGPROC = 1, false) as surgical
     from {{ ref('stg_outpatient_2022') }}
     union all
-    select 2023, DUPERSID, EVNTIDX, 'outpatient', OPXP23X, {{ pmi_visit_in_scope() }}
+    select 2023, DUPERSID, EVNTIDX, 'outpatient', OPXP23X, {{ pmi_visit_in_scope() }},
+           coalesce(SURGPROC = 1, false)
     from {{ ref('stg_outpatient_2023') }}
     union all
-    select 2022, DUPERSID, EVNTIDX, 'office_based', OBXP22X, {{ pmi_visit_in_scope() }}
+    select 2022, DUPERSID, EVNTIDX, 'office_based', OBXP22X, {{ pmi_visit_in_scope() }},
+           coalesce(SURGPROC = 1, false)
     from {{ ref('stg_office_based_2022') }}
     union all
-    select 2023, DUPERSID, EVNTIDX, 'office_based', OBXP23X, {{ pmi_visit_in_scope() }}
+    select 2023, DUPERSID, EVNTIDX, 'office_based', OBXP23X, {{ pmi_visit_in_scope() }},
+           coalesce(SURGPROC = 1, false)
     from {{ ref('stg_office_based_2023') }}
 )
 
 select
     year, DUPERSID, EVNTIDX, event_type, cost,
     not_birth and not er_originated as in_scope,
-    not_birth and er_originated as er_stay
+    not_birth and er_originated as er_stay,
+    'inpatient_daycase' as benefit_type
 from inpatient
 union all
 select
     year, DUPERSID, EVNTIDX, event_type, cost,
     coalesce(in_scope, false) as in_scope,
-    false as er_stay
+    false as er_stay,
+    case when surgical then 'inpatient_daycase' else 'outpatient' end as benefit_type
 from visits

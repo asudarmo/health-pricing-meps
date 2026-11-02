@@ -343,3 +343,32 @@ structure predicts best. Separating the two keeps the choice honest and the appr
 Alternatives: assuming a frequency x severity model on event counts (rejected as a starting point, because claim
 count is unknown at quote time), and requiring an exactly multiplicative risk model (rejected, it would limit
 the candidates).
+
+## 2026-11-02 Benefit types for the stacked candidate (issue #24)
+Decision: `mart_person_year_benefit` has one row per person-year per benefit type, with both rows present for
+every person-year in `mart_person_year` (zeros where there are no in-scope events). The benefit types are
+`inpatient_daycase` and `outpatient`. `mart_person_year` is unchanged.
+- **Inpatient and day-case** holds every in-scope inpatient stay, and every in-scope outpatient or office-based
+  visit where `SURGPROC` (a surgical procedure was performed on the visit) is 1. **Outpatient** holds all other
+  in-scope visits. `SURGPROC` exists in all four visit files and is passed through the staging views. The user
+  approved using it on 2026-11-02. The classification is the `benefit_type` column of `int_events_pmi`.
+- `SURGPROC` values -8 (don't know) and -7 (refused) are treated as no procedure, so those visits are
+  `outpatient`. They are 0.5% to 0.9% of visits. A rule for the five allowed values is in the staging
+  `schema.yml`.
+- Event counts and costs summed over the two benefit types equal `claim_count`, `claim_cost` and
+  `claim_cost_2023_prices` in the mart. A dbt test checks this for every person-year.
+- **What moves.** Of all in-scope events in the event files, `SURGPROC` moves 4,198 of 66,406 (6.3%) in 2022 and
+  3,847 of 61,792 (6.2%) in 2023, which is 19.8% and 18.0% of their cost. By file in 2022, 5.1% of office-based
+  events (14.4% of cost) and 11.5% of outpatient events (44.8% of cost). In 2023, 4.8% (12.4%) and 12.8% (48.7%).
+  These figures cover every person in the event files, including zero-weight people. In the modelling table,
+  `inpatient_daycase` has 7.4% of events and 47.5% (2022) and 53.8% (2023) of cost at 2023 prices.
+Known limitations:
+- `SURGPROC` is a yes or no for the whole visit. A minor procedure in a doctor's office, such as a skin biopsy,
+  counts as day-case, which UK private medical insurance would usually treat as outpatient.
+- Hospital outpatient visits with a procedure are close to UK day surgery, but there is no length-of-stay
+  or admission flag to confirm it.
+Why: the stacked candidate needs a benefit split that matches how a UK policy prices cover, and the survey's
+procedure flag is the only direct indicator. A plain inpatient versus visit split would put day surgery in
+outpatient.
+Alternatives: inpatient stays only versus all visits (rejected by the user in favour of the procedure flag), and
+treating office-based procedures as outpatient (a possible sensitivity, since they are 5% of office events).
