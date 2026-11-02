@@ -1,0 +1,7 @@
+part,role,comparisons,beyond_noise,expected_by_chance,p_value_that_many_by_chance,beyond_noise_after_bonferroni,mean_z_squared
+combined,analysis_only,13,0,0.65,1.0,0,0.8968622595658188
+combined,rating,13,1,0.65,0.48665791672049497,0,0.7031247392988067
+frequency,analysis_only,13,0,0.65,1.0,0,1.0534950811900696
+frequency,rating,13,0,0.65,1.0,0,0.7753486966869618
+severity,analysis_only,13,1,0.65,0.48665791672049497,0,1.0169521457289554
+severity,rating,13,2,0.65,0.13542385973978077,0,1.2702759570886504
