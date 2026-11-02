@@ -34,7 +34,12 @@ OPTIONS = {
 # gives p < 0.05 and AIC improves. Applied to option 1 it drops these four, leaving 10 factors.
 SELECTION_P_VALUE = 0.05
 DROPPED_BY_RULE = ["ANGIDX", "MIDX", "STRKDX", "DIABDX_M18"]
-FINAL_RATING = [f for f in OPTIONS["option_1"] if f not in DROPPED_BY_RULE]
+RATING_AFTER_RULE = [f for f in OPTIONS["option_1"] if f not in DROPPED_BY_RULE]
+# Smoking passes the rule, but the user decided at the smoking gate that it is analysis-only. It
+# is fitted as a control and priced at the non-smoker level, so the tariff has no smoker discount.
+SMOKING = "OFTSMK53"
+FINAL_RATING = [f for f in RATING_AFTER_RULE if f != SMOKING]
+OPTIONS["rule_selected"] = RATING_AFTER_RULE
 OPTIONS["final"] = FINAL_RATING
 OUTPUT_DIR = glm.SCORES_DIR
 
@@ -42,10 +47,13 @@ OUTPUT_DIR = glm.SCORES_DIR
 def controls_for(option: str) -> list[str]:
     """The analysis-only factors of an option, in the order of the factor list.
 
-    A factor dropped by the selection rule is left out of the fit and is not a control.
+    A factor dropped by the selection rule is left out of the fit and is not a control. The
+    final structure also holds smoking as a control.
     """
-    if option == "final":
+    if option == "rule_selected":
         return [f for f in FACTORS if f in ANALYSIS_ONLY]
+    if option == "final":
+        return [f for f in FACTORS if f in ANALYSIS_ONLY or f == SMOKING]
     return [f for f in FACTORS if f not in OPTIONS[option]]
 
 

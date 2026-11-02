@@ -42,7 +42,10 @@ def test_options_split_the_factors_as_agreed():
     assert factors.controls_for("all_factors") == []
     for name, rating in factors.OPTIONS.items():
         covered = set(rating) | set(factors.controls_for(name))
-        if name == "final":  # the factors dropped by the rule are in neither list
+        if name in (
+            "final",
+            "rule_selected",
+        ):  # the factors dropped by the rule are in neither list
             assert covered == set(mf.FACTORS) - set(factors.DROPPED_BY_RULE)
         else:
             assert covered == set(mf.FACTORS)
@@ -151,7 +154,9 @@ def test_real_all_factor_option_matches_candidate_a_and_controls_are_not_priced(
             prepared.train, factors.OPTIONS["option_1"], factors.controls_for("option_1")
         )
     )
-    assert selected == factors.FINAL_RATING  # the rule gives the approved ten factors
+    # the rule gives the ten factors, and smoking is then made analysis-only by decision
+    assert selected == factors.RATING_AFTER_RULE
+    assert [f for f in selected if f != "OFTSMK53"] == factors.FINAL_RATING
     # an option-2 prediction ignores a control, so rows that differ only in a flag agree
     controls = factors.controls_for("option_2")
     model_2 = factors.fit_option(prepared.train, factors.OPTIONS["option_2"], controls)
@@ -192,14 +197,15 @@ def test_select_by_aic_keeps_only_supported_factors():
     assert factors.select_by_aic(tests) == ["a", "c"]
 
 
-def test_the_final_set_is_option_1_without_the_four_dropped_factors():
+def test_the_final_set_is_the_rule_set_with_smoking_made_analysis_only():
     assert set(factors.DROPPED_BY_RULE) == {"ANGIDX", "MIDX", "STRKDX", "DIABDX_M18"}
-    assert len(factors.FINAL_RATING) == 10
+    assert len(factors.RATING_AFTER_RULE) == 10 and len(factors.FINAL_RATING) == 9
     assert set(factors.FINAL_RATING) == {
-        "age", "region", "OFTSMK53", "HIBPDX", "CHDDX", "OHRTDX", "CHOLDX", "CANCERDX",
-        "ARTHDX", "ASTHDX",
+        "age", "region", "HIBPDX", "CHDDX", "OHRTDX", "CHOLDX", "CANCERDX", "ARTHDX", "ASTHDX",
     }  # fmt: skip
-    assert set(factors.controls_for("final")) == set(factors.ANALYSIS_ONLY)
+    assert "OFTSMK53" in factors.RATING_AFTER_RULE and "OFTSMK53" not in factors.FINAL_RATING
+    assert set(factors.controls_for("final")) == set(factors.ANALYSIS_ONLY) | {"OFTSMK53"}
+    assert set(factors.controls_for("rule_selected")) == set(factors.ANALYSIS_ONLY)
 
 
 def test_the_selection_rule_needs_both_the_p_value_and_aic():
@@ -232,10 +238,10 @@ def test_real_final_model_excludes_the_dropped_factors_and_prices_the_four_contr
     for dropped in factors.DROPPED_BY_RULE:
         assert dropped not in model.factors
         assert not any(term.startswith(f"{dropped}=") for term in model.frequency.params.index)
-    assert set(model.factors) == set(factors.FINAL_RATING) | set(factors.ANALYSIS_ONLY)
+    assert set(model.factors) == set(factors.FINAL_RATING) | set(factors.controls_for("final"))
     sample = prepared.test.iloc[::37].copy()
     base = factors.predict_option(model, sample, controls)
-    for control in factors.ANALYSIS_ONLY:
+    for control in controls:
         changed = sample.copy()
         categories = list(changed[control].cat.categories)
         changed[control] = pd.Categorical([categories[-1]] * len(changed), categories=categories)

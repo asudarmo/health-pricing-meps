@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 
 from health_pricing.models import agecurve as ac
+from health_pricing.models import factors, glm, levels
 from health_pricing.models import frame as mf
-from health_pricing.models import glm, levels
 from health_pricing.models import relativities as rel
 
 KNOTS = np.array([21.0, 38.0, 53.0, 66.0, 81.0])
@@ -213,3 +213,19 @@ def test_real_age_comparison_has_three_models_and_valid_tests():
     tariff, train_prediction = ac.smooth_tariff(prepared, models["spline"], frames["spline"])
     assert train_prediction.sum() == pytest.approx(prepared.train["cost"].sum())
     assert tariff.predict(prepared.train).sum() == pytest.approx(train_prediction.sum(), rel=1e-6)
+
+
+@pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
+def test_the_final_tariff_is_balanced_on_train_multiplicative_and_smooth():
+    raw = mf.load_frames()
+    prepared = glm.prepare_frames(raw)
+    final = ac.final_tariff(prepared, raw)
+    train = prepared.train
+    assert final.candidate.train.sum() == pytest.approx(train["cost"].sum(), rel=1e-6)
+    assert final.tariff.parameters == len(final.tariff.result.params)
+    unit = final.candidate.train_unit
+    matrix = glm.design_matrix(train, final.tariff.factors, rating=True)
+    # exactly multiplicative: the log of the full-year prediction is linear in the dummies
+    coefficients, *_ = np.linalg.lstsq(matrix.to_numpy(), np.log(unit), rcond=None)
+    assert np.abs(matrix.to_numpy() @ coefficients - np.log(unit)).max() < 1e-8
+    assert set(final.tariff.factors) == set(factors.FINAL_RATING)

@@ -613,3 +613,31 @@ check" and "Age curve" sections of `notebooks/03_glm.ipynb` and in `outputs/m3_d
   intervals were on the technical base is replaced by this.
 - **Code.** `design_matrix` and `fit_two_part` accept numeric columns, which carry the spline terms.
 Alternatives: floor smoking at 1.00 instead of analysis-only, and keep the five-year bands as fitted.
+
+## 2026-11-02 Smoking and age decisions (issues #40 and #41)
+Decision: the user decided the smoking and age questions raised in the findings entry above, after QA passed both
+checks. The final structure is candidate (a) with 9 rating factors. Evidence is in the "Smoking check" and "Age curve"
+sections of `notebooks/03_glm.ipynb`.
+- **Smoking is analysis-only.** It passes the factor rule but is made analysis-only, which leaves 9 rating factors (age,
+  region and the flags for high blood pressure, coronary heart disease, other heart disease, cholesterol, cancer, arthritis
+  and asthma). It is still fitted as a control, so it adjusts the other relativities, and it is priced at the non-smoker
+  level. There is no smoker discount in the tariff.
+- **Evidence for smoking.** Removing the condition flags leaves the smoker relativity unchanged (daily 0.600 with and 0.596
+  without). Dropping self-rated health as well raises it to 0.736 (0.57 to 0.95), so health explains part of it. The rest is
+  mainly in frequency and is already present in the crude data (crude cost for all smokers 0.86, 0.71 and 0.82 at ages 18 to
+  39, 40 to 64 and 65 and over). It is consistent with US access to care, and the data cannot separate lower need from lower
+  use.
+- **Smoker loading.** If a smoker loading is wanted in a later product layer, it must be an explicit judgement loading from an
+  external source, labelled as not derived from this data. It is not built.
+- **Age.** The tariff's band relativities are read off the adult natural spline with 4 degrees of freedom, and the five-year
+  bands stay as the format of the rating table. After smoothing, the base rate is rebalanced on train so that train predicted
+  cost equals train actual cost. The intervals for age against the 65 to 69 band come from the covariance matrix
+  (`presentation_lower_95` and `presentation_upper_95`).
+- **Numbers.** The final structure scores a test deviance of 830,232 (Gini 0.393, 80 parameters, rebalancing factor 1.116). The
+  final tariff scores 838,173 (Gini 0.378, 26 parameters), departs from the banded structure by a median of 5.5 percent, and has
+  a test A/E of 1.081 (band 0.90 to 1.28).
+- **Tables.** `relativities_tariff.csv` is the final tariff. `relativities_tariff_banded.csv` is the banded tariff for
+  comparison, and the frequency, severity and combined tables hold the component relativities with their intervals.
+Why: a smoker discount has no support as a risk effect and would carry a factor with no effect if floored, and the smooth
+curve removes irregularities between bands that look like noise while keeping the table format.
+Alternatives: floor the smoker relativity at 1.00, and keep the age relativities as fitted by band.

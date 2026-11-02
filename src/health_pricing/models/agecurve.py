@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from health_pricing.models import factors, glm, surrogate
+from health_pricing.models import comparison, factors, glm, surrogate
 from health_pricing.models.frame import Frames
 
 CHILD_BANDS = ["05-14", "00-04", "15-17"]  # the first is the reference
@@ -229,3 +229,37 @@ def smooth_tariff(
         prepared.train, train_prediction * balance, factors.FINAL_RATING
     )
     return tariff, train_prediction * balance
+
+
+@dataclass
+class FinalTariff:
+    """The final tariff: five-year bands whose relativities are read off the smooth age curve."""
+
+    tariff: surrogate.SurrogateTariff
+    candidate: comparison.Candidate
+    models: dict[str, AgeModel]
+    frames: dict[str, Frames]
+
+
+def final_tariff(prepared: Frames, raw: Frames, df: int = 4) -> FinalTariff:
+    """The surrogate model (tariff) of the final structure with a smooth adult age curve.
+
+    The final structure is fitted with adult age as a natural spline with `df` degrees of freedom.
+    Its predictions are rebalanced on train, so that predicted cost on train equals actual cost on
+    train, and the surrogate model (tariff) with five-year age bands is fitted to them. The band
+    relativities therefore follow the smooth curve. Returns the tariff and a candidate that can be
+    scored like any other.
+    """
+    models = fit_age_models(prepared, raw, df)
+    frames = model_frames(prepared, raw, models)
+    tariff, _ = smooth_tariff(prepared, models["spline"], frames["spline"])
+    unit = {s: getattr(prepared, s).assign(exposure=1.0) for s in ("train", "test")}
+    candidate = comparison.Candidate(
+        "final_tariff",
+        tariff.parameters,
+        tariff.predict(prepared.train),
+        tariff.predict(prepared.test),
+        tariff.predict(unit["train"]),
+        tariff.predict(unit["test"]),
+    )
+    return FinalTariff(tariff, candidate, models, frames)

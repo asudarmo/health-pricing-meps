@@ -93,7 +93,9 @@ def test_real_refit_without_flags_has_the_same_smokers_and_the_age_groups_are_fi
     }
     assert set(table["smoking"]) == {"every day", "some days"}
     with_flags = table[table["model"] == "with condition flags"].set_index("smoking")
-    final = factors.fit_option(prepared.train, factors.FINAL_RATING, factors.controls_for("final"))
+    final = factors.fit_option(
+        prepared.train, factors.RATING_AFTER_RULE, factors.controls_for("rule_selected")
+    )
     assert with_flags.loc["every day", "frequency_relativity"] == pytest.approx(
         float(np.exp(final.frequency.params["OFTSMK53=1"]))
     )

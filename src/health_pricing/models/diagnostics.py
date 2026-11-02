@@ -34,7 +34,7 @@ def factor_role(factor: str) -> str:
     """Whether a factor is a rating factor, analysis-only, or dropped by the selection rule."""
     if factor in factors.FINAL_RATING:
         return "rating"
-    if factor in factors.ANALYSIS_ONLY:
+    if factor in factors.controls_for("final"):
         return "analysis_only"
     return "dropped"
 

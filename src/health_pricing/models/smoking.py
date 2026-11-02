@@ -18,8 +18,10 @@ SMOKING = "OFTSMK53"
 NON_SMOKER = "3"
 SMOKER_LEVELS = ("1", "2")
 LEVEL_NAMES = {"1": "every day", "2": "some days", "any": "any smoker"}
-RATING_WITH_FLAGS = factors.FINAL_RATING
-RATING_WITHOUT_FLAGS = [f for f in factors.FINAL_RATING if f not in factors.CONDITION_FLAGS]
+# The check was run on the ten factors that passed the selection rule, with smoking a rating factor.
+RATING_WITH_FLAGS = factors.RATING_AFTER_RULE
+RATING_WITHOUT_FLAGS = [f for f in RATING_WITH_FLAGS if f not in factors.CONDITION_FLAGS]
+CONTROLS = factors.controls_for("rule_selected")
 # Broad groups of adults, as the lower and upper age of the five-year bands they hold.
 BROAD_GROUPS = (("18-39", 18, 39), ("40-64", 40, 64), ("65+", 65, 200))
 
@@ -44,7 +46,7 @@ HEALTH_CONTROLS = ["rthlth", "mnhlth"]
 def _fit(
     frame: pd.DataFrame, rating: list[str], controls: list[str] | None = None
 ) -> glm.TwoPartModel:
-    controls = factors.controls_for("final") if controls is None else controls
+    controls = CONTROLS if controls is None else controls
     return factors.fit_option(frame, rating, controls)
 
 
@@ -91,7 +93,7 @@ def with_and_without_flags(prepared: Frames) -> pd.DataFrame:
     """
     with_flags = _fit(prepared.train, RATING_WITH_FLAGS)
     without = _fit(prepared.train, RATING_WITHOUT_FLAGS)
-    no_health_controls = [c for c in factors.controls_for("final") if c not in HEALTH_CONTROLS]
+    no_health_controls = [c for c in CONTROLS if c not in HEALTH_CONTROLS]
     without_health = _fit(prepared.train, RATING_WITHOUT_FLAGS, no_health_controls)
     return pd.concat(
         [
@@ -180,9 +182,7 @@ def adjusted_by_group(prepared: Frames) -> pd.DataFrame:
     train = adults(prepared.train)
     rows = []
     for group, part in train.groupby("broad_group"):
-        part = rebase(
-            part.drop(columns="broad_group"), [*RATING_WITH_FLAGS, *factors.controls_for("final")]
-        )
+        part = rebase(part.drop(columns="broad_group"), [*RATING_WITH_FLAGS, *CONTROLS])
         for label, rating in (
             ("with condition flags", RATING_WITH_FLAGS),
             ("without condition flags", RATING_WITHOUT_FLAGS),

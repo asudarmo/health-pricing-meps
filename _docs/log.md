@@ -187,3 +187,25 @@ Open questions: (1) `dbt docs generate` was run against a copy of the database b
 `data/interim/meps.duckdb`. Rerun it on the real file once the lock is released. (2) The user's uncommitted
 edit to `notebooks/02_eda.ipynb` adds a cell that prints `DUPERSID`, so `tests/test_notebooks.py` fails until
 that cell is removed or its output cleared.
+
+## 2026-11-02 M3 GLM models (#23 to #41)
+
+Done: the shared frame and metrics, benefit types, the leakage check, level grouping (gate 6), the large-claim cap
+and provisional load (gate 5), candidates (a), (b) and (c), the model comparison with the surrogate model (tariff)
+check, permitted factors and the factor rule (gate 7), diagnostics, relativity tables, the smoking check and the
+age curve. Each task passed QA in a fresh subagent. The final structure is candidate (a) with 9 rating factors (age,
+region and seven condition flags), with self-rated health, exercise, `inscov` and smoking analysis-only and priced at
+their reference level, rebalanced on train. The final tariff has five-year age bands read off a smooth age curve, and
+is saved in `outputs/m3_draft/` with the component relativity tables, the scores, the key charts under `figures/`
+and the other tables. `notebooks/03_glm.ipynb` has an overview, a key decisions table and a limitations section, and
+`notebooks/03_glm_summary.ipynb` shows the saved tables and charts in seconds without refitting. `statsmodels` was
+added as approved.
+
+Next: the user reviews M3. Optional #36 (sex sensitivity) and #37 (the multiplicative rating structure) and #38
+(re-estimate the large-claim load on pooled 2022 and 2023 rows) are for M6. M4 is the gradient-boosting challenger
+with its own surrogate model (tariff), as the plan now says.
+
+Open questions: (1) the test A/E of about 1.08 and the level-by-level A/E flags on the small test split are noted and
+not tuned. (2) The smoking relativity is below 1 in the fitted structure. It is analysis-only, and any smoker loading
+would be an external judgement loading. (3) The combined relativity bounds are approximate (frequency and severity
+treated as independent), and the final tariff has point values only.

@@ -127,6 +127,7 @@ def test_overall_check_applies_the_tolerances_and_the_matched_load():
 def test_roles_and_flags_follow_the_final_structure():
     assert dg.factor_role("age") == "rating"
     assert dg.factor_role("rthlth") == "analysis_only"
+    assert dg.factor_role("OFTSMK53") == "analysis_only"
     assert dg.factor_role("MIDX") == "dropped"
     table = pd.DataFrame(
         {
@@ -169,7 +170,7 @@ def _built() -> bool:
 def test_real_final_structure_is_balanced_on_train_and_tables_have_every_factor():
     prepared = glm.prepare_frames(mf.load_frames())
     final = dg.final_result(prepared)
-    assert final.rating_factors == 10
+    assert final.rating_factors == 9
     check = dg.overall_check(prepared, final, n_boot=200).set_index("split")
     assert check.loc["train", "a_e"] == pytest.approx(1.0)
     assert check.loc["train", "within_tolerance"]
