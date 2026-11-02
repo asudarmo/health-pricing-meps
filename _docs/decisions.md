@@ -352,9 +352,11 @@ every person-year in `mart_person_year` (zeros where there are no in-scope event
   visit where `SURGPROC` (a surgical procedure was performed on the visit) is 1. **Outpatient** holds all other
   in-scope visits. `SURGPROC` exists in all four visit files and is passed through the staging views. The user
   approved using it on 2026-11-02. The classification is the `benefit_type` column of `int_events_pmi`.
-- `SURGPROC` values -8 (don't know) and -7 (refused) are treated as no procedure, so those visits are
-  `outpatient`. They are 0.5% to 0.9% of visits. A rule for the five allowed values is in the staging
-  `schema.yml`.
+- `SURGPROC` values -1 (inapplicable), -7 (refused) and -8 (don't know) are treated as no procedure, so those
+  visits are `outpatient`. Of all visits in the files, -1 is 12.6% (2022) and 12.4% (2023) of hospital
+  outpatient visits and 8.3% and 8.0% of office-based visits, and -7 or -8 is 0.4% to 0.7%. If a procedure
+  was recorded as inapplicable, those visits are missed from `inpatient_daycase`. A rule for the five
+  allowed values is in the staging `schema.yml`.
 - Event counts and costs summed over the two benefit types equal `claim_count`, `claim_cost` and
   `claim_cost_2023_prices` in the mart. A dbt test checks this for every person-year.
 - **What moves.** Of all in-scope events in the event files, `SURGPROC` moves 4,198 of 66,406 (6.3%) in 2022 and
