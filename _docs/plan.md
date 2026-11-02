@@ -224,6 +224,24 @@ each milestone for the user's review. A milestone may start once the milestones 
 
 M7 and M8 are independent of each other and can run in either order once M6 is done.
 
+### Status
+
+- **M1 Setup and data:** done.
+- **M2 Validation and modelling table:** done on 2026-11-01 (issues #8 to #22, each closed after QA). Every
+  "done when" condition is met. The modelling table is `mart_person_year` (40,210 person-years) and its
+  columns are defined in `_docs/data-dictionary.md`. Where M2 differs from the plan as first written:
+  - The PMI-scope definition is decided (gate 2). Stays that began in the ER are out of the base definition
+    and kept as a flag for the M5 sensitivity. See `_docs/pmi-scope.md`.
+  - People with a zero survey weight are held out as the modelling population (gate 3).
+  - `AGELAST` and `REGION31/42/53` were added to the shortlist so people who left the survey part-way keep an
+    age and region. Adult `-1` answers are a separate `unknown` level, to be checked for leakage in M3.
+  - On-levelling uses PCE-Health (factor 1.02599, 2022 to 2023). The 2022 weighted mean matches AHRQ's
+    published figure. 2023 has no published mean, so it is checked by `TOTEXP` bands. See
+    `_docs/reconciliation.md`.
+  - Remaining check: run `dbt docs generate` on the real database once the file lock is released (#22).
+  - Detail is in `_docs/decisions.md` and `_docs/log.md`.
+- **M3 onwards:** not started. M3 starts after the user's review of M2.
+
 ### Priority and cut order
 
 If time runs short, cut in this order:
