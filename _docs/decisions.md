@@ -499,3 +499,28 @@ Why: a rating engine holds a multiplicative tariff, so a structure that is not e
 compared after it is put into that form. The check keeps the yardstick the same and tests whether (a)'s advantage
 over the already multiplicative (b) survives.
 Alternatives: choose (b), which is exactly multiplicative, and choose (c) for the benefit-type split.
+
+## 2026-11-02 Permitted factor options: fitting choices (issue #39)
+Decision: these are the choices made to compare the permitted-factor options. The choice of the final factor set is
+decision gate 7, part 2, and is the user's. Evidence is in the "Permitted rating factors" section of
+`notebooks/03_glm.ipynb` and in `outputs/m3_draft/permitted_factor_options.csv` and `factor_tests.csv`. The code is
+`health_pricing.models.factors`.
+- **Analysis-only factors** are fitted as controls and priced at their reference level, as agreed for `inscov`.
+- **Rebalancing.** Pricing a control at its reference level leaves the base rate too low for the book, because the
+  reference level is not the average. Each option's predictions are scaled so that predicted cost on the train split
+  equals actual cost on train. The factors are 1.012 (all factors), 1.156 (option 1) and 1.941 (option 2). Without
+  rebalancing the test A/E would be 1.25 and 2.10 and the deviance would hide the ranking power. The test split is not
+  used to set it.
+- **Tests and AIC.** Each rating factor is dropped in turn from candidate (a). The likelihood-ratio statistic is the fall
+  in deviance over both parts, with the severity part divided by the full model's Gamma dispersion, and the change in AIC is
+  the statistic minus twice the extra degrees of freedom. The `statsmodels` AIC for a Gamma model is not used, because it
+  evaluates the likelihood at each model's own estimated dispersion and so is not comparable across models. A selection
+  rule of keeping a factor when AIC improves gives 11 of the 14 option 1 factors.
+- **Results (test split, p = 1.5).** All factors 807,324 (Gini 0.433). Option 1 829,537 (0.393). Option 1 selected by AIC
+  829,405 (0.394). Option 2 854,746 (0.329). Intervals for the differences from all factors include zero.
+- **Not supported by the tests in option 1:** heart attack (`MIDX`), stroke (`STRKDX`) and diabetes (`DIABDX_M18`).
+  Angina (`ANGIDX`) is borderline.
+- **Exercise** is analysis-only. Adults who do not exercise cost 31 percent more before adjustment, and the adjusted
+  relativities are 0.97 for frequency and 1.07 for severity, both consistent with 1.
+Alternatives: leave an analysis-only factor out of the fit instead of fitting it as a control (not done, because a
+control keeps the other relativities unconfounded), and keep the `statsmodels` AIC.
