@@ -38,8 +38,14 @@ def broad_group(band: str) -> str | None:
     return None
 
 
-def _fit(frame: pd.DataFrame, rating: list[str]) -> glm.TwoPartModel:
-    return factors.fit_option(frame, rating, factors.controls_for("final"))
+HEALTH_CONTROLS = ["rthlth", "mnhlth"]
+
+
+def _fit(
+    frame: pd.DataFrame, rating: list[str], controls: list[str] | None = None
+) -> glm.TwoPartModel:
+    controls = factors.controls_for("final") if controls is None else controls
+    return factors.fit_option(frame, rating, controls)
 
 
 def _smoking_rows(model: glm.TwoPartModel, train: pd.DataFrame, label: str) -> pd.DataFrame:
@@ -74,17 +80,26 @@ def _smoking_rows(model: glm.TwoPartModel, train: pd.DataFrame, label: str) -> p
 
 
 def with_and_without_flags(prepared: Frames) -> pd.DataFrame:
-    """The smoking relativities of the final structure, with and without the condition flags.
+    """The smoking relativities of the final structure under three sets of adjusting factors.
+
+    The sets are the final structure, the structure without the condition flags, and the structure
+    without the condition flags and without the self-rated health controls. The last two ask
+    whether illness absorbs the discount.
 
     The combined relativity is the product of the frequency and severity relativities. The bounds
     treat the two as independent, so they are approximate.
     """
     with_flags = _fit(prepared.train, RATING_WITH_FLAGS)
     without = _fit(prepared.train, RATING_WITHOUT_FLAGS)
+    no_health_controls = [c for c in factors.controls_for("final") if c not in HEALTH_CONTROLS]
+    without_health = _fit(prepared.train, RATING_WITHOUT_FLAGS, no_health_controls)
     return pd.concat(
         [
             _smoking_rows(with_flags, prepared.train, "with condition flags"),
             _smoking_rows(without, prepared.train, "without condition flags"),
+            _smoking_rows(
+                without_health, prepared.train, "without condition flags and self-rated health"
+            ),
         ],
         ignore_index=True,
     )

@@ -598,8 +598,7 @@ Decision: none yet. These are findings and recommendations, and the choices are 
 check" and "Age curve" sections of `notebooks/03_glm.ipynb` and in `outputs/m3_draft/` (`smoking_*.csv`,
 `age_curve_*.csv`). The code is `health_pricing.models.smoking` and `agecurve`.
 - **Smoking.** Removing the condition flags barely moves the smoker relativity (daily 0.600 with and 0.596 without,
-  occasional 0.688 and 0.733), so the flags do not absorb the discount. It is mostly in frequency (about 0.70 daily). It
-  is present in every adult age group before and after adjustment (crude cost for all smokers 0.86, 0.71 and 0.82 at 18 to
+  occasional 0.688 and 0.733), so the flags do not absorb the discount. Dropping the self-rated health controls as well raises it to 0.736 (0.57 to 0.95) for daily smokers, so health explains part of it. The rest is mostly in frequency (about 0.70 to 0.75 daily). The direction is the same in the three adult age groups before and after adjustment, with the evidence strongest at 40 and over (crude cost for all smokers 0.86, 0.71 and 0.82 at 18 to
   39, 40 to 64 and 65 and over, adjusted daily smokers 0.52, 0.49 and 0.67). The pattern fits a difference in the use of
   care, and the data cannot separate lower need from lower use. Recommended: make smoking analysis-only, which leaves 9
   rating factors, and put no smoker discount in the tariff. The alternative is a floor at 1.00.
@@ -607,8 +606,8 @@ check" and "Age curve" sections of `notebooks/03_glm.ipynb` and in `outputs/m3_d
   its AIC (at a common Gamma dispersion) is 20.1 lower. Against a model that holds both, the bands add nothing beyond the
   spline (p = 0.134) and the spline adds something beyond the bands (p = 0.011). On the test split the bands are 0.2 percent
   better on deviance (826,675 against 828,268) and 0.006 higher on Gini, within noise. The 3-degree spline is not
-  distinguishable from the bands. Recommended: read the tariff's band relativities off the smooth curve, which removes the
-  dips at ages 35 to 39, 40 to 44 and 70 to 74.
+  distinguishable from the bands. Recommended: read the tariff's band relativities off the smooth curve, which removes
+  irregularities at ages 35 to 39, 40 to 44 and 70 to 74.
 - **Rebased age intervals.** The age relativities against the 65 to 69 band now have intervals from the covariance matrix
   (70 to 74 is 1.21, 0.94 to 1.55), saved as `presentation_lower_95` and `presentation_upper_95`. The earlier note that the
   intervals were on the technical base is replaced by this.

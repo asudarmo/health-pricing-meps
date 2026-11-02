@@ -194,8 +194,17 @@ def test_real_age_comparison_has_three_models_and_valid_tests():
     assert set(table.index) == {"bands", "spline", "both"}
     assert table.loc["bands", "aic_change_from_bands"] == 0.0
     assert table.loc["spline", "parameters"] < table.loc["bands", "parameters"]
-    tests = ac.encompassing_tests(models)
-    assert tests["p_value"].between(0, 1).all() and (tests["df"] > 0).all()
+    tests = ac.encompassing_tests(models).set_index("model_tested")
+    assert tests["p_value"].between(0, 1).all()
+    assert (
+        tests.loc["bands", "df"] == 8 and tests.loc["spline", "df"] == 24
+    )  # 4 per part, 12 per part
+    phi = models["both"].model.severity.scale
+    by_hand = models["spline"].model.frequency.aic + (
+        models["spline"].model.severity.deviance / phi
+        + 2 * len(models["spline"].model.severity.params)
+    )
+    assert table.loc["spline", "aic"] == pytest.approx(by_hand)
     # the model that holds both has the lowest deviance in each part
     for part in ("frequency", "severity"):
         both = getattr(models["both"].model, part).deviance

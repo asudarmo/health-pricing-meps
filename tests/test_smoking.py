@@ -86,12 +86,22 @@ def _built() -> bool:
 def test_real_refit_without_flags_has_the_same_smokers_and_the_age_groups_are_fitted():
     prepared = glm.prepare_frames(mf.load_frames())
     table = smoking.with_and_without_flags(prepared)
-    assert set(table["model"]) == {"with condition flags", "without condition flags"}
+    assert set(table["model"]) == {
+        "with condition flags",
+        "without condition flags",
+        "without condition flags and self-rated health",
+    }
     assert set(table["smoking"]) == {"every day", "some days"}
     with_flags = table[table["model"] == "with condition flags"].set_index("smoking")
     final = factors.fit_option(prepared.train, factors.FINAL_RATING, factors.controls_for("final"))
     assert with_flags.loc["every day", "frequency_relativity"] == pytest.approx(
         float(np.exp(final.frequency.params["OFTSMK53=1"]))
+    )
+    # without the health controls the model has fewer parameters and a different adjustment
+    health = table[table["model"].str.endswith("self-rated health")].set_index("smoking")
+    assert (
+        health.loc["every day", "frequency_relativity"]
+        != with_flags.loc["every day", "frequency_relativity"]
     )
     adjusted = smoking.adjusted_by_group(prepared)
     assert set(adjusted["age_group"]) == {"18-39", "40-64", "65+"}
