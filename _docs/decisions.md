@@ -311,3 +311,35 @@ Why: a remembered or computed number is not a published figure, and the band che
 expenditure distribution for 2023. Alternative: the user downloading the mean from AHRQ's dashboard
 (declined as unnecessary).
 
+
+## 2026-11-02 M3 model structure is decided by comparison, and the benefit-type and multiplicative-structure approach
+Decision (user, 2026-11-02): the M3 model structure is not assumed. Up to four candidates predict the same
+quantity, expected annual PMI-scope cost per person-year at 2023 prices, and are scored on the 2022
+household-grouped holdout with the same package code. The final choice is a decision gate (issue #32).
+- **(a)** binomial GLM with a cloglog link on the claimant indicator, with a `log(exposure)` offset, and Gamma
+  log-link severity on annual cost per claimant with weight 1.
+- **(b)** as (a), but Poisson on the claimant indicator.
+- **(c)** stacked by benefit type (inpatient and day-case versus outpatient), with a `benefit_type` x age
+  interaction tested by likelihood-ratio test.
+- **(d)** optional, event-based Poisson or negative binomial, with Gamma on average cost per event weighted by
+  event count.
+- Claim count is part of the outcome and unknown at quote time, so in (a) to (c) it is never a weight or a
+  predictor. Event count is a weight only in (d).
+- Yardstick: Tweedie deviance on annual cost (p = 1.5, checked at 1.3 and 1.7), Gini, lift, double-lift, and A/E
+  by factor and by predicted-cost decile. Family-specific checks are supporting evidence only.
+- **Benefit types for (c).** Inpatient and day-case versus outpatient. Outpatient and office-based events with
+  `SURGPROC` = 1 (surgical procedure performed on the visit) count as day-case. If the flag proves unusable the
+  split stays simple and the limitation is logged (issue #24).
+- **Large claims.** The cap applies per person-year, so `mart_person_year` does not change (issue #27).
+- **Multiplicative pricing.** The departure from a product of relativities is reported in #32 for information
+  only, and the risk model is chosen on the common yardstick. If the chosen structure is not exactly
+  multiplicative, an M6 task (#37) fits a log-link GLM to its predicted annual cost, reports the approximation
+  error overall and by segment, and uses that structure for the section 6 relativities.
+- **Outputs.** M3 tables are saved in `outputs/m3_draft/` in the section 6 column shape. Combined pure-premium
+  bounds are approximate and labelled so.
+- `statsmodels` is approved as a main dependency. `scikit-learn` waits until M4.
+Why: the rating engine needs a multiplicative structure, but forcing it on the risk model would hide which
+structure predicts best. Separating the two keeps the choice honest and the approximation measurable.
+Alternatives: assuming a frequency x severity model on event counts (rejected as a starting point, because claim
+count is unknown at quote time), and requiring an exactly multiplicative risk model (rejected, it would limit
+the candidates).
