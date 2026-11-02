@@ -524,3 +524,40 @@ decision gate 7, part 2, and is the user's. Evidence is in the "Permitted rating
   relativities are 0.97 for frequency and 1.07 for severity, both consistent with 1.
 Alternatives: leave an analysis-only factor out of the fit instead of fitting it as a control (not done, because a
 control keeps the other relativities unconfounded), and keep the `statsmodels` AIC.
+
+## 2026-11-02 Permitted factors and the final factor set (decision gate 7, part 2, issue #39)
+Decision: the user decided the permitted factors and the factor rule, from the evidence in the "Permitted rating
+factors" section of `notebooks/03_glm.ipynb`. The final structure is candidate (a) with 10 rating factors. The fitting
+choices behind the evidence are in the entry "Permitted factor options: fitting choices (issue #39)" above.
+- **Structure.** Candidate (a) is confirmed. (a) keeps its position in multiplicative form, not a clear win.
+- **Permitted set.** Option 1. Self-rated health (`rthlth`, `mnhlth`), exercise (`PHYEXE53`) and `inscov` are
+  analysis-only. They are fitted as controls and priced at their reference level.
+- **Rebalancing.** The base rate is rescaled so that predicted cost on train equals actual cost on train, and the test
+  split is not used. It applies to every option and to the final tariff.
+- **Factor rule.** Keep a rating factor only if the likelihood-ratio test gives p < 0.05 and AIC improves. It drops
+  `MIDX` (p = 0.68), `STRKDX` (0.63), `DIABDX_M18` (0.32) and `ANGIDX` (0.096), which leaves 10 rating factors: age,
+  region, smoking (`OFTSMK53`) and the flags for high blood pressure, coronary heart disease, other heart disease,
+  cholesterol, cancer, arthritis and asthma. `ANGIDX` fails the p-value part of the rule. Its AIC improves marginally
+  (by 0.7) when it is kept, so it is dropped on the p-value alone and not because AIC is worse.
+- **Result (test split, p = 1.5).** The final 10 factors score 826,675 (Gini 0.399) with 80 parameters. All 18 factors
+  score 807,324 (0.433), option 1 scores 829,537 (0.393) and option 2 scores 854,746 (0.329). The final set is slightly
+  better than option 1, so the dropped factors added nothing on the test. Intervals for the differences from all factors
+  include zero.
+- **Diabetes sensitivity.** Given the final 10 factors, `DIABDX_M18` has relativities of 0.96 (frequency) and 0.91
+  (severity), and adding it back raises the test deviance by 1,909.
+- **Limitation.** The condition flags stand in for underwriting. UK private medical insurance would exclude claims
+  linked to pre-existing conditions, and modelling that needs a link from each condition to each claim, which is out of
+  scope. Option 2 is kept as a sensitivity. It removes the loadings but still pays those claims, so it overstates the
+  loss.
+- **Exercise** is kept as an insight section and not a rating factor. The raw gap is 31 percent, but the adjusted
+  relativities (0.97 frequency, 1.07 severity) are consistent with no effect, so the raw gap reflects who exercises and
+  not a causal effect. A randomised design would be needed to estimate the effect.
+- **Folded into later tasks.** Diagnostics (#33) and relativities (#34) use the final 10 factors. #33 also shows lift
+  charts on train and test with household-resampled bands and a five-group version, and compares the lowest and highest
+  group A/E of the final set with the all-factor model. If over-spreading persists, a penalised GLM (ridge or elastic net)
+  is an option for the next gate and is not built before then.
+Why: a factor that the tests do not support adds parameters without ranking power, and the final set keeps most of the
+ranking of the full model. Condition flags are kept as a stand-in so that the plan's simulation of full medical
+underwriting can proceed.
+Alternatives: option 2 (rejected as the base, kept as a sensitivity), keeping all 14 option 1 factors, and a
+less strict rule that keeps a factor on AIC alone.

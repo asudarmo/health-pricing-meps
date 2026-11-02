@@ -41,7 +41,11 @@ def test_options_split_the_factors_as_agreed():
     )
     assert factors.controls_for("all_factors") == []
     for name, rating in factors.OPTIONS.items():
-        assert set(rating) | set(factors.controls_for(name)) == set(mf.FACTORS)
+        covered = set(rating) | set(factors.controls_for(name))
+        if name == "final":  # the factors dropped by the rule are in neither list
+            assert covered == set(mf.FACTORS) - set(factors.DROPPED_BY_RULE)
+        else:
+            assert covered == set(mf.FACTORS)
     assert not {"sex", "race", "income", "education"} & set(mf.FACTORS)
 
 
@@ -142,6 +146,12 @@ def test_real_all_factor_option_matches_candidate_a_and_controls_are_not_priced(
     balance = results["all_factors"].rebalance_factor
     assert candidates["all_factors"].test == pytest.approx(model.predict(prepared.test) * balance)
     assert 0.9 < balance < 1.1  # the full model is already close to balanced on train
+    selected = factors.select_by_rule(
+        factors.drop_one_tests(
+            prepared.train, factors.OPTIONS["option_1"], factors.controls_for("option_1")
+        )
+    )
+    assert selected == factors.FINAL_RATING  # the rule gives the approved ten factors
     # an option-2 prediction ignores a control, so rows that differ only in a flag agree
     controls = factors.controls_for("option_2")
     model_2 = factors.fit_option(prepared.train, factors.OPTIONS["option_2"], controls)
@@ -177,3 +187,35 @@ def test_a_scored_option_is_rebalanced_and_keeps_its_factor_count():
 def test_select_by_aic_keeps_only_supported_factors():
     tests = pd.DataFrame({"factor": ["a", "b", "c"], "keep_by_aic": [True, False, True]})
     assert factors.select_by_aic(tests) == ["a", "c"]
+
+
+def test_the_final_set_is_option_1_without_the_four_dropped_factors():
+    assert set(factors.DROPPED_BY_RULE) == {"ANGIDX", "MIDX", "STRKDX", "DIABDX_M18"}
+    assert len(factors.FINAL_RATING) == 10
+    assert set(factors.FINAL_RATING) == {
+        "age", "region", "OFTSMK53", "HIBPDX", "CHDDX", "OHRTDX", "CHOLDX", "CANCERDX",
+        "ARTHDX", "ASTHDX",
+    }  # fmt: skip
+    assert set(factors.controls_for("final")) == set(factors.ANALYSIS_ONLY)
+
+
+def test_the_selection_rule_needs_both_the_p_value_and_aic():
+    tests = pd.DataFrame(
+        {
+            "factor": ["both", "p_only", "aic_only", "neither"],
+            "p_value": [0.01, 0.01, 0.09, 0.5],
+            "keep_by_aic": [True, False, True, False],
+        }
+    )
+    assert factors.select_by_rule(tests) == ["both"]
+    assert factors.select_by_rule(tests, p_value=0.1) == ["both", "aic_only"]
+
+
+def test_add_back_sensitivity_reports_the_relativity_and_the_deviance_change():
+    frame = toy().assign(cost=lambda d: d["capped_cost"])
+    prepared = mf.Frames(frame, toy(seed=22).assign(cost=lambda d: d["capped_cost"]), {})
+    out = factors.add_back_sensitivity(prepared, "noise", ["age"], ["ctrl"])
+    assert out["level"].tolist() == ["u", "v"]
+    assert (out["frequency_relativity"] > 0).all() and (out["severity_relativity"] > 0).all()
+    gap = out["test_deviance_with"] - out["test_deviance_without"]
+    assert out["change_in_test_deviance"].tolist() == pytest.approx(gap.tolist())

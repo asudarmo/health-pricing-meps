@@ -30,11 +30,22 @@ OPTIONS = {
     "option_1": [f for f in FACTORS if f not in ANALYSIS_ONLY],
     "option_2": [f for f in FACTORS if f not in ANALYSIS_ONLY and f not in CONDITION_FLAGS],
 }
+# The factor rule approved at gate 7, part 2: keep a rating factor only if the likelihood-ratio test
+# gives p < 0.05 and AIC improves. Applied to option 1 it drops these four, leaving 10 factors.
+SELECTION_P_VALUE = 0.05
+DROPPED_BY_RULE = ["ANGIDX", "MIDX", "STRKDX", "DIABDX_M18"]
+FINAL_RATING = [f for f in OPTIONS["option_1"] if f not in DROPPED_BY_RULE]
+OPTIONS["final"] = FINAL_RATING
 OUTPUT_DIR = glm.SCORES_DIR
 
 
 def controls_for(option: str) -> list[str]:
-    """The analysis-only factors of an option, in the order of the factor list."""
+    """The analysis-only factors of an option, in the order of the factor list.
+
+    A factor dropped by the selection rule is left out of the fit and is not a control.
+    """
+    if option == "final":
+        return [f for f in FACTORS if f in ANALYSIS_ONLY]
     return [f for f in FACTORS if f not in OPTIONS[option]]
 
 
@@ -104,6 +115,51 @@ def option_results(prepared: Frames) -> dict[str, OptionResult]:
 def select_by_aic(tests: pd.DataFrame) -> list[str]:
     """The tested factors whose removal would worsen AIC, so that keeping them is supported."""
     return list(tests.loc[tests["keep_by_aic"], "factor"])
+
+
+def select_by_rule(tests: pd.DataFrame, p_value: float = SELECTION_P_VALUE) -> list[str]:
+    """The factors to keep: the likelihood-ratio test gives p below the limit and AIC improves."""
+    keep = tests["keep_by_aic"] & (tests["p_value"] < p_value)
+    return list(tests.loc[keep, "factor"])
+
+
+def add_back_sensitivity(
+    prepared: Frames,
+    factor: str,
+    rating: list[str] = FINAL_RATING,
+    controls: list[str] | None = None,
+) -> pd.DataFrame:
+    """What a dropped factor would do if it were added back to the final factor set.
+
+    The table gives the relativity of each level in the fuller structure (frequency and
+    severity) and the test deviance (p = 1.5) with and without the factor. Both are rebalanced.
+    A negative change is an improvement.
+    """
+    controls = controls_for("final") if controls is None else controls
+    base = scored_option(prepared, "final", rating, controls)
+    plus = scored_option(prepared, f"final_plus_{factor}", [*rating, factor], controls)
+    model = fit_option(prepared.train, [*rating, factor], controls)
+    effect = adjusted_effect(model, prepared.train, factor)
+    rows = []
+    for _, line in effect.iterrows():
+        scores = {}
+        for name, result in (("without", base), ("with", plus)):
+            frame_scores = glm.candidate_scores(
+                name, 0, {"test": (prepared.test, result.candidate.test)}
+            )
+            scores[name] = frame_scores.loc[0, "tweedie_deviance"]
+        rows.append(
+            {
+                "factor": factor,
+                "level": line["level"],
+                "frequency_relativity": line["frequency_relativity"],
+                "severity_relativity": line["severity_relativity"],
+                "test_deviance_without": scores["without"],
+                "test_deviance_with": scores["with"],
+                "change_in_test_deviance": scores["with"] - scores["without"],
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def option_scores(prepared: Frames, results: dict[str, OptionResult]) -> pd.DataFrame:
