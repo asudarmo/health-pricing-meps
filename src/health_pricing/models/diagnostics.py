@@ -1,6 +1,6 @@
 """Diagnostics for the final structure on the train and 2022 test splits (issue #33).
 
-The final structure is candidate (a) with the 10 rating factors chosen at decision gate 7, part 2.
+The final structure is candidate (a) with the 9 rating factors chosen at decision gate 7, part 2.
 The tables are aggregates. Uncertainty bands come from resampling households, because members of
 a household are not independent. Nothing here tunes the model. The tables show how it behaves.
 """

@@ -212,3 +212,16 @@ def test_the_full_notebook_runs_top_to_bottom_in_a_fresh_kernel_with_no_person_l
     for name in PERSON_LEVEL_NAMES:
         assert name not in outputs, name
     assert "Traceback" not in outputs
+
+
+def _decision_rows(path):
+    notebook = nbformat.read(path, as_version=4)
+    cell = next(c.source for c in notebook.cells if c.source.startswith("## Key decisions"))
+    rows = [line for line in cell.split(chr(10)) if line.startswith("|")]
+    return [re.sub(r"\]\((03_glm\.ipynb)?#", "](#", line) for line in rows]
+
+
+def test_the_summary_decisions_table_is_the_full_notebooks_table():
+    assert _decision_rows(SUMMARY) == _decision_rows(FULL)
+    markdown = _text(nbformat.read(SUMMARY, as_version=4), "markdown")
+    assert "A shorter notebook" not in markdown

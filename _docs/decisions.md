@@ -633,7 +633,7 @@ sections of `notebooks/03_glm.ipynb`.
   bands stay as the format of the rating table. After smoothing, the base rate is rebalanced on train so that train predicted
   cost equals train actual cost. The intervals for age against the 65 to 69 band come from the covariance matrix
   (`presentation_lower_95` and `presentation_upper_95`).
-- **Numbers.** The final structure scores a test deviance of 830,232 (Gini 0.393, 80 parameters, rebalancing factor 1.116). The
+- **Numbers.** The final structure scores a test deviance of 830,232 (Gini 0.393, 80 parameters, rebalancing factor 1.115). The
   final tariff scores 838,173 (Gini 0.378, 26 parameters), departs from the banded structure by a median of 5.5 percent, and has
   a test A/E of 1.081 (band 0.90 to 1.28).
 - **Tables.** `relativities_tariff.csv` is the final tariff. `relativities_tariff_banded.csv` is the banded tariff for

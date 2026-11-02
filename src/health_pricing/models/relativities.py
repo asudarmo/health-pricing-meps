@@ -1,6 +1,6 @@
 """Relativity tables for the final structure (issue #34).
 
-The final structure is candidate (a) on the 10 rating factors chosen at decision gate 7, part 2.
+The final structure is candidate (a) on the 9 rating factors chosen at decision gate 7, part 2.
 Its two parts are multiplicative on their own scales, so each part is a base value times one
 relativity per factor level. The frequency part is a claim hazard, `1 - exp(-exposure * base *
 product of relativities)`, and the severity part is `base * product of relativities`. The combined
