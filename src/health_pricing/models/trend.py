@@ -157,6 +157,11 @@ def _base_columns(pieces: Parts) -> dict[str, np.ndarray]:
     }
 
 
+def _log_share(part: float, total: float) -> float:
+    """The share of the log gap in a part, which is 0 when there is no gap."""
+    return float(np.log(part) / np.log(total)) if total != 1 else 0.0
+
+
 def decomposition(
     train: Parts, later: Parts, n_boot: int = N_BOOT, seed: int = SEED
 ) -> pd.DataFrame:
@@ -198,7 +203,7 @@ def decomposition(
                 "change_percent": 100 * (point[name] - 1),
                 "lower_95_percent": 100 * (np.quantile(ratio, 0.025) - 1),
                 "upper_95_percent": 100 * (np.quantile(ratio, 0.975) - 1),
-                "share_of_log_gap": np.log(point[name]) / np.log(point["cost_per_exposure_year"]),
+                "share_of_log_gap": _log_share(point[name], point["cost_per_exposure_year"]),
                 "pricing_treatment": treatment[name],
             }
         )

@@ -75,7 +75,7 @@ def forecast_filings(sheet: pd.DataFrame) -> pd.DataFrame:
     """Filings with a calendar-year 2021 experience period and a projection starting 1 January 2023.
 
     For these filings the Year 2 trend is the trend from 2022 to 2023. Filings with no member months
-    or with no entered trend (a recorded 0) are left out.
+    are left out. A trend outside 0.5 to 2 is treated as missing when the quartiles are taken.
     """
     keep = (
         (sheet["EXP_BEG_DT"] == EXPERIENCE_START)

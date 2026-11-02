@@ -198,7 +198,7 @@ def test_real_decomposition_multiplies_to_the_16_9_percent_gap(frozen, oot):
 
 
 @pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
-def test_real_trend_options_move_a_e_down_and_never_use_2023_for_the_forecast(frozen, oot):
+def test_real_trend_options_scale_a_e_by_the_factor_and_the_parts_multiply(frozen, oot):
     options = {
         "none": (1.0, "cost", "no trend", "sensitivity"),
         "urr": (1.019, "cost", "URR", "central"),

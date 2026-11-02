@@ -708,3 +708,10 @@ Decision: the user decided the forecast trend after seeing the evidence logged a
   experience by its credibility and not recalibrate fully.
 Why: an external, pre-2023 actuarial view keeps the out-of-time test a test of a forecast.
 Alternatives: no trend as the central forecast, the National Health Expenditure projections, and a trend on the claim hazard only.
+
+## 2026-11-02 Forecast trend: wording after QA (issue #43)
+Clarifications to the entry above. The split of the severity part between more claims per claimant (about 6 percent) and a higher
+cost per claim (about 7 percent) is an inference from claims per exposure year and the claimant rate, whose intervals overlap, so
+"mainly intensity" is a reading and not a measurement. The household intervals of the ratios resample 2022 and 2023 independently
+although many people and households are in both years, so they are somewhat wider than they need to be. The data-implied trend would
+make the frequency part of the 2023 A/E close to 1 by construction, and a cost A/E of 1.139 would remain.
