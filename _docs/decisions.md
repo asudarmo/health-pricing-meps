@@ -653,7 +653,7 @@ option and final score tables and in the headline tables. `03_glm_summary.ipynb`
 of the chosen model and the final tariff, and a lift chart of the final tariff with household bands.
 - The final structure that is scored (80 parameters, test Gini 0.393) has age in five-year bands. The final tariff is fitted
   to the same structure with a smooth adult age curve (64 parameters, test Gini 0.386), so the tariff's lower Gini (0.378)
-  comes mostly from smoothing age and partly from the multiplicative approximation.
+  comes about half from smoothing age (0.393 to 0.386) and half from the multiplicative approximation (0.386 to 0.378), with the approximation the larger part of the deviance rise.
 - The internal option names `all_factors`, `option_1`, `final` and `final_tariff` are not renamed.
 Why: a reviewer needs to check what is fitted, and the letters alone did not say.
 Alternatives: keep the short keys in tables, or rename the option names too.

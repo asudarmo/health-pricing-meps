@@ -215,7 +215,7 @@ treated as independent), and the final tariff has point values only.
 Done: a "Model specifications" section, descriptive model names with letters in all tables, charts and saved files, the
 percentage deviance reduction against the baseline, the equations and comparison table in the summary notebook, and a lift
 chart of the final tariff with household bands. QA found the final structure described as spline-aged when the scored
-structure is banded, and a leftover short name. Both are fixed, and the Gini explanation now names the age smoothing as the
-larger part. The M5 tasks (#42 to #50) are created and wait for the user's review.
+structure is banded, and a leftover short name. Both are fixed, and the Gini explanation now splits the gap between age smoothing and
+the multiplicative approximation. The M5 tasks (#42 to #50) are created and wait for the user's review.
 
 Next: the user reviews the M5 tasks. Open questions: none.
