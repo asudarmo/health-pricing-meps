@@ -740,3 +740,13 @@ forecast cost. The structure did not move, the mix did not move and the ranking 
 The large-claim load is handled apart. Matching it to the 2023 excess would add 0.37 points to the A/E.
 Why: one noisy year should not be priced in full, and the data cannot say how much the level drifts, so the range is shown and not hidden.
 Alternatives: a single credibility from a Buhlmann model with an estimated drift, which needs more years, and a full rebase.
+
+## 2026-11-02 Trend sensitivity: the total move (issue #48)
+Decision: the low, central and high trends are the lower quartile, median and upper quartile of the CMS utilization trend of gate 4,
+part 2 (0.8, 1.9 and 3.1 percent). The conclusions are compared through the recalibration rule under each trend, and through the
+total move, which is the trend times the rebase factor, meaning the level of 2023 cost against the 2022 train level. At the sampling
+weight the total is the same under every trend (1.167), because a higher trend leaves less to rebase. At the persistence weight it is
+1.035, 1.045 and 1.055, so the trend matters a little there. The rule gives a rebase under all three, and the trend has no effect on
+the relativities.
+Why: the trend is a level factor, so the useful question is how much of the level it explains and whether the action changes.
+Alternatives: showing only the A/E under each trend, which hides that the trend and the rebase offset each other.
