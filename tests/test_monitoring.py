@@ -69,6 +69,8 @@ pytestmark_real = pytest.mark.skipif(not _built(), reason="run the load script a
 
 @pytest.fixture(scope="module")
 def setup():
+    if not _built():
+        pytest.skip("run the load script and dbt build")
     frozen = outofsample.freeze()
     oot = outofsample.load_out_of_time(frozen)
     predictions = monitoring.forecast(frozen, oot, 1.019)
@@ -97,6 +99,21 @@ def test_a_e_by_level_covers_every_level_of_every_factor_and_adds_up(setup):
         assert rows["actual"].sum() == pytest.approx(oot.frame["cost"].sum())
     assert set(table["role"]) == {"rating", "analysis_only", "dropped"}
     assert (table.loc[table["outside_band"], "claimants"] >= monitoring.MIN_CLAIMANTS).all()
+
+
+@pytestmark_real
+def test_flagged_levels_and_the_count_of_levels_outside_the_band(setup):
+    _, oot, predictions = setup
+    table = monitoring.by_level(oot, predictions[outofsample.TARIFF], n_boot=100)
+    checked = table[table["enough_claimants"] & (table["role"] == "rating")]
+    assert checked["outside_band"].sum() > 0
+    assert (
+        checked["moves_with_the_book"]
+        == ((checked["relative_lower_95"] <= 1) & (checked["relative_upper_95"] >= 1))
+    ).all()
+    flagged = monitoring.flagged(table)
+    assert flagged["outside_band"].all() and flagged["enough_claimants"].all()
+    assert int(checked["outside_band"].sum()) == 15
 
 
 @pytestmark_real
