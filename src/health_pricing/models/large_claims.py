@@ -3,8 +3,8 @@
 The cap applies to annual cost per person-year, so `mart_person_year` does not change. Cost is the
 PMI-scope cost at 2023 prices. Every table is an aggregate over claimants (person-years with at
 least one claim) and is built from the 2022 train split, with the test split used only to check
-that a cap set on train behaves the same on rows it has not seen. The caps are proposals until the
-user decides at the gate.
+that a cap set on train behaves the same on rows it has not seen. The user approved the cap and the
+provisional load at decision gate 5 on 2026-11-02, and the functions at the end apply them.
 """
 
 from __future__ import annotations
@@ -13,7 +13,13 @@ import duckdb
 import pandas as pd
 
 from health_pricing.data.load import DUCKDB_PATH
-from health_pricing.models.frame import MODEL_YEAR
+from health_pricing.models.frame import MODEL_YEAR, Frames
+
+# Approved at gate 5. The cap is on annual PMI-scope cost per person-year at 2023 prices. The load
+# is the train excess over capped cost (6.47%, rounded to 6.5%). It is provisional, used to compare
+# the candidate structures only, and is not set from the test split or from 2023.
+LARGE_CLAIM_CAP = 100_000.0
+PROVISIONAL_LOAD = 0.065
 
 PERCENTILES = (50, 60, 70, 75, 80, 90, 95, 97.5, 99, 99.5, 99.9)
 # Candidate caps. A percentile cap is that percentile of train cost per claimant, a fixed cap is a
@@ -119,12 +125,15 @@ def excess_load_table(frame: pd.DataFrame, cap: float, by: str | None = None) ->
 
 
 def load_benefit_claimants(con: duckdb.DuckDBPyConnection | None = None) -> pd.DataFrame:
-    """Claimants by benefit type for the 2022 train and test splits, with age and cost."""
+    """Claimants by benefit type for the 2022 train and test splits, with age and cost.
+
+    The rows carry the person key so costs can be capped per person-year. Do not display them.
+    """
     own = con is None
     con = con or duckdb.connect(str(DUCKDB_PATH), read_only=True)
     try:
         return con.execute(
-            "SELECT split, benefit_type, age, cost_2023_prices AS cost "
+            "SELECT DUPERSID, year, split, benefit_type, age, cost_2023_prices AS cost "
             "FROM mart_person_year_benefit "
             f"WHERE year = {MODEL_YEAR} AND split IN ('train', 'test') AND claimant = 1"
         ).fetchdf()
@@ -144,3 +153,61 @@ def benefit_cap_comparison(claimants: pd.DataFrame) -> pd.DataFrame:
         table.insert(1, "claimants", len(cost))
         rows.append(table)
     return pd.concat(rows, ignore_index=True)
+
+
+def capped_cost(cost, cap: float = LARGE_CLAIM_CAP):
+    """Annual cost per person-year limited to the cap. The excess is `cost - capped_cost(cost)`."""
+    return cost.clip(upper=cap) if hasattr(cost, "clip") else min(cost, cap)
+
+
+def cap_frames(frames: Frames, cap: float = LARGE_CLAIM_CAP) -> Frames:
+    """The train and test frames with a `capped_cost` column. The `cost` column is unchanged."""
+    return Frames(
+        frames.train.assign(capped_cost=capped_cost(frames.train["cost"], cap)),
+        frames.test.assign(capped_cost=capped_cost(frames.test["cost"], cap)),
+        frames.reference_levels,
+    )
+
+
+def capped_benefit_cost(
+    benefit: pd.DataFrame,
+    cap: float = LARGE_CLAIM_CAP,
+    cost: str = "cost_2023_prices",
+    keys: tuple[str, ...] = ("DUPERSID", "year"),
+) -> pd.Series:
+    """Benefit-type cost after capping the person-year total, shared by uncapped cost.
+
+    Each person-year's total over its benefit-type rows is capped, and every row keeps its share of
+    that total. A person-year under the cap is unchanged and one with no cost stays at zero. The
+    capped rows add up to the capped person-year cost.
+    """
+    total = benefit.groupby(list(keys))[cost].transform("sum")
+    scale = (cap / total).where(total > cap, 1.0)
+    return benefit[cost] * scale
+
+
+def with_load(prediction, load: float = PROVISIONAL_LOAD):
+    """A capped prediction plus the large-claim load, which is a percentage of capped cost."""
+    return prediction * (1 + load)
+
+
+def capped_summary(frames: Frames) -> pd.DataFrame:
+    """Cost, capped cost and the excess for each split, from frames made by `cap_frames`.
+
+    The test row is a check only. The provisional load is set from train and not from test.
+    """
+    rows = []
+    for name, frame in (("train", frames.train), ("test", frames.test)):
+        cost, capped = frame["cost"].sum(), frame["capped_cost"].sum()
+        rows.append(
+            {
+                "split": name,
+                "person_years": len(frame),
+                "claimants_above_cap": int((frame["cost"] > LARGE_CLAIM_CAP).sum()),
+                "cost": cost,
+                "capped_cost": capped,
+                "excess": cost - capped,
+                "excess_load": (cost - capped) / capped,
+            }
+        )
+    return pd.DataFrame(rows)

@@ -403,3 +403,29 @@ treatment of `unknown` a measured rule and not a judgement for each variable.
 Alternatives: ten-year age bands (same minimum claimant count, but they hide slope inside a band, for example a claimant rate of 49
 percent at ages 55 to 59 and 56 percent at 60 to 64 in one band), and merging `unknown` for the lifestyle questions (rejected because
 of the distortion above).
+
+## 2026-11-02 Large-claim cap and provisional load (decision gate 5, issue #27)
+Decision: the user approved a cap and a load for the M3 comparison, with additions. Evidence is in the "Large
+claims" section of `notebooks/03_glm.ipynb`, on the 2022 train claimants (7,229) with the test split used as a
+check only. The functions are in `health_pricing.models.large_claims`.
+- **Cap.** A fixed 100,000 dollars on annual PMI-scope cost per person-year at 2023 prices. It caps 32 train
+  claimants (0.44 percent) and removes 6.1 percent of train cost, and sits just above the 99.5th percentile
+  (92,709). `mart_person_year` is unchanged. When costs are projected to the rating period in M6, the cap is
+  indexed with the same trend.
+- **Stacked candidate.** The person-year total is capped and the capped amount is shared between the benefit types
+  in proportion to their uncapped cost (`capped_benefit_cost`), so every candidate predicts the same capped quantity.
+- **Load.** A flat 6.5 percent of capped cost, from train (2.31 million dollars of excess over 35.77 million of
+  capped cost, 6.47 percent). It is provisional and used for the M3 comparison only. It is not set from the test
+  split or from 2023, and there are no segment loads.
+- **Test shortfall.** The test split has a heavier tail (11 claimants above the cap, 10.8 percent of cost, an implied
+  load of 12.1 percent). Any test A/E shortfall that comes from this sampling noise is expected. The diagnostics
+  (issue #33) report its size and do not tune the model or the load to remove it.
+- **Follow-up (M6).** Re-estimate the load on the pooled 2022 and 2023 rows for the final model, preferably by
+  fitting a tail distribution above the cap such as a generalised Pareto, and compare it with the empirical load.
+  Also index the cap with the projection trend.
+Why: the tail rests on a few people, so a fixed cap keeps the largest person-years from dominating severity while
+leaving most of the signal. Segment loads rest on 6 to 16 claimants and do not reproduce on test, so they would
+price noise. Holding the load to train keeps the test split a clean holdout.
+Alternatives: caps of 50,000 (109 claimants, 13.9 percent of cost removed), 250,000 (4 claimants), and the 99th,
+99.5th and 99.9th percentiles (sample dependent). A higher load taken from the test split, and loads by age group or
+benefit type.

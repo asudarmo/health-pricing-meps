@@ -112,3 +112,71 @@ def test_real_claimants_match_the_frames_and_the_cap_excess_adds_up():
     # benefit-type costs add to the person-year cost, so the totals agree
     train_benefit = benefit[benefit["split"] == "train"]["cost"].sum()
     assert train_benefit == pytest.approx(claimants.sum())
+
+
+def test_the_approved_cap_and_load():
+    assert lc.LARGE_CLAIM_CAP == 100_000.0 and lc.PROVISIONAL_LOAD == 0.065
+
+
+def test_capped_cost_limits_each_value_and_keeps_the_excess():
+    cost = pd.Series([0.0, 50_000.0, 100_000.0, 250_000.0])
+    capped = lc.capped_cost(cost)
+    assert capped.tolist() == [0.0, 50_000.0, 100_000.0, 100_000.0]
+    assert (cost - capped).tolist() == [0.0, 0.0, 0.0, 150_000.0]
+    assert lc.capped_cost(cost, 10.0).max() == 10.0
+
+
+def test_cap_frames_adds_a_column_and_leaves_cost_alone(frames_for_cap):
+    capped = lc.cap_frames(frames_for_cap)
+    assert capped.train["capped_cost"].tolist() == [10.0, 100_000.0]
+    assert capped.train["cost"].tolist() == [10.0, 300_000.0]
+    assert capped.test["capped_cost"].tolist() == [100_000.0]
+    assert "capped_cost" not in frames_for_cap.train.columns
+
+
+@pytest.fixture
+def frames_for_cap():
+    train = pd.DataFrame({"cost": [10.0, 300_000.0]})
+    test = pd.DataFrame({"cost": [100_000.0]})
+    return mf.Frames(train, test, {})
+
+
+def test_benefit_cost_is_capped_on_the_total_and_shared_by_uncapped_cost():
+    benefit = pd.DataFrame(
+        {
+            "DUPERSID": ["a", "a", "b", "b", "c", "c"],
+            "year": 2022,
+            "benefit_type": ["inpatient_daycase", "outpatient"] * 3,
+            "cost_2023_prices": [150_000.0, 50_000.0, 20_000.0, 30_000.0, 0.0, 0.0],
+        }
+    )
+    capped = lc.capped_benefit_cost(benefit)
+    assert capped.tolist() == [75_000.0, 25_000.0, 20_000.0, 30_000.0, 0.0, 0.0]
+    totals = capped.groupby(benefit["DUPERSID"]).sum()
+    assert totals["a"] == 100_000.0 and totals["b"] == 50_000.0 and totals["c"] == 0.0
+
+
+def test_with_load_adds_a_percentage_of_capped_cost():
+    assert lc.with_load(pd.Series([100.0, 200.0])).tolist() == pytest.approx([106.5, 213.0])
+    assert lc.with_load(100.0, 0.1) == pytest.approx(110.0)
+
+
+@pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
+def test_real_benefit_cap_agrees_with_the_person_year_cap_and_the_load_is_6_5_percent():
+    frames = mf.load_frames()
+    benefit = lc.load_benefit_claimants()
+    train = benefit[benefit["split"] == "train"].copy()
+    train["capped"] = lc.capped_benefit_cost(train, cost="cost")
+    people = frames.train[frames.train["claimant"] == 1]
+    assert train["capped"].sum() == pytest.approx(lc.capped_cost(people["cost"]).sum())
+    load = lc.excess_load_table(people, lc.LARGE_CLAIM_CAP).iloc[0]["excess_load"]
+    assert round(load, 3) == lc.PROVISIONAL_LOAD
+
+
+def test_capped_summary_adds_up(frames_for_cap):
+    table = lc.capped_summary(lc.cap_frames(frames_for_cap)).set_index("split")
+    train = table.loc["train"]
+    assert train["cost"] == 300_010.0 and train["capped_cost"] == 100_010.0
+    assert train["excess"] == 200_000.0 and train["claimants_above_cap"] == 1
+    assert train["excess_load"] == pytest.approx(200_000 / 100_010)
+    assert table.loc["test", "excess"] == 0.0
