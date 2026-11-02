@@ -175,8 +175,11 @@ def test_a_scored_option_is_rebalanced_and_keeps_its_factor_count():
     result = factors.scored_option(prepared, "t", ["age"], ["ctrl"])
     assert result.rating_factors == 1
     assert result.candidate.train.sum() == pytest.approx(frame["cost"].sum())
-    assert result.candidate.test.sum() == pytest.approx(
-        result.rebalance_factor * result.candidate.test.sum() / result.rebalance_factor
+    model = factors.fit_option(frame, ["age"], ["ctrl"])
+    raw_test = factors.predict_option(model, prepared.test, ["ctrl"])
+    assert result.candidate.test == pytest.approx(raw_test * result.rebalance_factor)
+    assert result.rebalance_factor == pytest.approx(
+        frame["cost"].sum() / factors.predict_option(model, frame, ["ctrl"]).sum()
     )
     scores = factors.option_scores(prepared, {"t": result})
     assert set(scores["split"]) == {"train", "test"}
@@ -219,3 +222,21 @@ def test_add_back_sensitivity_reports_the_relativity_and_the_deviance_change():
     assert (out["frequency_relativity"] > 0).all() and (out["severity_relativity"] > 0).all()
     gap = out["test_deviance_with"] - out["test_deviance_without"]
     assert out["change_in_test_deviance"].tolist() == pytest.approx(gap.tolist())
+
+
+@pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
+def test_real_final_model_excludes_the_dropped_factors_and_prices_the_four_controls_at_reference():
+    prepared = glm.prepare_frames(mf.load_frames())
+    controls = factors.controls_for("final")
+    model = factors.fit_option(prepared.train, factors.FINAL_RATING, controls)
+    for dropped in factors.DROPPED_BY_RULE:
+        assert dropped not in model.factors
+        assert not any(term.startswith(f"{dropped}=") for term in model.frequency.params.index)
+    assert set(model.factors) == set(factors.FINAL_RATING) | set(factors.ANALYSIS_ONLY)
+    sample = prepared.test.iloc[::37].copy()
+    base = factors.predict_option(model, sample, controls)
+    for control in factors.ANALYSIS_ONLY:
+        changed = sample.copy()
+        categories = list(changed[control].cat.categories)
+        changed[control] = pd.Categorical([categories[-1]] * len(changed), categories=categories)
+        assert factors.predict_option(model, changed, controls) == pytest.approx(base)

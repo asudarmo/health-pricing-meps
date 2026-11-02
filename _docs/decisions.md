@@ -561,3 +561,34 @@ ranking of the full model. Condition flags are kept as a stand-in so that the pl
 underwriting can proceed.
 Alternatives: option 2 (rejected as the base, kept as a sensitivity), keeping all 14 option 1 factors, and a
 less strict rule that keeps a factor on AIC alone.
+
+## 2026-11-02 Diagnostics and relativities of the final structure (issues #33 and #34)
+Decision: these are findings and presentation choices for the final structure (candidate (a) on 10 rating factors,
+rebalanced on train). No model choice changes. Evidence is in the "Diagnostics of the final structure" and "Relativities of
+the final structure" sections of `notebooks/03_glm.ipynb`, and in `outputs/m3_draft/` (`ae_by_level.csv`,
+`residuals_by_decile.csv`, `lift_by_group.csv` and the four `relativities_*.csv` tables).
+- **Overall A/E.** Train 1.000 (within 2 percent by construction of the rebalancing). Test 1.080, outside 5 percent, with
+  a household band of 0.90 to 1.29. The test excess over the cap is 12.1 percent of capped cost against the 6.5 percent in
+  the provisional load, and with a matched load the test A/E would be 1.03. The gap is consistent with a small test split,
+  a heavy tail and the provisional load, and is not tuned away.
+- **A/E by level.** Rating factors have 7 of 38 levels outside 0.85 to 1.15 on train and 19 of 37 on test. On train the
+  four age bands up to 24 are over-predicted by about 20 to 35 percent, which is consistent with self-rated health being
+  analysis-only and a single rebalancing factor. On test the pattern is noise and the condition flags show some
+  over-spreading.
+- **Lift and over-spreading.** On test the all-factor model over-predicts the top group by 27.5 percent and the final
+  set does not (A/E 1.02), so the factor selection removed that over-fitting. The lowest group is over-predicted on
+  train in both (0.49 final, 0.63 all factors), which points to the form of the model, and is too noisy to read on test.
+  Over-spreading is not present in the final set on this evidence, so no penalised GLM is proposed. It remains an option
+  at a later gate if the user asks.
+- **Relativities.** Frequency and severity relativities are saved with 95 percent bounds, and the combined pure premium
+  relativity is their product with bounds that treat the two as independent (approximate). Age is also shown against the
+  adult band with the most exposure (65 to 69), and the technical reference stays 5 to 14. A prediction recomputed from the
+  base values and relativities matches the model to 1e-8.
+- **Tariff.** The surrogate model (tariff) of the final structure has a median departure of 3.2 percent, a 99th percentile of
+  19 percent and a largest of 62 percent. On test its deviance is 0.95 percent higher than the final structure's and its Gini
+  is 0.390 against 0.399. Its relativities are smaller than the product of the parts for high-risk levels (cancer 1.79
+  against 2.29), because the chance of a claim cannot exceed 1. Which table is the published one is settled in the
+  multiplicative rating structure task.
+- **Flag for review.** The smoking relativities are below 1 (0.60 daily, 0.69 occasional against non-smokers), the opposite of
+  UK pricing assumptions. The factor passes the selection rule and stays in. The sign is flagged and the result is not a
+  finding that smoking lowers cost.
