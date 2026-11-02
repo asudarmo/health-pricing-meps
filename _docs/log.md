@@ -219,3 +219,23 @@ structure is banded, and a leftover short name. Both are fixed, and the Gini exp
 the multiplicative approximation. The M5 tasks (#42 to #50) are created and wait for the user's review.
 
 Next: the user reviews the M5 tasks. Open questions: none.
+
+## 2026-11-02 M5 core out-of-time test and monitoring (issues #42 to #49)
+
+Done: the frozen final model and the 2023 scoring frame (#42), the forecast trend of gate 4 part 2 with the gap decomposition
+(#43), A/E on 2023 by level, age group and decile with lift charts and bands (#44), relativity stability from a refit on 2023
+(#45), PSI drift (#46), the recalibration rule (#47) with its document `_docs/recalibration-rule.md`, the low and high trend
+sensitivity (#48) and the ER-originated stays sensitivity (#49). Tables and charts are in `outputs/m5_draft/` and the evidence is in
+`notebooks/04_monitoring.ipynb`. The Mermaid diagrams of `_docs/data-flow.md` are now rendered to SVG by
+`python -m health_pricing.diagrams` and shown in the notebooks, and a test fails if a diagram changes without a re-render.
+
+Findings: the A/E on 2023 is 1.145 (1.075 to 1.220) under the central 1.9 percent forecast, mostly severity beyond the price
+index. The relativities are stable (Wald p of 0.64 and 0.27), the mix did not move (every PSI below 0.01) and the ranking held (Gini
+0.473). The rule gives a rebase, with a base-rate factor between 1.025 and 1.145 depending on the credibility given to one year.
+People with a diagnosed condition were under-predicted by more than the book, which is a pattern to watch. Adding ER-originated stays
+raises cost by 33 percent and leaves the relativities and the factor ranking unchanged.
+
+Next: the interim README (#51) and the final notebook pass (#50). Then M4, and rerun M5 if M4 changes the model.
+
+Open questions: (1) the factor within the rebase range of 1.025 to 1.145 is a judgement for the user. (2) The condition pattern in
+the A/E by level should be watched with the next year of data. (3) The large-claim load is re-estimated in M6.
