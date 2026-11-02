@@ -182,29 +182,27 @@ flowchart TD
 
 ### 5b. Reading the evidence: level change or structure change
 
-This is the logic the recalibration rule formalises. It is provisional until issue #47 sets the thresholds,
-and this diagram is updated then.
+This is the recalibration rule of issue #47, written in full in `_docs/recalibration-rule.md`. It reads the evidence of
+diagram 5a and recommends one of four actions. The thresholds are in `src/health_pricing/models/recalibration.py`.
 
 ```mermaid
 flowchart TD
-    START["2023 evidence for the frozen model"] --> GAP{"Overall A/E interval<br/>excludes 1?"}
-    GAP -- "no" --> NONE["No action<br/>keep monitoring"]
-    GAP -- "yes" --> WHERE{"Where is the gap?<br/>decomposition of A/E"}
+    START["2023 evidence for the frozen model"] --> STRUCT{"Structure moved?<br/>Wald p below 0.05 for frequency or severity,<br/>or more rating levels beyond noise or off the book<br/>than chance gives (binomial p below 0.05)"}
 
-    WHERE -- "mix or large claims" --> NOLVL["Not a level change<br/>check mix drift (PSI) and the large-claim load"]
-    WHERE -- "frequency or severity<br/>beyond the price index" --> SHAPE{"Relativities stable<br/>and lift flat on 2023?"}
+    STRUCT -- "yes" --> RANK{"Gini fallen by more than 0.05<br/>against the 2022 test split?"}
+    RANK -- "yes" --> REVIEW["Review the structure<br/>factors or form of the model"]
+    RANK -- "no" --> REFIT["Refit the relativities<br/>pooled years, in M6"]
 
-    SHAPE -- "yes" --> LEVEL["Level change<br/>adjust the base rate, credibility-weighted<br/>(one noisy year is not taken at full weight)"]
-    SHAPE -- "no, some levels or<br/>groups move beyond noise" --> STRUCT["Structure change<br/>review the moving factors, refit with pooled years"]
+    STRUCT -- "no" --> GAP{"Overall A/E interval<br/>excludes 1?"}
+    GAP -- "no" --> NONE["Do nothing<br/>keep monitoring"]
+    GAP -- "yes" --> REBASE["Rebase, credibility-weighted<br/>factor between the persistence weight<br/>and the sampling weight"]
 
-    PSI2{"Large PSI on a factor<br/>or on predicted cost?"} -- "yes" --> MIX["Mix drift<br/>check whether the book has changed,<br/>and whether the model still ranks well"]
-    PSI2 -- "no" --> OK["No mix action"]
+    MIX["PSI of a rating factor or of predicted cost above 0.1<br/>reported with the action, a change of mix"] -.-> REBASE
+    MIX -.-> REFIT
+    LOAD["Large-claim load<br/>handled apart, re-estimated in M6"] -.-> REBASE
 ```
 
-Early reading of the 2023 evidence (issue #43): A/E is about 1.15 with an interval that excludes 1, mostly
-from severity beyond the price index, which is read as mainly intensity (more services per claimant), with a
-smaller frequency part. Mix and large claims explain almost none of it. Issue #44 shows the age structure and
-the lift are not contradicted, but people with a diagnosed condition are under-predicted by more than the
-book, which is a pattern to watch. If the relativities prove stable in issue #45, this points to a
-credibility-weighted level change rather than a structure change.
-
+Application to 2023: the structure did not move (Wald p of 0.64 and 0.27, 1 of 13 rating levels beyond noise, 4 of 34 off the book,
+which is within chance), the A/E interval excludes 1 (1.145, 1.075 to 1.220), the PSI is far below 0.1 and the ranking held. The
+rule therefore recommends a rebase, with a factor between 1.025 and 1.145 on the forecast cost, depending on how much weight one
+year receives. The choice within that range is for the user.

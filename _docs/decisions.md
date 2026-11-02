@@ -715,3 +715,28 @@ cost per claim (about 7 percent) is an inference from claims per exposure year a
 "mainly intensity" is a reading and not a measurement. The household intervals of the ratios resample 2022 and 2023 independently
 although many people and households are in both years, so they are somewhat wider than they need to be. The data-implied trend would
 make the frequency part of the 2023 A/E close to 1 by construction, and a cost A/E of 1.139 would remain.
+
+## 2026-11-02 PSI drift choices (issue #46)
+Decision: PSI is computed on exposure shares of the M3 levels, with age in its five-year bands. A share below 0.0001 is raised to
+0.0001, so an empty level does not give an infinite PSI. Predicted cost is binned at the exposure-weighted deciles of 2022 train, for a
+full year of exposure and with no trend, because a trend is a level factor that would move every row into higher bins together.
+Each PSI is shown with a household-resampled interval and with the PSI that sampling noise alone gives, approximated by
+`(levels - 1) * (1 / n1 + 1 / n2)` on person-year counts. The resampled interval is not a confidence interval. Both periods are resampled,
+so it sits above the PSI of the data when the true PSI is near zero. The chart uses a symmetric log axis because every PSI is below 0.01.
+Why: the reading bands of 0.1 and 0.25 are conventions, and the question is whether the movement is more than noise.
+Alternatives: a permutation test for the noise level, which is more exact and could replace the approximation in M9.
+
+## 2026-11-02 Recalibration rule and its thresholds (issue #47)
+Decision: the rule in `_docs/recalibration-rule.md` and `src/health_pricing/models/recalibration.py`. Structure has moved if either Wald
+p-value for the relativities is below 0.05, or the count of rating levels beyond noise (stability) or off the book (A/E) is more than
+chance gives (binomial p below 0.05 at 5 percent per level). The mix has moved if the largest PSI is above 0.1. The ranking is lost
+if the Gini is more than 0.05 below the 2022 test split. The actions are: do nothing, rebase, refit the relativities, or review the
+structure. A rebase is credibility-weighted and reported as a range. The sampling weight is the square root of the claimants over the
+limited-fluctuation standard (90 percent probability of being within 5 percent, 1,082 times one plus the squared coefficient of
+variation of severity). The persistence weight is `spread^2 / (spread^2 + standard error^2)` with a spread of 1.7 percent, from the
+quartiles of the CMS utilization trend.
+Result on 2023: rebase, with a base-rate factor between 1.025 (persistence weight 0.17) and 1.145 (sampling weight 1.00) on the
+forecast cost. The structure did not move, the mix did not move and the ranking held. The choice within the range is left to the user.
+The large-claim load is handled apart. Matching it to the 2023 excess would add 0.37 points to the A/E.
+Why: one noisy year should not be priced in full, and the data cannot say how much the level drifts, so the range is shown and not hidden.
+Alternatives: a single credibility from a Buhlmann model with an estimated drift, which needs more years, and a full rebase.

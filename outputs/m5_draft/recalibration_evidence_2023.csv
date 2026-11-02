@@ -1,0 +1,16 @@
+evidence,value
+a_e,1.1453372811545828
+a_e_lower,1.0747078159759096
+a_e_upper,1.220259839324823
+claimants,7763.0
+severity_cv2,5.411585818502938
+frequency_p,0.6424897919902208
+severity_p,0.27373032127081254
+levels_beyond_noise,1.0
+levels_compared,13.0
+off_book_levels,4.0
+off_book_checked,34.0
+max_psi,0.0019847165070657363
+gini_later,0.4730705353815917
+gini_earlier,0.38588756506901745
+load_a_e_change,0.3692786969181405
