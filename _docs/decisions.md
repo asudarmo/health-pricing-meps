@@ -459,3 +459,43 @@ Why: a positive-cost indicator keeps frequency times severity equal to expected 
 exactly collinear design. The interaction is kept out of the severity part because it is not supported by the test.
 Alternatives: keep zero-cost claimants and fit severity with a small floor (rejected as an arbitrary value), or merge
 the two `unknown` levels into the reference (rejected at gate 6).
+
+## 2026-11-02 Model structure and the surrogate model (tariff) check (decision gate 7, part 1, issue #32)
+Decision: the user chose candidate (a), the binomial cloglog claimant frequency with a Gamma severity, as the risk
+model, provisional until a surrogate model (tariff) check confirmed it. The check confirmed it. Evidence is in the
+"Model comparison" section of `notebooks/03_glm.ipynb`, and the scores are in `outputs/m3_draft/model_comparison.csv`.
+- **Surrogate model (tariff).** A multiplicative log-link GLM (Poisson family, log exposure offset) fitted to (a)'s
+  predicted annual cost on the train split, and not to actual claims, with the same 18 rating factor candidates and
+  the `unknown` control priced at the reference. It is also called tariff extraction, or fitting a rating structure to
+  the technical premium. The code is `health_pricing.models.surrogate`.
+- **Departure from (a).** The median absolute relative difference is 4.7 percent on train and 4.8 percent on test, the
+  99th percentile is 30 percent, and the largest is 63 percent on train and 53 percent on test. Total predicted cost
+  is kept (ratio 1.000 train, 0.998 test). It has 43 parameters against 88 for (a).
+- **Test yardstick (p = 1.5, with 1.3 and 1.7).** Deviance of the surrogate model (tariff) 814,292 against 816,054 for
+  (b) and 808,193 for (a), and the order (a), surrogate model (tariff), (b) is the same at all three powers. The
+  Gini is 0.426 against 0.428 for (b) and 0.433 for (a). Against (b) the deviance difference is -1,762 with a household
+  bootstrap interval of -5,752 to 1,756 (better in 83 percent of resamples), so the margin is small and within noise.
+  The surrogate model (tariff) is nearer 1 than (b) in 7 of 10 double-lift groups.
+- **Rule applied.** If the surrogate model (tariff) of (a) beats (b), confirm (a), and otherwise choose (b). It beats (b)
+  on the Tweedie deviance at all three powers, so (a) is confirmed. The Gini is marginally lower than (b)'s and the
+  deviance gap is within noise, so the check shows (a) keeps its position when put into a multiplicative form and does
+  not show a clear win.
+- **(a) over (c).** The two are statistically indistinguishable, so (a) is chosen on simplicity. (c), the stacked
+  candidate, is the option if the product layer later needs separate inpatient and outpatient pricing, for example an
+  outpatient limit.
+- **Candidate (d) and cross-validation.** The optional event-based candidate (#31) is skipped. No pooled
+  cross-validation is done now. Grouped cross-validation happens in M4 with the LightGBM tuning.
+- **`inscov`.** Everyone is kept, and `inscov` is fitted as a control and priced at the private level.
+- **Factors.** The factor set is decided in a new task, "Permitted factors and factor selection (gate 7, part 2)",
+  placed between #32 and #33. Self-rated health (`rthlth`, `mnhlth`), exercise (`PHYEXE53`) and `inscov` are
+  analysis-only. An option with the condition flags analysis-only as well is also presented, because UK individual PMI
+  usually handles pre-existing conditions through exclusions (moratorium or full medical underwriting) and not premium
+  loadings. Diagnostics (#33) and relativities (#34) use the final factor set.
+- **Test A/E.** The overall test A/E of 1.08 and the level-by-level failures are consistent with a small test split,
+  a heavy tail and the provisional large-claim load. They are noted in the notebook and are not tuned away.
+- **M4.** The plan for M4 now includes a surrogate model (tariff) of the tuned gradient-boosting model, compared with
+  the GLM's surrogate model (tariff) on the holdout.
+Why: a rating engine holds a multiplicative tariff, so a structure that is not exactly multiplicative has to be
+compared after it is put into that form. The check keeps the yardstick the same and tests whether (a)'s advantage
+over the already multiplicative (b) survives.
+Alternatives: choose (b), which is exactly multiplicative, and choose (c) for the benefit-type split.
