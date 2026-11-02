@@ -429,3 +429,33 @@ price noise. Holding the load to train keeps the test split a clean holdout.
 Alternatives: caps of 50,000 (109 claimants, 13.9 percent of cost removed), 250,000 (4 claimants), and the 99th,
 99.5th and 99.9th percentiles (sample dependent). A higher load taken from the test split, and loads by age group or
 benefit type.
+
+## 2026-11-02 Candidate models (a), (b) and (c): fitting choices (issues #28, #29, #30)
+Decision: the candidates are fitted by `health_pricing.models.glm` and `stacked` with `statsmodels`, which the user
+approved as a main dependency. Scores are in `outputs/m3_draft/scores_candidate_a.csv`, `_b.csv` and `_c.csv`, and the
+evidence is in `notebooks/03_glm.ipynb`. These are modelling choices within the approved plan and not decision gates.
+- **Claimant indicator.** The frequency target is whether the capped annual cost is above zero, so the Gamma severity
+  model sees only positive costs. This drops 34 of 7,229 train claimants (0.5 percent) and 6 test claimants whose
+  recorded claims have a zero cost. The claim count is never a weight or a predictor.
+- **Factors.** All 18 rating factor candidates are used by every candidate, so the structures are compared on the same
+  inputs. `inscov` is an ordinary factor in this comparison. The factor set for the final structure, including
+  `inscov`, is decided at gate 7.
+- **`unknown` control.** The same people are `unknown` on the smoking and exercise questions, so the two `unknown`
+  columns are identical. They are replaced by one `unknown_control` column that is fitted and then set to zero (priced at
+  the reference) when predicting. This follows the gate 6 decision.
+- **Scoring.** Predictions are capped expected cost plus the provisional 6.5 percent load, scored against the uncapped
+  annual cost of the 2022 test split with the shared metrics. Poisson claimant counts can exceed 1 and are not capped.
+- **Gamma dispersion** is estimated from the Pearson chi-squared, the `statsmodels` default. It is 5.25 for (a) and (b)
+  and 5.35 for (c).
+- **Candidate (c).** The `benefit_type` x age interaction is tested by the fall in deviance, divided by the Gamma
+  dispersion for severity, against a chi-squared distribution. The frequency part is significant (80.5 on 15 degrees of
+  freedom) and the severity part is not (10.7 on 15, p = 0.78). Two versions are scored, `c` with main effects only and
+  `c_age_interaction` with the interaction in the frequency part. Standard errors are clustered by person. The tests
+  treat rows as independent, so their p-values are approximate.
+Results on the 2022 test split (baseline deviance 928,364): (a) 808,193, Gini 0.433, A/E 1.080. (b) 816,054, 0.428,
+1.066. (c) 809,923, 0.432, 1.065. (c) with the age interaction 814,569, 0.431, 1.054. The ranking is for the model
+comparison in the next task and is not a choice.
+Why: a positive-cost indicator keeps frequency times severity equal to expected cost. One control column avoids an
+exactly collinear design. The interaction is kept out of the severity part because it is not supported by the test.
+Alternatives: keep zero-cost claimants and fit severity with a small floor (rejected as an arbitrary value), or merge
+the two `unknown` levels into the reference (rejected at gate 6).
