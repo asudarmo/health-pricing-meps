@@ -750,3 +750,15 @@ weight the total is the same under every trend (1.167), because a higher trend l
 the relativities.
 Why: the trend is a level factor, so the useful question is how much of the level it explains and whether the action changes.
 Alternatives: showing only the A/E under each trend, which hides that the trend and the rebase offset each other.
+
+## 2026-11-02 ER-originated stays sensitivity: method (issue #49)
+Decision: the broadened cost of a person-year is its base cost plus its ER-originated stay cost, both at 2023 prices, and a person
+with such a stay is a claimant. The large-claim cap stays at 100,000 dollars and the provisional load is not re-estimated. The frozen
+base model is scored on the broadened 2023 cost, and the same structure is refitted on the broadened 2022 train cost and scored on
+the broadened 2023 cost, so that both the shift in level and the like-for-like A/E are shown. The relativity intervals treat the base
+and broadened fits as independent although the broadened cost contains the base cost, so they are wide.
+Result: the stays add 33.0 percent to 2023 cost and 2.8 percent to claimants. The base model A/E rises from 1.145 to 1.523, and the
+refit has an A/E of 1.147. No relativity is beyond noise, the factor ranking is unchanged and the age curve ratio contains 1 at every age.
+The base definition stays the approved one. Any change to the PMI-scope definition needs the user at decision gate 2.
+Why: this is the sensitivity planned in the PMI-scope decision.
+Alternatives: a larger cap for the broadened cost, which would need the pooled load estimate of M6.
