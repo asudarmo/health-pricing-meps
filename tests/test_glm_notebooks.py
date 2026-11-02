@@ -257,6 +257,13 @@ def test_the_specification_table_parameters_equal_the_saved_scores():
         assert rows[name] == int(test.loc[name, "parameters"]), name
     final = summary.read("final_scores.csv").set_index(["candidate", "split"])
     assert rows["(a) Final tariff"] == int(final.loc[("final_tariff", "test"), "parameters"])
+    options = summary.read("permitted_factor_options.csv").set_index(["candidate", "split"])
+    assert rows["(a) Final structure, 9 rating factors"] == int(
+        options.loc[("final", "test"), "parameters"]
+    )
+    age = summary.read("age_curve_comparison.csv")
+    spline = age[(age["spline"] == "spline with 4 df") & (age["model"] == "spline")]
+    assert rows["(a) Final structure with a smooth age curve"] == int(spline["parameters"].iloc[0])
 
 
 def test_the_model_specifications_section_defines_the_notation_and_every_model():
@@ -268,7 +275,7 @@ def test_the_model_specifications_section_defines_the_notation_and_every_model()
         "### (b) Poisson × Gamma",
         "### (c) Stacked by benefit type",
         "### (c) Stacked with age × benefit interaction",
-        "### Final structure and surrogate model (tariff)",
+        "### Final structure, the smooth age model and the surrogate model (tariff)",
         "### Comparison of the specifications",
         "### The yardstick",
     ):

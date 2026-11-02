@@ -641,3 +641,19 @@ sections of `notebooks/03_glm.ipynb`.
 Why: a smoker discount has no support as a risk effect and would carry a factor with no effect if floored, and the smooth
 curve removes irregularities between bands that look like noise while keeping the table format.
 Alternatives: floor the smoker relativity at 1.00, and keep the age relativities as fitted by band.
+
+## 2026-11-02 Model specifications and descriptive model names in the GLM notebooks
+Decision: after the notebook review, `notebooks/03_glm.ipynb` has a "Model specifications" section after "Data and metrics",
+with the notation, the equations of each candidate, the final structure, the smooth age model and the surrogate model
+(tariff), a comparison table, and the definitions of the Tweedie deviance and the exposure-weighted Gini. Models carry
+descriptive names with their letters in every table, chart legend and saved file, namely "(a) Binomial-cloglog × Gamma",
+"(b) Poisson × Gamma", "(c) Stacked by benefit type", "(c) Stacked with age × benefit interaction" and "(a) Surrogate
+model (tariff)". Deviance is shown with its percentage reduction against the baseline of the same split in the comparison,
+option and final score tables and in the headline tables. `03_glm_summary.ipynb` shows the comparison table, the equations
+of the chosen model and the final tariff, and a lift chart of the final tariff with household bands.
+- The final structure that is scored (80 parameters, test Gini 0.393) has age in five-year bands. The final tariff is fitted
+  to the same structure with a smooth adult age curve (64 parameters, test Gini 0.386), so the tariff's lower Gini (0.378)
+  comes mostly from smoothing age and partly from the multiplicative approximation.
+- The internal option names `all_factors`, `option_1`, `final` and `final_tariff` are not renamed.
+Why: a reviewer needs to check what is fitted, and the letters alone did not say.
+Alternatives: keep the short keys in tables, or rename the option names too.
