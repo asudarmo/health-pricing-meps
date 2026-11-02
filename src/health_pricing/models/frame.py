@@ -124,6 +124,7 @@ def frame_summary(frames: Frames) -> pd.DataFrame:
                 "exposure": frame["exposure"].sum(),
                 "claimants": int(frame["claimant"].sum()),
                 "claimant_rate": frame["claimant"].mean(),
+                "zero_cost_claimants": int(((frame["claimant"] == 1) & (frame["cost"] == 0)).sum()),
                 "claims": int(frame["claim_count"].sum()),
                 "cost": frame["cost"].sum(),
                 "mean_cost_per_claimant": frame["cost_per_claimant"].mean(),

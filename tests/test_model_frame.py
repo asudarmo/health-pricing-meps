@@ -119,6 +119,14 @@ def test_summary_and_reference_tables(mart):
     assert table.loc["region", "exposure_share"] == pytest.approx(2.5 / 3.5)
 
 
+def test_zero_cost_claimants_are_counted_in_the_summary(mart):
+    extra = pd.DataFrame([_row("1005", 2022, "train", claim_count=1, claim_cost_2023_prices=0.0)])
+    frames = mf.build_frames(pd.concat([mart, extra], ignore_index=True))
+    summary = mf.frame_summary(frames).set_index("split")
+    assert summary.loc["train", "zero_cost_claimants"] == 1
+    assert summary.loc["test", "zero_cost_claimants"] == 0
+
+
 def _built() -> bool:
     if not DUCKDB_PATH.exists():
         return False
@@ -149,3 +157,23 @@ def test_row_counts_equal_the_mart_counts_for_2022():
     assert set(frames.train["split"]) == {"train"} and set(frames.test["split"]) == {"test"}
     for placeholder in mf.NOT_REFERENCE:
         assert placeholder not in frames.reference_levels.values()
+
+
+@pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
+def test_metrics_on_the_real_frames_reconcile_and_the_baseline_does_not_rank():
+    import numpy as np
+
+    from health_pricing.models import metrics as mm
+
+    frames = mf.load_frames()
+    test = frames.test
+    baseline = mm.baseline_predictions(frames.train, test)
+    assert mm.gini(test["cost"], baseline, test["exposure"]) == pytest.approx(0.0, abs=1e-12)
+    lift = mm.lift_table(test["cost"], baseline, test["exposure"])
+    assert lift["person_years"].sum() == len(test)
+    assert lift["actual"].sum() == pytest.approx(test["cost"].sum())
+    assert lift["exposure"].tolist() == pytest.approx([test["exposure"].sum() / 10] * 10, rel=0.02)
+    shifted = baseline * np.where(test["age"].astype(int) >= 50, 1.5, 0.8)
+    double = mm.double_lift_table(test["cost"], baseline, shifted, test["exposure"])
+    assert double["actual"].sum() == pytest.approx(test["cost"].sum())
+    assert double["predicted_a"].sum() == pytest.approx(baseline.sum())

@@ -1,8 +1,10 @@
 """Metrics shared by every M3 candidate (issue #23).
 
 A prediction is the expected annual cost of a person-year, exposure included. Actual is the
-observed annual cost of the same person-year. Rows with equal predicted risk (prediction per
-exposure year) are tied, so the order of rows never changes a result.
+observed annual cost of the same person-year. Risk is the prediction per exposure year. Rows
+whose risks agree to a relative 1e-9 are tied, so floating-point noise cannot split them. The
+Gini does not depend on the order of rows. In the lift tables, tied rows that straddle a group
+boundary are placed by row order, which only matters when many rows share one prediction.
 """
 
 from __future__ import annotations
@@ -12,6 +14,7 @@ import pandas as pd
 
 TWEEDIE_POWER = 1.5
 POWER_CHECKS = (1.3, 1.5, 1.7)
+RISK_TOLERANCE = 1e-9
 
 
 def tweedie_deviance(actual, predicted, power: float = TWEEDIE_POWER) -> float:
@@ -35,6 +38,14 @@ def deviance_by_power(actual, predicted, powers=POWER_CHECKS) -> dict[float, flo
     return {p: tweedie_deviance(actual, predicted, p) for p in powers}
 
 
+def _tie_ids(risk: pd.Series) -> pd.Series:
+    """A group number for each row. Risks within the tolerance of each other share a number."""
+    order = risk.sort_values(kind="stable").index
+    values = risk.loc[order].to_numpy()
+    starts = np.concatenate([[True], np.diff(values) > RISK_TOLERANCE * np.abs(values[:-1])])
+    return pd.Series(np.cumsum(starts), index=order).reindex(risk.index)
+
+
 def _grouped(actual, predicted, exposure) -> pd.DataFrame:
     """One row per distinct predicted risk, ordered from lowest to highest."""
     frame = pd.DataFrame(
@@ -44,8 +55,8 @@ def _grouped(actual, predicted, exposure) -> pd.DataFrame:
             "exposure": np.asarray(exposure, dtype=float),
         }
     )
-    frame["risk"] = frame["predicted"] / frame["exposure"]
-    return frame.groupby("risk", as_index=False)[["actual", "predicted", "exposure"]].sum()
+    frame["tie"] = _tie_ids(frame["predicted"] / frame["exposure"])
+    return frame.groupby("tie")[["actual", "predicted", "exposure"]].sum().reset_index(drop=True)
 
 
 def gini(actual, predicted, exposure) -> float:
@@ -67,7 +78,7 @@ def gini(actual, predicted, exposure) -> float:
 
 def _buckets(order_key: pd.Series, exposure: pd.Series, n: int) -> pd.Series:
     """Exposure-weighted groups 1 to n by the order of `order_key`, ties kept stable."""
-    order = order_key.sort_values(kind="stable").index
+    order = _tie_ids(order_key).sort_values(kind="stable").index
     cumulative = exposure.loc[order].cumsum()
     midpoint = (cumulative - exposure.loc[order] / 2) / exposure.sum()
     bucket = np.minimum((midpoint * n).astype(int), n - 1) + 1
@@ -75,7 +86,12 @@ def _buckets(order_key: pd.Series, exposure: pd.Series, n: int) -> pd.Series:
 
 
 def lift_table(actual, predicted, exposure, n: int = 10) -> pd.DataFrame:
-    """Actual and expected cost by predicted-risk group. Also the A/E by predicted-cost decile."""
+    """Actual and expected cost by group of predicted risk, with the A/E of each group.
+
+    Groups hold equal exposure and are ordered by predicted risk, the prediction per exposure year,
+    so a part-year person is placed by their annual rate, not by their small expected cost. This
+    is what the A/E by predicted-cost decile means throughout M3.
+    """
     frame = pd.DataFrame(
         {
             "actual": np.asarray(actual, dtype=float),

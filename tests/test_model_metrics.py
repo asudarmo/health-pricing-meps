@@ -126,3 +126,24 @@ def test_baseline_scores_have_the_headline_columns_and_a_zero_gini():
     # the baseline ranks every person-year the same, so its Gini is 0
     assert scores["gini"].tolist() == pytest.approx([0.0, 0.0])
     assert scores.loc[0, "a_e"] == pytest.approx(1.0)  # the baseline matches train in total
+
+
+def test_gini_of_a_constant_risk_prediction_is_zero_with_part_year_exposure():
+    # predictions of the form rate x exposure do not always divide back to identical risks
+    rng = np.random.default_rng(7)
+    exposure = rng.choice([0.1, 0.3, 0.7, 1 / 3, 0.58, 1.0], size=5000)
+    actual = rng.gamma(0.5, 400.0, size=5000) * (rng.random(5000) < 0.4)
+    for rate in (123.456, 77.7, 1 / 7, 2377.5):
+        assert mm.gini(actual, rate * exposure, exposure) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_risks_that_differ_only_by_float_noise_are_tied_but_real_differences_are_not():
+    tied = pd.Series([1.0, 1.0 + 1e-13, 2.0])
+    assert mm._tie_ids(tied).tolist() == [1, 1, 2]
+    assert mm._tie_ids(pd.Series([1.0, 1.0 + 1e-6])).tolist() == [1, 2]
+
+
+def test_lift_groups_are_by_predicted_risk_per_exposure_not_raw_predicted_cost():
+    # row A: cost 30 over one year, risk 30. Row B: cost 20 over half a year, risk 40.
+    table = mm.lift_table(actual=[5, 99], predicted=[30, 20], exposure=[1.0, 0.5], n=2)
+    assert table["actual"].tolist() == [5, 99]  # group 1 is row A, which has the lower risk
