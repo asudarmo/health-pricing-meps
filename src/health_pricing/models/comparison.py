@@ -20,8 +20,15 @@ from health_pricing.models.frame import FACTORS, Frames
 COMPARISON_PATH = glm.SCORES_DIR / "model_comparison.csv"
 AE_LOW, AE_HIGH = 0.85, 1.15
 MIN_CLAIMANTS = 30
-BASELINE = "baseline"
-NOT_FITTED = {"d": "Optional event-based candidate, not fitted in this round."}
+# Names used in every table, chart and saved file. The letter is the candidate of the plan.
+NAME_A = "(a) Binomial-cloglog × Gamma"
+NAME_B = "(b) Poisson × Gamma"
+NAME_C = "(c) Stacked by benefit type"
+NAME_C_AGE = "(c) Stacked with age × benefit interaction"
+NAME_A_SURROGATE = "(a) Surrogate model (tariff)"
+NAME_D = "(d) Event-based"
+BASELINE = "Baseline (overall mean)"
+NOT_FITTED = {NAME_D: "Optional event-based candidate, not fitted in this round."}
 
 
 @dataclass
@@ -59,7 +66,7 @@ def fit_candidates(raw: Frames) -> tuple[Frames, dict[str, Candidate]]:
     benefit_unit = {s: getattr(benefit, s).assign(exposure=1.0) for s in ("train", "test")}
     tests = stacked.interaction_tests(benefit.train)
     candidates = {}
-    for name, link in (("a", "cloglog"), ("b", "poisson")):
+    for name, link in ((NAME_A, "cloglog"), (NAME_B, "poisson")):
         model = glm.fit_two_part(train, link, name=name)
         candidates[name] = Candidate(
             name,
@@ -69,7 +76,7 @@ def fit_candidates(raw: Frames) -> tuple[Frames, dict[str, Candidate]]:
             model.predict(unit["train"]),
             model.predict(unit["test"]),
         )
-    for name, parts in (("c", ()), ("c_age_interaction", stacked.significant_parts(tests))):
+    for name, parts in ((NAME_C, ()), (NAME_C_AGE, stacked.significant_parts(tests))):
         model = stacked.fit_stacked(benefit.train, parts)
 
         candidates[name] = Candidate(
@@ -145,7 +152,11 @@ def comparison_table(prepared: Frames, candidates: dict[str, Candidate]) -> pd.D
             rows.append({"candidate": name, "split": split, "dropped_reason": reason})
     table = pd.DataFrame(rows)
     columns = [c for c in glm.SCORE_COLUMNS if c != "dropped_reason"]
-    return table[[*columns, "max_multiplicative_departure", "dropped_reason"]]
+    table = table[[*columns, "max_multiplicative_departure", "dropped_reason"]]
+    reference = table[table["candidate"] == BASELINE][["split", "tweedie_deviance"]]
+    table = metrics.add_deviance_reduction(table, reference)
+    order = [*columns[:3], "deviance_reduction_pct", *columns[3:]]
+    return table[[*order, "max_multiplicative_departure", "dropped_reason"]]
 
 
 def save_comparison(table: pd.DataFrame, path: Path = COMPARISON_PATH) -> Path:
@@ -220,7 +231,7 @@ def deviance_difference_interval(
     frame: pd.DataFrame,
     candidates: dict[str, Candidate],
     split: str = "test",
-    reference: str = "a",
+    reference: str = NAME_A,
     n_boot: int = 2000,
     seed: int = 20221102,
 ) -> pd.DataFrame:

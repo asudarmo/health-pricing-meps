@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from health_pricing.models import comparison, glm
+from health_pricing.models import comparison, glm, metrics
 from health_pricing.models.frame import FACTORS, Frames
 
 CONDITION_FLAGS = [
@@ -183,7 +183,8 @@ def option_scores(prepared: Frames, results: dict[str, OptionResult]) -> pd.Data
             scores.insert(2, "rating_factors", result.rating_factors)
             scores.insert(3, "rebalance_factor", result.rebalance_factor)
             rows.append(scores.drop(columns="dropped_reason"))
-    return pd.concat(rows, ignore_index=True)
+    baseline = metrics.baseline_scores(prepared.train, prepared.test)
+    return metrics.add_deviance_reduction(pd.concat(rows, ignore_index=True), baseline)
 
 
 def drop_one_tests(train: pd.DataFrame, rating: list[str], controls: list[str]) -> pd.DataFrame:

@@ -101,7 +101,7 @@ def test_a_surrogate_candidate_can_be_scored_like_any_other():
     prepared = cmp.Frames(train, test, {})
     reference = candidate("a", kinked(train), kinked(test))
     tariff, scored = surrogate.surrogate_candidate(prepared, reference, factors=FACTORS)
-    assert scored.name == "a_surrogate" and scored.parameters == tariff.parameters == 4
+    assert scored.name == cmp.NAME_A_SURROGATE and scored.parameters == tariff.parameters == 4
     assert len(scored.train) == len(train) and len(scored.test) == len(test)
     # the unit prediction is the same tariff at a full year of exposure
     assert scored.train_unit == pytest.approx(tariff.predict(train.assign(exposure=1.0)))

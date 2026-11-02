@@ -70,7 +70,7 @@ def fit_surrogate_tariff(
 def surrogate_candidate(
     prepared: Frames,
     reference: comparison.Candidate,
-    name: str = "a_surrogate",
+    name: str = comparison.NAME_A_SURROGATE,
     factors: list[str] = FACTORS,
 ) -> tuple[SurrogateTariff, comparison.Candidate]:
     """The surrogate model (tariff) of a candidate, as a candidate that can be scored."""

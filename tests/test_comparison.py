@@ -148,7 +148,10 @@ def test_the_comparison_table_has_the_agreed_columns_and_marks_unfitted_candidat
     predicted_test = test["exposure"].to_numpy() * 900
     fitted = cmp.Candidate("a", 3, predicted_train, predicted_test, predicted_train, predicted_test)
     table = cmp.comparison_table(frames, {"a": fitted})
-    assert {"baseline", "a", "d"} <= set(table["candidate"])
+    assert {cmp.BASELINE, "a", cmp.NAME_D} <= set(table["candidate"])
+    assert "deviance_reduction_pct" in table.columns
+    baseline_rows = table[table["candidate"] == cmp.BASELINE]
+    assert (baseline_rows["deviance_reduction_pct"].abs() < 1e-9).all()
     assert set(table["split"]) == {"train", "test"}
     for column in ("tweedie_deviance", "gini", "a_e", "parameters", "dropped_reason"):
         assert column in table.columns
@@ -182,13 +185,13 @@ def test_real_comparison_matches_the_saved_candidate_scores_and_the_poisson_is_m
 
     prepared, candidates = cmp.fit_candidates(mf.load_frames())
     table = cmp.comparison_table(prepared, candidates)
-    assert set(candidates) == {"a", "b", "c", "c_age_interaction"}
+    assert set(candidates) == {cmp.NAME_A, cmp.NAME_B, cmp.NAME_C, cmp.NAME_C_AGE}
     saved = pd.read_csv(glm.SCORES_DIR / "scores_candidate_a.csv").set_index("split")
-    row = table[(table["candidate"] == "a") & (table["split"] == "test")].iloc[0]
+    row = table[(table["candidate"] == cmp.NAME_A) & (table["split"] == "test")].iloc[0]
     assert row["tweedie_deviance"] == pytest.approx(saved.loc["test", "tweedie_deviance"])
     departure = table.set_index(["candidate", "split"])["max_multiplicative_departure"]
     # log links on both parts and an offset make the Poisson candidate exactly multiplicative
-    assert departure[("b", "test")] < 1e-6 and departure[("a", "test")] > 0.01
+    assert departure[(cmp.NAME_B, "test")] < 1e-6 and departure[(cmp.NAME_A, "test")] > 0.01
 
 
 def test_overall_ae_interval_brackets_the_point_estimate_and_is_reproducible():

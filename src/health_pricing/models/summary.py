@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from health_pricing.models import comparison as names
 from health_pricing.models import glm, large_claims
 
 OUTPUT_DIR = glm.SCORES_DIR
@@ -18,6 +19,7 @@ FIGURES = [
         "double_lift_surrogate",
         "Double lift of the surrogate model (tariff) against candidates (b) and (a)",
     ),
+    ("lift_final_tariff", "Lift of the final tariff with household bands"),
     ("relativities_final", "Relativities of the final structure"),
     ("age_curve", "Smooth adult age curve and the tariff band relativities"),
     ("smoking_by_age_group", "Smoking relativity by adult age group"),
@@ -36,6 +38,12 @@ def _row(table: pd.DataFrame, **match) -> pd.Series:
     return table[mask].iloc[0]
 
 
+def with_reduction(row: pd.Series) -> str:
+    """A deviance with its percentage reduction against the baseline of the same split."""
+    deviance, reduction = row["tweedie_deviance"], row["deviance_reduction_pct"]
+    return f"{deviance:,.0f} ({reduction:.1f} percent below the baseline)"
+
+
 def headline_numbers() -> pd.DataFrame:
     """The headline numbers as a table of label, text value and source file."""
     comparison = read("model_comparison.csv")
@@ -50,8 +58,8 @@ def headline_numbers() -> pd.DataFrame:
     def test(candidate):
         return _row(comparison, candidate=candidate, split="test")
 
-    baseline, a, b = test("baseline"), test("a"), test("b")
-    surrogate = test("a_surrogate")
+    baseline, a, b = test(names.BASELINE), test(names.NAME_A), test(names.NAME_B)
+    surrogate = test(names.NAME_A_SURROGATE)
     option = _row(options, candidate="final", split="test")
     tariff = _row(final, candidate="final_tariff", split="test")
     overall = _row(check, split="test")
@@ -75,33 +83,37 @@ def headline_numbers() -> pd.DataFrame:
             "model_comparison.csv",
         ),
         (
-            "Candidate (a), all factors, test deviance",
-            f"{a['tweedie_deviance']:,.0f}",
-            "model_comparison.csv",
-        ),
-        ("Candidate (a), all factors, test Gini", f"{a['gini']:.3f}", "model_comparison.csv"),
-        ("Candidate (b), test deviance", f"{b['tweedie_deviance']:,.0f}", "model_comparison.csv"),
-        (
-            "Surrogate model (tariff) of (a), test deviance",
-            f"{surrogate['tweedie_deviance']:,.0f}",
+            "(a) Binomial-cloglog × Gamma, all factors, test deviance",
+            with_reduction(a),
             "model_comparison.csv",
         ),
         (
-            "Surrogate model (tariff) of (a), test Gini",
+            "(a) Binomial-cloglog × Gamma, all factors, test Gini",
+            f"{a['gini']:.3f}",
+            "model_comparison.csv",
+        ),
+        ("(b) Poisson × Gamma, test deviance", with_reduction(b), "model_comparison.csv"),
+        (
+            "(a) Surrogate model (tariff), test deviance",
+            with_reduction(surrogate),
+            "model_comparison.csv",
+        ),
+        (
+            "(a) Surrogate model (tariff), test Gini",
             f"{surrogate['gini']:.3f}",
             "model_comparison.csv",
         ),
         (
-            "Final structure (9 factors), test deviance",
-            f"{option['tweedie_deviance']:,.0f}",
+            "(a) Final structure (9 factors), test deviance",
+            with_reduction(option),
             "permitted_factor_options.csv",
         ),
         (
-            "Final structure (9 factors), test Gini",
+            "(a) Final structure (9 factors), test Gini",
             f"{option['gini']:.3f}",
             "permitted_factor_options.csv",
         ),
-        ("Final tariff, test deviance", f"{tariff['tweedie_deviance']:,.0f}", "final_scores.csv"),
+        ("Final tariff, test deviance", with_reduction(tariff), "final_scores.csv"),
         ("Final tariff, test Gini", f"{tariff['gini']:.3f}", "final_scores.csv"),
         ("Final tariff, parameters", f"{int(tariff['parameters'])}", "final_scores.csv"),
         ("Final tariff, test A/E", f"{overall['a_e']:.3f}", "final_tariff_overall_check.csv"),

@@ -179,6 +179,20 @@ def score(frame: pd.DataFrame, predicted, power: float = TWEEDIE_POWER) -> dict[
     }
 
 
+def add_deviance_reduction(scores: pd.DataFrame, baseline: pd.DataFrame) -> pd.DataFrame:
+    """Add `deviance_reduction_pct`, the percentage fall in deviance against the baseline.
+
+    Both tables have a `split` and a `tweedie_deviance` column. The reduction is taken against the
+    baseline of the same split, as 100 times one minus the model deviance over the baseline's.
+    """
+    reference = baseline.set_index("split")["tweedie_deviance"]
+    out = scores.copy()
+    out["deviance_reduction_pct"] = 100 * (
+        1 - out["tweedie_deviance"] / out["split"].map(reference)
+    )
+    return out
+
+
 def baseline_scores(train: pd.DataFrame, test: pd.DataFrame, power: float = TWEEDIE_POWER):
     """Scores of the overall-mean baseline on train and test."""
     rows = []

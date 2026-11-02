@@ -12,6 +12,7 @@ import pytest
 from nbclient import NotebookClient
 
 from health_pricing.data.load import DUCKDB_PATH
+from health_pricing.models import comparison as comparison_names
 from health_pricing.models import figures, summary
 
 REPO = Path(__file__).resolve().parents[1]
@@ -138,21 +139,30 @@ def test_the_headline_numbers_equal_the_saved_tables():
     test = comparison[comparison["split"] == "test"].set_index("candidate")
     assert (
         table["Baseline test deviance (p = 1.5)"]
-        == f"{test.loc['baseline', 'tweedie_deviance']:,.0f}"
+        == f"{test.loc[comparison_names.BASELINE, 'tweedie_deviance']:,.0f}"
     )
-    assert table["Candidate (a), all factors, test Gini"] == f"{test.loc['a', 'gini']:.3f}"
-    assert table["Surrogate model (tariff) of (a), test deviance"] == (
-        f"{test.loc['a_surrogate', 'tweedie_deviance']:,.0f}"
+    assert (
+        table["(a) Binomial-cloglog × Gamma, all factors, test Gini"]
+        == f"{test.loc[comparison_names.NAME_A, 'gini']:.3f}"
     )
+    surrogate_row = test.loc[comparison_names.NAME_A_SURROGATE]
+    baseline_deviance = test.loc[comparison_names.BASELINE, "tweedie_deviance"]
+    reduction = 100 * (1 - surrogate_row["tweedie_deviance"] / baseline_deviance)
+    assert table["(a) Surrogate model (tariff), test deviance"] == (
+        f"{surrogate_row['tweedie_deviance']:,.0f} ({reduction:.1f} percent below the baseline)"
+    )
+    assert surrogate_row["deviance_reduction_pct"] == pytest.approx(reduction)
     final = summary.read("final_scores.csv").set_index(["candidate", "split"])
-    assert table["Final tariff, test deviance"] == (
-        f"{final.loc[('final_tariff', 'test'), 'tweedie_deviance']:,.0f}"
+    tariff_deviance = final.loc[("final_tariff", "test"), "tweedie_deviance"]
+    assert table["Final tariff, test deviance"].startswith(f"{tariff_deviance:,.0f} (")
+    assert final.loc[("final_tariff", "test"), "deviance_reduction_pct"] == pytest.approx(
+        100 * (1 - tariff_deviance / baseline_deviance)
     )
     assert table["Final tariff, parameters"] == str(
         int(final.loc[("final_tariff", "test"), "parameters"])
     )
     options = summary.read("permitted_factor_options.csv").set_index(["candidate", "split"])
-    assert table["Final structure (9 factors), test Gini"] == (
+    assert table["(a) Final structure (9 factors), test Gini"] == (
         f"{options.loc[('final', 'test'), 'gini']:.3f}"
     )
     assert options.loc[("final", "test"), "rating_factors"] == 9
@@ -225,3 +235,47 @@ def test_the_summary_decisions_table_is_the_full_notebooks_table():
     assert _decision_rows(SUMMARY) == _decision_rows(FULL)
     markdown = _text(nbformat.read(SUMMARY, as_version=4), "markdown")
     assert "A shorter notebook" not in markdown
+
+
+def test_the_specification_table_parameters_equal_the_saved_scores():
+    notebook = nbformat.read(FULL, as_version=4)
+    cell = next(c.source for c in notebook.cells if c.source.startswith("### Comparison of the"))
+    rows = {
+        line.split("|")[1].strip(): int(line.split("|")[-2])
+        for line in cell.split(chr(10))
+        if line.startswith("| (")
+    }
+    comparison = summary.read("model_comparison.csv")
+    test = comparison[comparison["split"] == "test"].set_index("candidate")
+    for name in (
+        comparison_names.NAME_A,
+        comparison_names.NAME_B,
+        comparison_names.NAME_C,
+        comparison_names.NAME_C_AGE,
+        comparison_names.NAME_A_SURROGATE,
+    ):
+        assert rows[name] == int(test.loc[name, "parameters"]), name
+    final = summary.read("final_scores.csv").set_index(["candidate", "split"])
+    assert rows["(a) Final tariff"] == int(final.loc[("final_tariff", "test"), "parameters"])
+
+
+def test_the_model_specifications_section_defines_the_notation_and_every_model():
+    notebook = nbformat.read(FULL, as_version=4)
+    markdown = _text(notebook, "markdown")
+    for heading in (
+        "## Model specifications",
+        "### (a) Binomial-cloglog × Gamma",
+        "### (b) Poisson × Gamma",
+        "### (c) Stacked by benefit type",
+        "### (c) Stacked with age × benefit interaction",
+        "### Final structure and surrogate model (tariff)",
+        "### Comparison of the specifications",
+        "### The yardstick",
+    ):
+        assert heading in markdown, heading
+    for symbol in ("$t_i", "$N_i", "$S_i", "$C$", r"$\ell$", r"\text{cloglog}", "Tweedie deviance"):
+        assert symbol in markdown, symbol
+    # the section sits directly after Data and metrics and before the benefit types
+    assert markdown.index("## Data and metrics") < markdown.index("## Model specifications")
+    assert markdown.index("## Model specifications") < markdown.index("## Benefit types")
+    assert not any(c.cell_type == "markdown" and not c.source.strip() for c in notebook.cells)
