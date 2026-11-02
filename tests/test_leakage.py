@@ -90,8 +90,8 @@ def test_the_loader_takes_only_2022_train_adults():
     columns = ", ".join(f"'x' AS {v}" for v in leakage.UNKNOWN_VARIABLES)
     con.execute(
         "CREATE TABLE mart_person_year AS "
-        f"SELECT * FROM (VALUES (2022, 'train', 30), (2022, 'train', 17), (2022, 'train', 18), (2022, 'test', 40), "
-        f"(2023, 'out_of_time', 40)) AS t(year, split, age), "
+        "SELECT * FROM (VALUES (2022, 'train', 30), (2022, 'train', 17), (2022, 'train', 18), "
+        "(2022, 'test', 40), (2023, 'out_of_time', 40)) AS t(year, split, age), "
         f"(SELECT {columns}, true AS left_survey_early, 1.0 AS exposure, 1 AS claim_count, "
         f"5.0 AS claim_cost_2023_prices)"
     )
