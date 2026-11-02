@@ -1,9 +1,9 @@
 # Data flow and decision rules
 
-Three diagrams show how raw MEPS data becomes the modelling frame, and how the UK PMI framing is applied.
-Each step names the `decisions.md` entry behind it. The diagrams show structure only. Counts of persons,
-events and cost at each step are in the generated table at the end, so the numbers cannot drift from the
-data.
+The diagrams show how raw MEPS data becomes the modelling frame (sections 1 to 3), and how the final model
+is tested forward on 2023 and monitored (section 5). Each step names the `decisions.md` entry or issue behind
+it. The diagrams show structure only. Counts of persons, events and cost at each step of the data pipeline
+are in the generated table in section 4, so the numbers cannot drift from the data.
 
 ## 1. Pipeline from raw MEPS files to the modelling frame
 
@@ -134,3 +134,77 @@ dying. An insurer cannot know this when pricing, so it is never priced as a rati
 Generated, do not edit by hand. To be produced from `exclusion_log`, `int_events_pmi`, `int_person_claims`
 and `mart_person_year`: persons, events and cost (nominal and at 2023 prices) for each year at each step
 of diagrams 1 and 2.
+
+## 5. Out-of-time test and monitoring (M5)
+
+The final M3 model is frozen, fitted on 2022 only, and scored on 2023 as a pricing team would score next
+year's experience. Nothing is fitted on 2023 except the comparison refits, which are labelled as such.
+
+### 5a. From the frozen model to the monitoring evidence
+
+```mermaid
+flowchart TD
+    FROZEN["Frozen M3 model, fitted on 2022 train<br/>technical model: binomial-cloglog frequency × Gamma severity<br/>9 rating factors · spline age · rebalanced base<br/>surrogate model (tariff): multiplicative, five-year bands"]
+    FRAME2023["2023 scoring frame<br/>same levels and grouping map as 2022<br/>2023 costs at 2023 prices"]
+
+    TREND{"Forecast trend 2022 to 2023<br/>set without looking at 2023"}
+    TREND -- "central" --> TC["External utilization trend 1.9%<br/>CMS Unified Rate Review, plan year 2023 filings<br/>median across filings, applied to expected annual cost"]
+    TREND -- "sensitivities" --> TS["0.8% and 3.1% (quartiles) · 0% · hazard-only application"]
+    TREND -. "diagnostic only, never the forecast" .-> TD2["Trend the data imply<br/>2022 vs 2023 estimate"]
+
+    FROZEN --> SCORE["Score 2023<br/>technical model and tariff"]
+    FRAME2023 --> SCORE
+    TC --> SCORE
+
+    SCORE --> AE["A/E overall with household intervals<br/>decomposition: frequency · severity beyond price index ·<br/>mix · large claims"]
+    SCORE --> LVL["A/E by factor level · lift and double lift with bands ·<br/>Gini and deviance at three Tweedie powers"]
+    FRAME2023 --> STAB["Relativity stability<br/>same structure refitted on 2023, comparison only"]
+    FRAME2023 --> PSI["PSI drift<br/>each factor and predicted cost, bins set on 2022 train"]
+
+    AE --> RULE["Recalibration rule<br/>see 5b"]
+    LVL --> RULE
+    STAB --> RULE
+    PSI --> RULE
+
+    RULE --> SENS["Sensitivities<br/>trend low and high · ER-originated stays added back"]
+```
+
+| Step | Decision log entry or issue |
+|---|---|
+| Frozen model and 2023 frame | Issue #42 |
+| Forecast trend | Gate 4 part 2, frequency trend assumption (issue #43) |
+| A/E by level, lift and double lift | Issue #44 |
+| Relativity stability | Issue #45 |
+| PSI drift | Issue #46 |
+| Recalibration rule | Issue #47 |
+| Trend sensitivity | Issue #48 |
+| ER-originated stays sensitivity | Issue #49, and the PMI-scope claim definition (gate 2) |
+
+### 5b. Reading the evidence: level change or structure change
+
+This is the logic the recalibration rule formalises. It is provisional until issue #47 sets the thresholds,
+and this diagram is updated then.
+
+```mermaid
+flowchart TD
+    START["2023 evidence for the frozen model"] --> GAP{"Overall A/E interval<br/>excludes 1?"}
+    GAP -- "no" --> NONE["No action<br/>keep monitoring"]
+    GAP -- "yes" --> WHERE{"Where is the gap?<br/>decomposition of A/E"}
+
+    WHERE -- "mix or large claims" --> NOLVL["Not a level change<br/>check mix drift (PSI) and the large-claim load"]
+    WHERE -- "frequency or severity<br/>beyond the price index" --> SHAPE{"Relativities stable<br/>and lift flat on 2023?"}
+
+    SHAPE -- "yes" --> LEVEL["Level change<br/>adjust the base rate, credibility-weighted<br/>(one noisy year is not taken at full weight)"]
+    SHAPE -- "no, some levels or<br/>groups move beyond noise" --> STRUCT["Structure change<br/>review the moving factors, refit with pooled years"]
+
+    PSI2{"Large PSI on a factor<br/>or on predicted cost?"} -- "yes" --> MIX["Mix drift<br/>check whether the book has changed,<br/>and whether the model still ranks well"]
+    PSI2 -- "no" --> OK["No mix action"]
+```
+
+Early reading of the 2023 evidence (issue #43): A/E is about 1.15 with an interval that excludes 1, mostly
+from severity beyond the price index, which is read as mainly intensity (more services per claimant), with a
+smaller frequency part. Mix and large claims explain almost none of it. Issue #44 shows the age structure and
+the lift are not contradicted, but people with a diagnosed condition are under-predicted by more than the
+book, which is a pattern to watch. If the relativities prove stable in issue #45, this points to a
+credibility-weighted level change rather than a structure change.
+
