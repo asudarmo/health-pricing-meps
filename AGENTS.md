@@ -61,7 +61,8 @@ Do not decide these alone. Present the evidence and options, recommend one, and 
 4. The price index used to on-level 2022 costs, and the assumed frequency trend
 5. Large-claim threshold and treatment
 6. Grouping of rating-factor levels (e.g. age bands) in the final GLMs
-7. GLM vs GBM model choice, and the final rating structure
+7. The GLM model structure (frequency and severity form, and any benefit-type split), the treatment of `inscov`,
+   GLM vs GBM model choice, and the final rating structure
 8. Any change to the plan's scope or the published output contract (section 6)
 
 Pre-approved patterns (no gate needed, log each use in `_docs/decisions.md`):

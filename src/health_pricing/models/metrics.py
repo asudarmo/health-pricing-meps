@@ -17,20 +17,24 @@ POWER_CHECKS = (1.3, 1.5, 1.7)
 RISK_TOLERANCE = 1e-9
 
 
-def tweedie_deviance(actual, predicted, power: float = TWEEDIE_POWER) -> float:
-    """Total Tweedie deviance for 1 < power < 2. Actuals may be zero, predictions must not."""
+def tweedie_unit_deviance(actual, predicted, power: float = TWEEDIE_POWER) -> np.ndarray:
+    """Tweedie deviance of each row for 1 < power < 2. Actuals may be zero, predictions must not."""
     if not 1 < power < 2:
         raise ValueError("power must be between 1 and 2")
     y = np.asarray(actual, dtype=float)
     mu = np.asarray(predicted, dtype=float)
     if (mu <= 0).any():
         raise ValueError("predictions must be positive")
-    unit = 2 * (
+    return 2 * (
         y ** (2 - power) / ((1 - power) * (2 - power))
         - y * mu ** (1 - power) / (1 - power)
         + mu ** (2 - power) / (2 - power)
     )
-    return float(unit.sum())
+
+
+def tweedie_deviance(actual, predicted, power: float = TWEEDIE_POWER) -> float:
+    """Total Tweedie deviance for 1 < power < 2. Actuals may be zero, predictions must not."""
+    return float(tweedie_unit_deviance(actual, predicted, power).sum())
 
 
 def deviance_by_power(actual, predicted, powers=POWER_CHECKS) -> dict[float, float]:
