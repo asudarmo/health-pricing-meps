@@ -155,3 +155,25 @@ def test_real_benefit_frames_match_the_person_year_frames():
     model = stacked.fit_stacked(benefit.train)
     predicted = stacked.predict_person_year(model, benefit.test, persons.test)
     assert predicted.notna().all() and len(predicted) == len(persons.test)
+
+
+def test_the_interaction_prediction_adds_the_cell_effect_for_one_benefit_type():
+    rows = stacked_frame()
+    model = fit(rows, ("frequency",))
+    person = pd.DataFrame(
+        {
+            "age": pd.Categorical(["40-44"], categories=["30-34", "35-39", "40-44"]),
+            "benefit_type": pd.Categorical(["inpatient_daycase"], categories=TYPES),
+            "exposure": [1.0],
+        }
+    )
+    terms = ["const", "age=40-44", "benefit_type=inpatient_daycase"]
+    cell = "benefit_type=inpatient_daycase:age=40-44"
+    eta = sum(model.frequency.params[t] for t in [*terms, cell])
+    severity = np.exp(sum(model.severity.params[t] for t in terms))
+    assert model.predict_capped(person)[0] == pytest.approx((1 - np.exp(-np.exp(eta))) * severity)
+
+
+def test_no_count_column_is_a_rating_factor_or_a_design_column():
+    assert not {"claim_count", "event_count"} & set(mf.FACTORS)
+    assert not {"claim_count", "event_count"} & set(stacked.BENEFIT_FACTORS)

@@ -32,7 +32,7 @@ def load_benefit_frames(frames: Frames, con: duckdb.DuckDBPyConnection | None = 
     try:
         columns = ", ".join(FACTORS)
         mart = con.execute(
-            f"SELECT DUPERSID, year, split, benefit_type, {columns}, exposure, claimant, "
+            f"SELECT DUPERSID, year, split, benefit_type, {columns}, exposure, "
             f"cost_2023_prices AS cost FROM mart_person_year_benefit "
             f"WHERE year = {MODEL_YEAR} AND split IN ('train', 'test')"
         ).fetchdf()
