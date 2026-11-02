@@ -24,7 +24,8 @@ OUTPUT_DIR = glm.SCORES_DIR
 Z95 = 1.959963984540054
 TABLE_COLUMNS = [
     "factor", "level", "role", "is_reference", "relativity", "presentation_relativity",
-    "exposure", "claimants", "lower_95", "upper_95",
+    "exposure", "claimants", "lower_95", "upper_95", "presentation_lower_95",
+    "presentation_upper_95",
 ]  # fmt: skip
 
 
@@ -149,21 +150,89 @@ def tariff_table(
     return pd.DataFrame(rows)
 
 
-def add_presentation(table: pd.DataFrame, age_reference: str) -> pd.DataFrame:
-    """Add `presentation_relativity`, with age rebased to `age_reference` and others unchanged.
+def _log_ratio(result, band: str, reference: str, technical: str) -> tuple[float, float]:
+    """The log ratio of an age band to a reference band, and its variance, from a fitted part.
+
+    The ratio is a contrast of the coefficients, so its variance is the contrast times the
+    covariance matrix times the contrast. The technical reference band has no coefficient.
+    """
+    contrast = pd.Series(0.0, index=result.params.index)
+    if band != technical:
+        contrast[f"age={band}"] += 1.0
+    if reference != technical:
+        contrast[f"age={reference}"] -= 1.0
+    covariance = result.cov_params()
+    return float(contrast @ result.params), float(contrast @ covariance @ contrast)
+
+
+def rebased_age_table(
+    model: glm.TwoPartModel, reference_band: str, technical_reference: str
+) -> pd.DataFrame:
+    """Age relativities against `reference_band` with intervals from the covariance matrix.
+
+    For each band the log of the ratio to the reference band is a contrast of the coefficients, with
+    its variance from the covariance matrix. The combined ratio is the product of the frequency and
+    severity ratios, and its bounds treat the two parts as independent, so they are approximate.
+    The table has the columns `level`, `part`, `relativity`, `lower_95` and `upper_95`.
+    """
+    frequency = model.frequency.params.index
+    bands = sorted(
+        {technical_reference, *(t.split("=", 1)[1] for t in frequency if t.startswith("age="))}
+    )
+    rows = []
+    for band in bands:
+        logs = {
+            part: _log_ratio(getattr(model, part), band, reference_band, technical_reference)
+            for part in ("frequency", "severity")
+        }
+        logs["combined"] = (
+            logs["frequency"][0] + logs["severity"][0],
+            logs["frequency"][1] + logs["severity"][1],
+        )
+        for part, (diff, var) in logs.items():
+            error = Z95 * np.sqrt(max(var, 0.0))
+            rows.append(
+                {
+                    "level": band,
+                    "part": part,
+                    "relativity": float(np.exp(diff)),
+                    "lower_95": float(np.exp(diff - error)),
+                    "upper_95": float(np.exp(diff + error)),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def add_presentation(
+    table: pd.DataFrame, age_reference: str, rebased: pd.DataFrame | None = None
+) -> pd.DataFrame:
+    """Add presentation columns, with age rebased to `age_reference` and others unchanged.
 
     The technical reference level of age is the band with the most exposure overall. For
     presentation the age relativities are divided by that of the adult band with the most
-    exposure. The rebasing changes how the table reads and not the model.
+    exposure. The rebasing changes how the table reads and not the model. The bounds for age in
+    `presentation_lower_95` and `presentation_upper_95` are those of the ratio to the presentation
+    band when `rebased` (from `rebased_age_table`, for this part) is given, and are empty
+    otherwise. The bounds in `lower_95` and `upper_95` stay on the technical reference.
     """
     out = table.copy()
     scale = float(
         out.loc[(out["factor"] == "age") & (out["level"] == age_reference), "relativity"].iloc[0]
     )
-    out["presentation_relativity"] = np.where(
-        out["factor"] == "age", out["relativity"] / scale, out["relativity"]
-    )
-    out = out.drop(columns="log_error")
+    is_age = out["factor"] == "age"
+    out["presentation_relativity"] = np.where(is_age, out["relativity"] / scale, out["relativity"])
+    out["presentation_lower_95"] = np.where(is_age, np.nan, out["lower_95"])
+    out["presentation_upper_95"] = np.where(is_age, np.nan, out["upper_95"])
+    if rebased is not None:
+        by_level = rebased.set_index("level")
+        for column, source in (
+            ("presentation_lower_95", "lower_95"),
+            ("presentation_upper_95", "upper_95"),
+        ):
+            mapped = out.loc[is_age, "level"].map(by_level[source])
+            out.loc[is_age, column] = mapped.to_numpy()
+    if "log_error" in out:
+        out = out.drop(columns="log_error")
     return out[TABLE_COLUMNS]
 
 

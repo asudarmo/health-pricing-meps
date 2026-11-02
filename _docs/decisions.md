@@ -592,3 +592,25 @@ the final structure" sections of `notebooks/03_glm.ipynb`, and in `outputs/m3_dr
 - **Flag for review.** The smoking relativities are below 1 (0.60 daily, 0.69 occasional against non-smokers), the opposite of
   UK pricing assumptions. The factor passes the selection rule and stays in. The sign is flagged and the result is not a
   finding that smoking lowers cost.
+
+## 2026-11-02 Smoking check and age curve: findings for the gate (issues #40 and #41)
+Decision: none yet. These are findings and recommendations, and the choices are the user's. Evidence is in the "Smoking
+check" and "Age curve" sections of `notebooks/03_glm.ipynb` and in `outputs/m3_draft/` (`smoking_*.csv`,
+`age_curve_*.csv`). The code is `health_pricing.models.smoking` and `agecurve`.
+- **Smoking.** Removing the condition flags barely moves the smoker relativity (daily 0.600 with and 0.596 without,
+  occasional 0.688 and 0.733), so the flags do not absorb the discount. It is mostly in frequency (about 0.70 daily). It
+  is present in every adult age group before and after adjustment (crude cost for all smokers 0.86, 0.71 and 0.82 at 18 to
+  39, 40 to 64 and 65 and over, adjusted daily smokers 0.52, 0.49 and 0.67). The pattern fits a difference in the use of
+  care, and the data cannot separate lower need from lower use. Recommended: make smoking analysis-only, which leaves 9
+  rating factors, and put no smoker discount in the tariff. The alternative is a floor at 1.00.
+- **Age curve.** An adult natural spline with 4 degrees of freedom has 64 parameters against 80 for the five-year bands, and
+  its AIC (at a common Gamma dispersion) is 20.1 lower. Against a model that holds both, the bands add nothing beyond the
+  spline (p = 0.134) and the spline adds something beyond the bands (p = 0.011). On the test split the bands are 0.2 percent
+  better on deviance (826,675 against 828,268) and 0.006 higher on Gini, within noise. The 3-degree spline is not
+  distinguishable from the bands. Recommended: read the tariff's band relativities off the smooth curve, which removes the
+  dips at ages 35 to 39, 40 to 44 and 70 to 74.
+- **Rebased age intervals.** The age relativities against the 65 to 69 band now have intervals from the covariance matrix
+  (70 to 74 is 1.21, 0.94 to 1.55), saved as `presentation_lower_95` and `presentation_upper_95`. The earlier note that the
+  intervals were on the technical base is replaced by this.
+- **Code.** `design_matrix` and `fit_two_part` accept numeric columns, which carry the spline terms.
+Alternatives: floor smoking at 1.00 instead of analysis-only, and keep the five-year bands as fitted.

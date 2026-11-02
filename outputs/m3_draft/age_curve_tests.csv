@@ -1,0 +1,5 @@
+spline,model_tested,curve_added,lr_statistic,df,p_value
+spline with 3 df,bands,spline,6.615356461480677,6.0,0.3578867886294406
+spline with 3 df,spline,bands,35.05210398378284,24.0,0.06763197216534333
+spline with 4 df,bands,spline,19.870721048574378,8.0,0.010836378892770566
+spline with 4 df,spline,bands,31.72239133683267,24.0,0.13402740384978515

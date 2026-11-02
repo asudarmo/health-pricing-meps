@@ -51,12 +51,14 @@ def design_matrix(
     factors: list[str] = FACTORS,
     rating: bool = False,
     interaction: tuple[str, str] | None = None,
+    numeric: tuple[str, ...] = (),
 ) -> pd.DataFrame:
     """A constant, then a 0/1 column for each non-reference level of each factor.
 
     The `unknown` level of the smoking and exercise questions becomes one `unknown_control` column
     that is 1 for those person-years when fitting and 0 when `rating` is set, so they are priced at
-    the reference. `interaction` names two factors whose level pairs are added as extra columns.
+    the reference. `interaction` names two factors whose level pairs are added as extra columns,
+    and `numeric` names frame columns that are added as they are, for example spline terms.
     """
     data = frame[list(factors)].copy()
     kept = [factor for factor in levels.KEEP_UNKNOWN if factor in data]
@@ -79,6 +81,8 @@ def design_matrix(
         for a in first:
             for b in second:
                 matrix[f"{a}:{b}"] = first[a] * second[b]
+    for column in numeric:
+        matrix[column] = frame[column].to_numpy(dtype=float)
     matrix.insert(0, "const", 1.0)
     return matrix
 
@@ -104,9 +108,12 @@ class TwoPartModel:
     severity_columns: list[str]
     frequency: object
     severity: object
+    numeric: tuple[str, ...] = ()
 
     def _matrix(self, frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
-        matrix = design_matrix(frame, self.factors, rating=True, interaction=self.interaction)
+        matrix = design_matrix(
+            frame, self.factors, rating=True, interaction=self.interaction, numeric=self.numeric
+        )
         return matrix.reindex(columns=columns, fill_value=0.0)
 
     def expected_claimants(self, frame: pd.DataFrame) -> np.ndarray:
@@ -145,19 +152,21 @@ def fit_two_part(
     interaction: tuple[str, str] | None = None,
     groups=None,
     interaction_parts: tuple[str, ...] = ("frequency", "severity"),
+    numeric: tuple[str, ...] = (),
 ) -> TwoPartModel:
     """Fit a frequency GLM and a Gamma severity GLM on a train frame.
 
     `frame` needs `exposure`, `capped_cost` and the factor columns. `groups` gives a cluster for
     each row, and the standard errors are then clustered. `interaction_parts` says which parts
-    carry the interaction columns, if there is an interaction. Nothing else in the frame is read,
+    carry the interaction columns, if there is an interaction, and `numeric` names frame columns
+    that enter as they are, such as spline terms. Nothing else in the frame is read,
     so a claim count cannot enter as a weight or a predictor.
     """
     if link not in FREQUENCY_LINKS:
         raise ValueError(f"link must be one of {FREQUENCY_LINKS}")
     groups = None if groups is None else np.asarray(groups)
     claimed = (frame["capped_cost"] > 0).to_numpy()
-    matrix = design_matrix(frame, factors, interaction=interaction)
+    matrix = design_matrix(frame, factors, interaction=interaction, numeric=numeric)
     # a column with no claimants, or no rows, cannot be estimated
     freq_columns = [c for c in matrix if c == "const" or matrix[c].any()]
     sev_columns = [c for c in matrix if c == "const" or matrix.loc[claimed, c].any()]
@@ -191,6 +200,7 @@ def fit_two_part(
         sev_columns,
         frequency,
         severity,
+        tuple(numeric),
     )
 
 
@@ -201,7 +211,9 @@ def coefficient_table(model: TwoPartModel, frame: pd.DataFrame) -> pd.DataFrame:
     capped cost. The constant row carries all claimants.
     """
     claimed = frame["capped_cost"] > 0
-    matrix = design_matrix(frame, model.factors, interaction=model.interaction)
+    matrix = design_matrix(
+        frame, model.factors, interaction=model.interaction, numeric=model.numeric
+    )
     rows = []
     for part, result in (("frequency", model.frequency), ("severity", model.severity)):
         for term, estimate in result.params.items():
