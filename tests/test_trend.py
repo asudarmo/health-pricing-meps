@@ -81,6 +81,11 @@ def test_the_implied_hazard_factor_recovers_a_known_trend():
     assert trend.implied_hazard_factor(train, later) == pytest.approx(1.12, rel=1e-6)
 
 
+def test_forecast_mode_must_be_cost_or_hazard():
+    with pytest.raises(ValueError):
+        trend.forecast_prediction(None, None, None, 1.02, "other")
+
+
 def test_the_tariff_carries_the_technical_models_average_rise_for_a_hazard_factor():
     class Frozen:
         balance = 1.2
@@ -195,14 +200,21 @@ def test_real_decomposition_multiplies_to_the_16_9_percent_gap(frozen, oot):
 @pytest.mark.skipif(not _built(), reason="run the load script and dbt build")
 def test_real_trend_options_move_a_e_down_and_never_use_2023_for_the_forecast(frozen, oot):
     options = {
-        "none": (1.0, "no trend", "forecast"),
-        "urr": (1.019, "URR", "forecast"),
-        "high": (1.031, "URR", "forecast"),
+        "none": (1.0, "cost", "no trend", "sensitivity"),
+        "urr": (1.019, "cost", "URR", "central"),
+        "hazard": (1.019, "hazard", "URR", "comparison"),
+        "high": (1.031, "cost", "URR", "range"),
     }
     table = trend.trend_options(frozen, oot, options, n_boot=200).set_index("option")
     assert table.loc["none", "technical_a_e"] == pytest.approx(1.1671, abs=5e-4)
     assert table.loc["none", "tariff_a_e"] == pytest.approx(1.1670, abs=5e-4)
-    assert table["technical_a_e"].is_monotonic_decreasing
+    # a trend on expected cost divides the A/E by the factor, a hazard trend by less
+    assert table.loc["urr", "technical_a_e"] == pytest.approx(
+        table.loc["none", "technical_a_e"] / 1.019
+    )
+    assert table.loc["urr", "tariff_a_e"] == pytest.approx(table.loc["none", "tariff_a_e"] / 1.019)
+    assert table.loc["hazard", "technical_a_e"] > table.loc["urr", "technical_a_e"]
+    assert table.loc["high", "technical_a_e"] < table.loc["urr", "technical_a_e"]
     assert (table["technical_lower_95"] < table["technical_a_e"]).all()
     # the product of the three ratios is the technical A/E
     train, later = trend.train_parts(frozen), trend.out_of_time_parts(frozen, oot)

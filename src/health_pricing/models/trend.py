@@ -224,34 +224,66 @@ def load_check(frozen: FrozenModel, later: Parts, own_excess_load: float) -> dic
     }
 
 
+COST = "cost"
+HAZARD = "hazard"
+
+
+def forecast_prediction(
+    frozen: FrozenModel,
+    oot: OutOfTime,
+    pieces: Parts,
+    factor: float,
+    mode: str = COST,
+) -> dict[str, np.ndarray]:
+    """Both models' predicted annual cost on 2023 with a forecast trend.
+
+    With `cost` the trend is a utilization trend on expected annual cost, so each prediction is
+    multiplied by the factor. With `hazard` it is a factor on the claim hazard of the technical
+    model, and the tariff carries the technical model's average rise. A factor of 1 is no trend.
+    """
+    if mode == COST:
+        technical = technical_prediction(frozen, pieces) * factor
+        tariff = tariff_prediction(frozen, oot.frame, pieces) * factor
+    elif mode == HAZARD:
+        technical = technical_prediction(frozen, pieces, factor)
+        tariff = tariff_prediction(frozen, oot.frame, pieces, factor)
+    else:
+        raise ValueError(f"mode must be {COST!r} or {HAZARD!r}")
+    return {"technical": technical, "tariff": tariff}
+
+
 def trend_options(
     frozen: FrozenModel,
     oot: OutOfTime,
-    options: dict[str, tuple[float, str, str]],
+    options: dict[str, tuple[float, str, str, str]],
     n_boot: int = N_BOOT,
     seed: int = SEED,
 ) -> pd.DataFrame:
     """A/E on 2023 for the technical model and the tariff under each trend option.
 
-    `options` maps a label to a hazard factor, the source and how the option is used. The interval
-    is
-    from resampling the 2023 households.
+    `options` maps a label to a trend factor, how it is applied (`cost` or `hazard`), its source and
+    how the option is used. The interval is from resampling the 2023 households.
     """
     later = out_of_time_parts(frozen, oot)
     columns = {"Y": later.Y}
-    for k, (factor, _, _) in enumerate(options.values()):
-        columns[f"tech_{k}"] = technical_prediction(frozen, later, factor)
-        columns[f"tariff_{k}"] = tariff_prediction(frozen, oot.frame, later, factor)
+    for k, (factor, mode, _, _) in enumerate(options.values()):
+        predicted = forecast_prediction(frozen, oot, later, factor, mode)
+        columns[f"tech_{k}"] = predicted["technical"]
+        columns[f"tariff_{k}"] = predicted["tariff"]
     sums = household_sums(later, columns)
     boot = resampled_sums(sums, n_boot, seed)
     rows = []
-    for k, (label, (factor, source, use)) in enumerate(options.items()):
-        row = {"option": label, "hazard_factor": factor, "trend_percent": 100 * (factor - 1)}
+    for k, (label, (factor, mode, source, use)) in enumerate(options.items()):
+        row = {
+            "option": label,
+            "factor": factor,
+            "trend_percent": 100 * (factor - 1),
+            "applied_to": mode,
+        }
         for model, key in (("technical", "tech"), ("tariff", "tariff")):
             column = list(columns).index(f"{key}_{k}")
-            estimate = sums[:, 0].sum() / sums[:, column].sum()
+            row[f"{model}_a_e"] = sums[:, 0].sum() / sums[:, column].sum()
             draws = boot[:, 0] / boot[:, column]
-            row[f"{model}_a_e"] = estimate
             row[f"{model}_lower_95"] = float(np.quantile(draws, 0.025))
             row[f"{model}_upper_95"] = float(np.quantile(draws, 0.975))
         row["source"] = source
@@ -348,7 +380,7 @@ def ae_components(
     beyond the price index and large claims), and the mix of people cancels. The tariff has an
     overall A/E only, because it is a single multiplicative model. Intervals resample households.
     """
-    none = trend_options(frozen, oot, {"No trend": (1.0, "", "")}, n_boot).iloc[0]
+    none = trend_options(frozen, oot, {"No trend": (1.0, COST, "", "")}, n_boot).iloc[0]
     split = decomposition(train, later, n_boot).set_index("component")
     rows = [
         (

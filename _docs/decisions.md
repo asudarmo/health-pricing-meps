@@ -684,3 +684,27 @@ trend and the forecast assumption" section of `notebooks/04_monitoring.ipynb` an
   of the gap is consistent with the load. Nothing is tuned for it.
 Recommendation: the external median of 1.9 percent as the central forecast, with 0.8 and 3.1 percent as the range. None (0
 percent) gives the same conclusion within one point of A/E.
+
+## 2026-11-02 Forecast trend for the out-of-time test (decision gate 4, part 2, issue #43)
+Decision: the user decided the forecast trend after seeing the evidence logged above.
+- **Central forecast.** The CMS Unified Rate Review median utilization trend, 1.9 percent, with 0.8 and 3.1 percent (the quartiles) as
+  the sensitivity range. Source: CMS Unified Rate Review public use file for plan year 2023, Worksheet I, file
+  `PY2023_WKSH1_PUF_20221027.csv` in `2023-urr-puf.zip`. Vintage: filings made in 2022, file updated by CMS on 1 November 2022.
+  Value: member-month weighted median Year 2 utilization trend over 713 filings (calendar-year 2021 experience, projection from
+  1 January 2023), 1.5 percent inpatient, 2.5 percent outpatient, 1.9 percent blended by experience claims share.
+- **How it is applied.** As a utilization trend on expected annual cost (expected cost × 1.019), for both the technical model and the
+  tariff. The URR utilization trend is services per member, and in this structure most extra use appears as more claims per claimant
+  (claims per exposure year +9.3 percent against a claimant rate +2.7 percent), so a trend on the claim hazard alone would leave out
+  most of it. The hazard-only application is shown alongside for comparison, and 0 percent is a further sensitivity.
+- **Not used.** The trend that the data imply is a diagnostic only. It is never used as a forecast, because that would make the 2023 A/E
+  close to 1 by construction.
+- **Reading.** The severity component (+13.9 percent, interval 5.6 to 23.0) is mainly intensity, meaning more services per claimant,
+  consistent with the CMS National Health Expenditure finding that growth in 2023 was driven by use and intensity with low price
+  growth. The MEPS magnitude is well above the national real growth of 4.4 percent, so it is noisy and is not to be taken at face
+  value.
+- **Result.** Technical model A/E on 2023 of 1.145 (1.075 to 1.220) under the central forecast, 1.158 at 0.8 percent, 1.132 at 3.1
+  percent and 1.167 with no trend. The hazard-only application of 1.9 percent gives 1.155. The tariff gives the same figures.
+- **For the recalibration rule (#47).** The 2023 evidence points to a level change, but the rule should weight one year of noisy
+  experience by its credibility and not recalibrate fully.
+Why: an external, pre-2023 actuarial view keeps the out-of-time test a test of a forecast.
+Alternatives: no trend as the central forecast, the National Health Expenditure projections, and a trend on the claim hazard only.
