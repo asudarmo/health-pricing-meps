@@ -1,0 +1,7 @@
+scenario,model,ratio_to_central,spread_of_ratio_over_rows
+Low,(a) Technical model,0.9894602198243659,4.440892098500626e-16
+Low,(a) Tariff,0.9894602198243657,4.440892098500626e-16
+Central,(a) Technical model,1.0,0.0
+Central,(a) Tariff,1.0,0.0
+High,(a) Technical model,1.0115358286972749,4.440892098500626e-16
+High,(a) Tariff,1.0115358286972749,4.440892098500626e-16
