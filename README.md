@@ -121,6 +121,16 @@ How the evidence is produced and read:
 
 ![Level or structure](outputs/figures/diagrams/diagram_5b.svg)
 
+### Gradient-boosting challenger (M4-lite)
+
+One LightGBM model (Tweedie objective, log exposure as an offset, monotone in adult age, tuned by five-fold cross-validation grouped
+by household) was compared with the GLM on the 2022 test split and on 2023, with its own surrogate tariff. The GBM does not beat the
+GLM: its test deviance is 840,754 against 838,173 for the GLM tariff and 831,786 for the technical model, with Gini of 0.378, 0.378
+and 0.386, and the gaps are within noise. Its surrogate tariff scores 843,827 with a Gini of 0.368. On 2023 the Gini is 0.469 for the
+GBM, 0.460 for its tariff and 0.468 for the GLM tariff. The recommendation at the decision gate is the **GLM tariff** as the basis for
+pricing. The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is
+`notebooks/05_gbm.ipynb`.
+
 ## Limitations
 
 - **US data.** MEPS is a US survey. Costs, benefit design and the mix of people differ from a UK book, so the results show the
@@ -139,7 +149,7 @@ How the evidence is produced and read:
 
 | Milestone | What it will add | Reruns |
 |---|---|---|
-| M4 Pure premium and ML challenger | A Tweedie GLM, a LightGBM challenger with SHAP, grouped cross-validation, and its own surrogate model (tariff) | If M4 changes the chosen model, the M3 final structure and all of M5 are rerun |
+| M4 Pure premium and ML challenger | The LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff is done (M4-lite). A Tweedie GLM and a wider comparison remain | If M4 changes the chosen model, the M3 final structure and all of M5 are rerun |
 | M6 Final model, rating engine and rate change | A final refit on 2022 and 2023 with a year term, a re-estimated large-claim load and indexed cap, a rating engine, the in-force book and rate-change impact | Supersedes the 1.06 rebase |
 | M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
 | M10 Model serving | A FastAPI service for quotes, relativities and monitoring, serving the published outputs | |

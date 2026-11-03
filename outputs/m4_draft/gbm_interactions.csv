@@ -1,0 +1,6 @@
+feature_a,feature_b,mean_abs_interaction
+age_adult,inscov,0.03609320456896984
+CANCERDX,ARTHDX,0.02825778767654829
+HIBPDX,inscov,0.02733897544409697
+age_adult,region,0.02706333250508945
+region,inscov,0.026860870386063225

@@ -112,3 +112,15 @@ def test_the_readme_says_that_raw_and_person_level_data_are_not_in_the_repositor
 def test_the_readme_links_the_summary_notebooks():
     assert "notebooks/04_monitoring_summary.ipynb" in README
     assert "notebooks/03_glm_summary.ipynb" in README
+
+
+def test_the_gbm_numbers_are_quoted_as_the_saved_tables_have_them():
+    from health_pricing.models import gbm_summary
+
+    table = gbm_summary.headline_numbers().set_index("number")["value"]
+    for label in ("GBM, test deviance", "GBM tariff, test deviance"):
+        assert table[label].split(" (")[0] in README, label
+    assert table["GLM tariff, test deviance"].split(" (")[0] in README
+    assert table["GLM technical model, test deviance"].split(" (")[0] in README
+    assert "0.378, 0.378 and 0.386" in " ".join(README.split())
+    assert "05_gbm_summary.ipynb" in README

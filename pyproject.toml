@@ -11,6 +11,9 @@ dependencies = [
     "requests>=2.32",
     "pyyaml>=6.0",
     "statsmodels>=0.15.0",
+    "lightgbm>=4.7.0",
+    "scikit-learn>=1.9.1",
+    "shap>=0.54.1",
 ]
 
 [dependency-groups]

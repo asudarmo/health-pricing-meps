@@ -772,3 +772,18 @@ one year of own experience, the factor is `1 + 0.3 * 0.145 + 0.7 * 0.025`, which
 Note: the M6 pooled refit with a year term estimates the level directly and supersedes this rebase.
 Why: one noisy year should not be priced in full, and an external view of the level gives a prior.
 Alternatives: the limited-fluctuation weight of 1.00 and the persistence weight of 0.17, reported in the entry of 2026-11-02.
+
+## 2026-11-03 M4-lite: GBM challenger, tuning and result (issues #52 to #56)
+Decision: one LightGBM model with a Tweedie objective (power 1.5) on capped annual cost per person-year, with log exposure as the init
+score. Inputs are the 9 rating factors (adult age as a number, monotone increasing, children in age bands) and `inscov`, priced at
+private when scoring. The prediction carries the provisional load of 6.5 percent and is rebalanced on 2022 train. Tuning is five-fold
+cross-validation on 2022 train, grouped by household, over the 12 combinations of learning rate (0.03, 0.06), leaves (4, 8, 16) and
+minimum rows per leaf (50, 150), with early stopping (patience 50) on the trees. Chosen: learning rate 0.06, 8 leaves, minimum 150
+rows per leaf, 123 trees (mean best iteration of the folds), by the lowest out-of-fold deviance. The grid is flat: the deviances of
+the 12 combinations lie within 0.3 percent. The grid and scores are in `outputs/m4_draft/gbm_cv_grid.csv`.
+Result: on the 2022 test split the GBM has a deviance of 840,754 and a Gini of 0.378 against 831,786 and 0.386 for the GLM technical
+model and 838,173 and 0.378 for the GLM tariff, all within noise. Its surrogate tariff has 843,827 and 0.368. On 2023 the A/E is 1.142
+(GBM) and 1.145 (the others) and the Gini is 0.469, 0.460 (GBM tariff), 0.473 and 0.468. The GBM has no advantage over the GLM, so
+there is nothing for its surrogate to keep.
+Why: a bounded challenger test before the pricing basis is chosen. The GLM is not changed.
+Alternatives: more inputs (the health and exercise controls), a wider grid and more seeds, left for M6 if the user wants them.
