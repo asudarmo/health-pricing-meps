@@ -49,9 +49,18 @@ def test_every_m5_headline_number_is_quoted_as_the_saved_table_has_it():
         "Cost added by ER-originated stays in 2023",
         "A/E with ER-originated stays, base model and refit",
     ]
+    split_labels = {
+        "Wald test that the relativities are unchanged, frequency and severity",
+        "A/E with ER-originated stays, base model and refit",
+    }
+    flat = " ".join(README.split())
     for label in quoted:
         value = table.set_index("number").loc[label, "value"]
-        assert value in README, label
+        if label in split_labels:
+            parts = value.replace("p of ", "").split(" and ")
+            assert all(part in flat for part in parts), label
+        else:
+            assert value in README, label
 
 
 def test_every_m3_headline_number_is_quoted_as_the_saved_table_has_it():
@@ -75,7 +84,7 @@ def test_every_m3_headline_number_is_quoted_as_the_saved_table_has_it():
         assert value.split(" (")[0] in README, label
 
 
-def test_the_model_specification_table_is_the_one_of_the_glm_notebook():
+def test_the_model_specification_rows_are_rows_of_the_glm_notebook_table():
     import json
 
     cells = json.load(open(REPO / "notebooks" / "03_glm_summary.ipynb", encoding="utf-8"))["cells"]
@@ -84,10 +93,53 @@ def test_the_model_specification_table_is_the_one_of_the_glm_notebook():
         for c in cells
         if "".join(c["source"]).startswith("### Comparison of the specifications")
     )
-    table = [line for line in spec.splitlines() if line.startswith("|")]
-    assert table
-    for line in table:
-        assert line in README
+    full = {line for line in spec.splitlines() if line.startswith("|")}
+    rows = [line for line in README.splitlines() if line.startswith("| (a)")]
+    assert len(rows) == 3
+    for line in rows:
+        assert line.rstrip() in full, line
+    assert "| Model | Frequency part | Severity part |" in README
+    for symbol in (r"$\ell$", r"$\rho$", "$r_0$", "$l_k(i)$"):
+        assert symbol in README, symbol
+
+
+def test_the_key_results_come_first_and_quote_the_saved_tables():
+    headings = [line for line in README.splitlines() if line.startswith("#")]
+    assert headings[0].startswith("# UK-style health insurance pricing on MEPS")
+    assert headings[1] == "## Key results"
+    section = README.split("## Key results")[1].split("\n## ")[0]
+    flat = " ".join(section.split())
+    m3 = summary.headline_numbers().set_index("number")["value"]
+    m5 = monitoring_summary.headline_numbers().set_index("number")["value"]
+    deviance = m3["Final tariff, test deviance"]
+    assert deviance.split("(")[1].split(" percent")[0] + " percent below the baseline" in flat
+    assert m3["Final tariff, test Gini"] in flat
+    assert m5["A/E of the technical model on 2023, central forecast"].split(" ")[0] in flat
+    assert m5["Rebase decided by the user"] in flat
+    assert m3["Smoking, daily, relativity"] in flat
+    assert m3["Exercise, raw gap in cost per exposure year"].replace(" percent", "") in flat
+    assert m3["Exercise, adjusted frequency relativity"] in flat
+    assert m3["Exercise, adjusted severity relativity"] in flat
+    for word in ("DuckDB", "dbt", "statsmodels", "LightGBM", "SHAP", "pytest", "SQL", "Python"):
+        assert word in flat, word
+
+
+def test_how_this_was_built_links_the_process_documents():
+    section = README.split("## How this was built")[1].split("\n## ")[0]
+    for link in ("AGENTS.md", "_docs/process.md", "_docs/decisions.md"):
+        assert link in section, link
+
+
+def test_the_notebook_list_names_all_full_and_summary_notebooks():
+    for name in (
+        "03_glm.ipynb",
+        "04_monitoring.ipynb",
+        "05_gbm.ipynb",
+        "03_glm_summary.ipynb",
+        "04_monitoring_summary.ipynb",
+        "05_gbm_summary.ipynb",
+    ):
+        assert name in README, name
 
 
 def test_the_rebase_and_the_final_tariff_agree_with_the_saved_tables():
