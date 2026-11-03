@@ -96,3 +96,12 @@ def test_credibility_follows_the_limited_fluctuation_standard():
 def test_the_chance_probability_of_no_differences_is_one():
     assert rule.chance_probability(0, 13) == 1.0
     assert dataclasses.is_dataclass(evidence())
+
+
+def test_the_decided_rebase_weights_own_experience_with_the_external_level_change():
+    out = rule.decided_rebase(1.1453)
+    assert out["external_level_change"] == pytest.approx(0.025)
+    assert out["factor"] == pytest.approx(1 + 0.3 * 0.1453 + 0.7 * 0.025)
+    assert round(out["factor"], 2) == 1.06
+    assert rule.decided_rebase(1.145, credibility=1.0)["factor"] == pytest.approx(1.145)
+    assert rule.decided_rebase(1.145, credibility=0.0)["factor"] == pytest.approx(1.025)

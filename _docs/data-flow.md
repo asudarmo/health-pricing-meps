@@ -204,5 +204,6 @@ flowchart TD
 
 Application to 2023: the structure did not move (Wald p of 0.64 and 0.27, 1 of 13 rating levels beyond noise, 4 of 34 off the book,
 which is within chance), the A/E interval excludes 1 (1.145, 1.075 to 1.220), the PSI is far below 0.1 and the ranking held. The
-rule therefore recommends a rebase, with a factor between 1.025 and 1.145 on the forecast cost, depending on how much weight one
-year receives. The choice within that range is for the user.
+rule therefore recommends a rebase. The user decided a factor of 1.06 on the forecast cost, which weights the own 2023 experience
+(+14.5 percent) at 0.3 and an external level change of +2.5 percent at 0.7, with 1.025 and 1.145 as the bounds. The M6 pooled refit
+with a year term estimates the level directly and supersedes this rebase.

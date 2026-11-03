@@ -762,3 +762,13 @@ refit has an A/E of 1.147. No relativity is beyond noise, the factor ranking is 
 The base definition stays the approved one. Any change to the PMI-scope definition needs the user at decision gate 2.
 Why: this is the sensitivity planned in the PMI-scope decision.
 Alternatives: a larger cap for the broadened cost, which would need the pooled load estimate of M6.
+
+## 2026-11-03 Rebase decision for the 2023 recalibration (issue #47)
+Decision: the user decided a rebase of 1.06 on the forecast cost, a credibility-weighted level change. Own 2023 experience implies
++14.5 percent, but its severity component is noisy (interval 5.6 to 23.0 percent). The CMS National Health Expenditure real growth of
+4.4 percent in 2023, against the 1.9 percent utilization trend already applied, implies about +2.5 percent. With a weight of 0.3 on
+one year of own experience, the factor is `1 + 0.3 * 0.145 + 0.7 * 0.025`, which is 1.061 and is rounded to 1.06. The bounds shown are
+1.025 (no weight on own experience beyond the external level) and 1.145 (full weight on the 2023 A/E).
+Note: the M6 pooled refit with a year term estimates the level directly and supersedes this rebase.
+Why: one noisy year should not be priced in full, and an external view of the level gives a prior.
+Alternatives: the limited-fluctuation weight of 1.00 and the persistence weight of 0.17, reported in the entry of 2026-11-02.

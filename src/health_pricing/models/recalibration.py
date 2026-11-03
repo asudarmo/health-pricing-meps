@@ -182,6 +182,31 @@ def recommend(evidence: Evidence) -> Recommendation:
     )
 
 
+NHE_REAL_GROWTH_2023 = 0.044  # CMS National Health Expenditure, real growth per person in 2023
+DECIDED_CREDIBILITY = 0.3  # the user's weight on one year of own experience
+
+
+def decided_rebase(
+    a_e: float,
+    credibility: float = DECIDED_CREDIBILITY,
+    external_growth: float = NHE_REAL_GROWTH_2023,
+    applied_trend: float = 0.019,
+) -> dict[str, float]:
+    """The rebase the user decided: own experience weighted with an external level change.
+
+    The external level change is the national real growth over the utilization trend that the
+    forecast already applies. The factor is `1 + Z * (A/E - 1) + (1 - Z) * external`.
+    """
+    external = external_growth - applied_trend
+    own = a_e - 1
+    return {
+        "own_level_change": own,
+        "credibility": credibility,
+        "external_level_change": external,
+        "factor": 1 + credibility * own + (1 - credibility) * external,
+    }
+
+
 def gather(oot: outofsample.OutOfTime, directory: Path = outofsample.OUTPUT_DIR) -> Evidence:
     """The evidence of the saved M5 tables for the tariff-side rule, with the technical model's A/E.
 

@@ -48,3 +48,7 @@ user. A pooled refit of both years in M6 weights the two years about equally, wh
 ## Application to the 2023 evidence
 
 See the section "Recalibration rule" of `notebooks/04_monitoring.ipynb`, which applies the rule to the saved tables.
+
+The user decided a rebase of 1.06 on the forecast cost, a weight of 0.3 on the own 2023 experience and 0.7 on an external level change
+of +2.5 percent, with 1.025 and 1.145 as the bounds (see `_docs/decisions.md`, 2026-11-03). The M6 pooled refit with a year term
+estimates the level directly and supersedes this rebase.
