@@ -107,3 +107,8 @@ def test_every_image_and_link_points_to_a_file_that_exists():
 def test_the_readme_says_that_raw_and_person_level_data_are_not_in_the_repository():
     assert "Raw MEPS files and person-level data are not in the repository" in README
     assert "uv run python -m health_pricing.data.download" in README
+
+
+def test_the_readme_links_the_summary_notebooks():
+    assert "notebooks/04_monitoring_summary.ipynb" in README
+    assert "notebooks/03_glm_summary.ipynb" in README

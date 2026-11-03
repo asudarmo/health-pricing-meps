@@ -21,6 +21,16 @@ FIGURES = [
 ]
 
 
+FIGURES_DIR = OUTPUT_DIR / "figures"
+SUMMARY_FIGURES = [
+    ("gap_decomposition", "Decomposition of the rise in cost per exposure year"),
+    ("ae_by_trend_option", "A/E on 2023 under each trend option"),
+    ("lift_2023", "Lift on 2023 with household bands"),
+    ("relativity_stability_2023", "Relativities of 2023 against 2022"),
+    ("drift_psi_2023", "PSI of the mix and of predicted cost"),
+]
+
+
 def read(name: str) -> pd.DataFrame:
     return pd.read_csv(OUTPUT_DIR / name)
 
@@ -132,3 +142,8 @@ def headline(label: str) -> str:
     """One headline value as text, looked up by its label."""
     table = headline_numbers()
     return table.loc[table["number"] == label, "value"].iloc[0]
+
+
+def rebase_decision() -> pd.DataFrame:
+    """The decided rebase and its bounds, as saved by the monitoring notebook."""
+    return read("rebase_decision_2023.csv")

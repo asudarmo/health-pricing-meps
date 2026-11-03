@@ -7,7 +7,9 @@ progress (see [Roadmap](#roadmap-in-progress)). The full plan is in [`_docs/plan
 [`_docs/decisions.md`](_docs/decisions.md) and the data flow is in [`_docs/data-flow.md`](_docs/data-flow.md).
 
 The audience is an actuarial pricing reviewer. The notebooks explain each step, and every number below is read from a saved table
-under `outputs/`.
+under `outputs/`. The short versions, which only load saved tables and charts, are
+[`notebooks/03_glm_summary.ipynb`](notebooks/03_glm_summary.ipynb) and
+[`notebooks/04_monitoring_summary.ipynb`](notebooks/04_monitoring_summary.ipynb).
 
 ## The problem
 
