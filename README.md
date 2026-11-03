@@ -127,7 +127,7 @@ One LightGBM model (Tweedie objective, log exposure as an offset, monotone in ad
 by household) was compared with the GLM on the 2022 test split and on 2023, with its own surrogate tariff. The GBM does not beat the
 GLM: its test deviance is 840,754 against 838,173 for the GLM tariff and 831,786 for the technical model, with Gini of 0.378, 0.378
 and 0.386, and the gaps are within noise. Its surrogate tariff scores 843,827 with a Gini of 0.368. On 2023 the Gini is 0.469 for the
-GBM, 0.460 for its tariff and 0.468 for the GLM tariff. The recommendation at the decision gate is the **GLM tariff** as the basis for
+GBM, 0.460 for its tariff and 0.468 for the GLM tariff, and the GBM deviance is 0.6 percent below the GLM tariff's but its own tariff is above it. The recommendation at the decision gate is the **GLM tariff** as the basis for
 pricing. The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is
 `notebooks/05_gbm.ipynb`.
 

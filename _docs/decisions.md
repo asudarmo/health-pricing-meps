@@ -784,6 +784,7 @@ the 12 combinations lie within 0.3 percent. The grid and scores are in `outputs/
 Result: on the 2022 test split the GBM has a deviance of 840,754 and a Gini of 0.378 against 831,786 and 0.386 for the GLM technical
 model and 838,173 and 0.378 for the GLM tariff, all within noise. Its surrogate tariff has 843,827 and 0.368. On 2023 the A/E is 1.142
 (GBM) and 1.145 (the others) and the Gini is 0.469, 0.460 (GBM tariff), 0.473 and 0.468. The GBM has no advantage over the GLM, so
-there is nothing for its surrogate to keep.
+there is nothing for its surrogate to keep. On 2023 deviance the GBM (3,518,700) is 0.6 percent below the GLM tariff (3,539,069) and 0.3 percent above
+the technical model (3,506,653), and its tariff is 3,554,354. The double lift on 2022 test has the GLM tariff nearer 1 in 8 of 10 groups.
 Why: a bounded challenger test before the pricing basis is chosen. The GLM is not changed.
 Alternatives: more inputs (the health and exercise controls), a wider grid and more seeds, left for M6 if the user wants them.

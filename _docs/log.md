@@ -250,3 +250,14 @@ problem, data, method, results, limitations, roadmap and how to reproduce, with 
 Self-checked, with no separate QA round, as the user asked.
 
 Next: M4 (not started). Rerun M3 comparisons and M5 if M4 changes the chosen model. Open questions: none.
+
+## 2026-11-03 M4-lite: GBM challenger (issues #52 to #56)
+
+Done: a LightGBM Tweedie model (log exposure offset, monotone in adult age, `inscov` priced at private) tuned by five-fold
+cross-validation grouped by household over 12 combinations, compared with the GLM on the 2022 test split (deviance, Gini, double lift,
+household intervals for the deviance gap), its surrogate tariff, SHAP, and scoring on 2023 with the trend of 1.019. `lightgbm`,
+`scikit-learn` and `shap` were added as approved. Notebooks `05_gbm.ipynb` and `05_gbm_summary.ipynb`, tables in
+`outputs/m4_draft/`. The GBM does not beat the GLM, and the gaps are within noise.
+
+Next: the user's decision at the gate, the GLM tariff or the GBM surrogate tariff as the basis for pricing. The recommendation is the
+GLM tariff. Open questions: whether to test the GBM with the health and exercise controls, and the Tweedie GLM of M4.
