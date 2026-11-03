@@ -123,13 +123,14 @@ How the evidence is produced and read:
 
 ### Gradient-boosting challenger (M4-lite)
 
-One LightGBM model (Tweedie objective, log exposure as an offset, monotone in adult age, tuned by five-fold cross-validation grouped
-by household) was compared with the GLM on the 2022 test split and on 2023, with its own surrogate tariff. The GBM does not beat the
-GLM: its test deviance is 840,754 against 838,173 for the GLM tariff and 831,786 for the technical model, with Gini of 0.378, 0.378
-and 0.386, and the gaps are within noise. Its surrogate tariff scores 843,827 with a Gini of 0.368. On 2023 the Gini is 0.469 for the
-GBM, 0.460 for its tariff and 0.468 for the GLM tariff, and the GBM deviance is 0.6 percent below the GLM tariff's but its own tariff is above it. The recommendation at the decision gate is the **GLM tariff** as the basis for
-pricing. The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is
-`notebooks/05_gbm.ipynb`.
+A LightGBM model with a Tweedie objective, log exposure as an offset and five-fold cross-validation grouped by household did not beat
+the GLM on the 2022 holdout. Its test deviance is 840,754 against 838,173 for the GLM tariff and 831,786 for the technical model, with
+a Gini of 0.378 for both the GBM and the GLM tariff (0.386 for the technical model), and the gaps are within noise. Its surrogate
+tariff is worse than the GLM tariff, with a deviance of 843,827 and a Gini of 0.368. SHAP found no interaction among the rating factors
+that the GLM misses. On 2023 the Gini is 0.469 for the GBM, 0.460 for its tariff and 0.468 for the GLM tariff, and the GBM deviance is
+0.6 percent below the GLM tariff's but its own tariff is above it. The GBM is constrained to rise with adult age, as UK premiums do,
+and a diagnostic refit without the constraint was no better (deviance 843,561, Gini 0.372). **The GLM tariff is the pricing basis.**
+The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is `notebooks/05_gbm.ipynb`.
 
 ## Limitations
 
@@ -141,6 +142,13 @@ pricing. The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gb
 - **Conditions stand in for underwriting.** The condition flags are a proxy for underwriting information, and the A/E by level
   shows a pattern for them that is worth watching.
 - **Smoking.** Smoking is analysis-only and no discount or loading is applied.
+- **Older ages.** The tariff's age curve flattens after about 60 and falls from the 65-69 band (the 80+ relativity is 0.887 against
+  1.000 at 65-69). One likely reason is that the PMI scope leaves out stays that began in the emergency room, which are concentrated at
+  older ages (they add 39.0 percent to cost at 65 and over against 24.8 percent at 18 to 39). The ER sensitivity points the same way
+  but does not settle it. With the stays added, the age curve is higher at old ages (the relativity at 80 against 67 is 0.983 against
+  0.870 and at 85 it is 0.947 against 0.782), yet the interval of the ratio contains 1 at every age. A UK implementation would
+  calibrate older-age relativities to UK market experience. The monotone adult age rule drafted for M6 (issue #57) removes the fall
+  in the meantime.
 - **The trend is an assumption.** The 1.9 percent is an external utilization trend from insurers' rate filings. The A/E and the rebase are
   shown at a low and a high trend.
 - **One out-of-time year.** A change of level cannot be separated from a lasting one with one year.
@@ -149,8 +157,8 @@ pricing. The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gb
 
 | Milestone | What it will add | Reruns |
 |---|---|---|
-| M4 Pure premium and ML challenger | The LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff is done (M4-lite). A Tweedie GLM and a wider comparison remain | If M4 changes the chosen model, the M3 final structure and all of M5 are rerun |
-| M6 Final model, rating engine and rate change | A final refit on 2022 and 2023 with a year term, a re-estimated large-claim load and indexed cap, a rating engine, the in-force book and rate-change impact | Supersedes the 1.06 rebase |
+| M4 Pure premium and ML challenger | Done (lite): the LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff, with the GLM tariff kept as the pricing basis. A Tweedie GLM and a GBM with the health and exercise controls are optional and not run | Nothing, because M4 did not change the chosen model |
+| M6 Final model, rating engine and rate change | A final refit on 2022 and 2023 with a year term, a re-estimated large-claim load and indexed cap, a rating engine, the in-force book and rate-change impact. It also adopts the monotone adult age rule (issue #57, drafted in `outputs/m6_draft/`), an isotonic adjustment of the adult band relativities followed by a rebalance | Supersedes the 1.06 rebase |
 | M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
 | M10 Model serving | A FastAPI service for quotes, relativities and monitoring, serving the published outputs | |
 

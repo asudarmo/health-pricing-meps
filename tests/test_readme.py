@@ -122,5 +122,30 @@ def test_the_gbm_numbers_are_quoted_as_the_saved_tables_have_them():
         assert table[label].split(" (")[0] in README, label
     assert table["GLM tariff, test deviance"].split(" (")[0] in README
     assert table["GLM technical model, test deviance"].split(" (")[0] in README
-    assert "0.378, 0.378 and 0.386" in " ".join(README.split())
+    assert (
+        "a Gini of 0.378 for both the GBM and the GLM tariff (0.386 for the technical model)"
+        in " ".join(README.split())
+    )
     assert "05_gbm_summary.ipynb" in README
+
+
+def test_the_unconstrained_diagnostic_and_the_older_age_limitation_agree_with_saved_tables():
+    from health_pricing.models import gbm
+
+    flat = " ".join(README.split())
+    free = pd.read_csv(gbm.OUTPUT_DIR / "gbm_unconstrained_scores.csv").set_index("candidate")
+    row = free.loc["GBM, no age constraint (diagnostic)"]
+    assert f"{row['tweedie_deviance']:,.0f}" in flat and f"{row['gini']:.3f}" in flat
+    assert "The GLM tariff is the pricing basis" in flat
+    assert "Done (lite)" in flat and "issue #57" in flat and "outputs/m6_draft/" in flat
+    curve = pd.read_csv(outofsample.OUTPUT_DIR / "er_stays_age_curve.csv").set_index("age")
+    for age in (80, 85):
+        assert f"{curve.loc[age, 'relativity_broad']:.3f}" in flat
+        assert f"{curve.loc[age, 'relativity_base']:.3f}" in flat
+    assert ((curve["ratio_lower_95"] > 1) | (curve["ratio_upper_95"] < 1)).sum() == 0
+    added = pd.read_csv(outofsample.OUTPUT_DIR / "er_stays_added_by_age_group.csv")
+    added = added[added["year"] == 2023].set_index("age_group")["cost_added_pct"]
+    assert f"{added['65+']:.1f}" in flat and f"{added['18-39']:.1f}" in flat
+    tariff = pd.read_csv(REPO / "outputs" / "m3_draft" / "relativities_tariff.csv")
+    age = tariff[tariff["factor"] == "age"].set_index("level")["presentation_relativity"]
+    assert f"{age['80+']:.3f}" in flat
