@@ -76,9 +76,13 @@ def feature_matrix(frame: pd.DataFrame, price: bool = False) -> pd.DataFrame:
 
 
 def parameters(
-    learning_rate: float, num_leaves: int, min_data_in_leaf: int, seed: int = SEED
+    learning_rate: float,
+    num_leaves: int,
+    min_data_in_leaf: int,
+    seed: int = SEED,
+    monotone: bool = True,
 ) -> dict:
-    """The LightGBM parameters, with a monotone increasing constraint on adult age."""
+    """The LightGBM parameters, with a monotone increasing constraint on adult age by default."""
     return {
         "objective": "tweedie",
         "tweedie_variance_power": POWER,
@@ -86,7 +90,7 @@ def parameters(
         "learning_rate": learning_rate,
         "num_leaves": num_leaves,
         "min_data_in_leaf": min_data_in_leaf,
-        "monotone_constraints": [1 if name == ADULT_AGE else 0 for name in FEATURES],
+        "monotone_constraints": [1 if monotone and name == ADULT_AGE else 0 for name in FEATURES],
         "seed": seed,
         "deterministic": True,
         "force_row_wise": True,
@@ -377,3 +381,29 @@ def forecast_predictions(
 def save_table(table: pd.DataFrame, name: str, directory=OUTPUT_DIR):
     """Save an aggregate table under `outputs/m4_draft/`."""
     return outofsample.save_table(table, name, directory)
+
+
+def fit_unconstrained(train: pd.DataFrame, fitted: Fitted, seed: int = SEED) -> Fitted:
+    """A diagnostic refit without the age constraint, with the tuned values and no re-tuning.
+
+    It is not a pricing candidate. It shows what the constraint costs on the data.
+    """
+    booster = lgb.train(
+        parameters(**fitted.chosen, seed=seed, monotone=False), dataset(train), fitted.trees
+    )
+    load = 1 + large_claims.PROVISIONAL_LOAD
+    balance = factors.rebalance_factor(train, raw_cost(booster, train) * load)
+    return Fitted(booster, fitted.trees, balance, fitted.chosen)
+
+
+def age_profile(
+    fitted: Fitted, adult_rows: pd.DataFrame, ages: range, reference: int = agecurve.REFERENCE_AGE
+) -> pd.DataFrame:
+    """Mean predicted cost of adult rows at each age, as a ratio to the same rows at age 67."""
+    rows = adult_rows.assign(exposure=1.0)
+
+    def mean_at(age: int) -> float:
+        return float(fitted.predict(rows.assign(age_spline_1=float(age))).mean())
+
+    base = mean_at(reference)
+    return pd.DataFrame({"age": list(ages), "ratio_to_67": [mean_at(a) / base for a in ages]})

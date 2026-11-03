@@ -77,7 +77,7 @@ def test_the_full_notebook_starts_with_a_summary_table_and_a_specification():
     assert first < markdown.index("## Model specification") < markdown.index("## Tuning")
     for term in ("Tweedie", "init score", "monotone", "households"):
         assert term in markdown
-    assert "## Decision gate" in markdown and "Recommendation" in markdown
+    assert "## Decision gate" in markdown and "Decision (the user)" in markdown
 
 
 def test_the_summary_never_fits_a_model_and_shows_the_headline_numbers():

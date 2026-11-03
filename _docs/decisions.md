@@ -788,3 +788,19 @@ there is nothing for its surrogate to keep. On 2023 deviance the GBM (3,518,700)
 the technical model (3,506,653), and its tariff is 3,554,354. The double lift on 2022 test has the GLM tariff nearer 1 in 8 of 10 groups.
 Why: a bounded challenger test before the pricing basis is chosen. The GLM is not changed.
 Alternatives: more inputs (the health and exercise controls), a wider grid and more seeds, left for M6 if the user wants them.
+
+## 2026-11-03 Pricing basis: the GLM tariff (M4-lite gate)
+Decision: the user chose the GLM tariff as the basis for pricing, not the surrogate tariff of the GBM.
+Evidence: the GBM does not beat the GLM on the 2022 holdout (deviance 840,754 against 838,173 for the GLM tariff, with a gap interval of
+-18,656 to 11,028 that includes 0, and the same Gini of 0.378), the GLM tariff is nearer 1 in 8 of 10 double-lift groups, and SHAP finds
+no interaction among the rating factors that the GLM misses. The GBM tariff is worse again (843,827 and a Gini of 0.368).
+Diagnostic: refitted once without the age constraint, with the tuned values and no re-tuning, the GBM has a test deviance of 843,561
+and a Gini of 0.372, so the constraint costs nothing on the data. At ages 80 to 85 its mean predicted cost against age 67 is 0.91 to
+1.00, against 1.06 to 1.09 constrained and 0.87 to 0.78 for the GLM curve. It is not a pricing candidate. The monotone constraint stays
+for pricing, because UK private medical premiums rise with age.
+Optional, not run: a GBM given the health and exercise controls.
+GLM tariff age check: the 80+ relativity (0.887 against the 65-69 band) is below 75-79 (0.949). The tariff also falls from 65-69 (1.000) to
+70-74 (0.988) and 75-79. An M6 task floors the 80+ relativity at the 75-79 level for consistency with the monotone pricing rule, then
+rebalances the base and reports the effect. The tariff is not changed now.
+Why: the simpler model with intervals is as accurate, and a monotone age rule suits UK PMI.
+Alternatives: the GBM surrogate tariff, which is more complex and less accurate here.

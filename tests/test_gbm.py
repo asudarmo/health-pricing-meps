@@ -141,3 +141,15 @@ def test_the_surrogate_tariff_keeps_the_train_total_and_scores_run(setup):
     assert set(table["candidate"]) == {gbm.BASELINE, *gbm.NAMES.values()}
     assert table.loc[table["candidate"] == gbm.BASELINE, "gini"].iloc[0] == 0
     assert (table["reduction_pct_dev"].iloc[1:] > 0).all()
+
+
+def test_the_unconstrained_refit_keeps_the_tuned_values_and_drops_only_the_constraint(setup):
+    _, train, _, fitted = setup
+    free = gbm.fit_unconstrained(train, fitted)
+    assert free.trees == fitted.trees and free.chosen == fitted.chosen
+    assert free.predict(train).sum() == pytest.approx(train["cost"].sum())
+    assert sum(gbm.parameters(**fitted.chosen, monotone=False)["monotone_constraints"]) == 0
+    adults = train[train["age_group3"].astype(str) == "adult"].head(300)
+    profile = gbm.age_profile(fitted, adults, range(60, 90, 5))
+    assert profile.loc[profile["age"] == 65, "ratio_to_67"].iloc[0] <= 1.0 + 1e-9
+    assert (profile["ratio_to_67"].diff().dropna() >= -1e-9).all()
