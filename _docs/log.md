@@ -239,3 +239,14 @@ Next: the interim README (#51) and the final notebook pass (#50). Then M4, and r
 
 Open questions: (1) the factor within the rebase range of 1.025 to 1.145 is a judgement for the user. (2) The condition pattern in
 the A/E by level should be watched with the next year of data. (3) The large-claim load is re-estimated in M6.
+
+## 2026-11-03 Monitoring notebook final pass, rebase decision and interim README (issues #50 and #51)
+
+Done: the user decided a rebase of 1.06 (own experience weighted at 0.3 with an external +2.5 percent), coded as
+`recalibration.decided_rebase`, logged in `_docs/decisions.md`, and added to diagram 5b and the rule document. The monitoring
+notebook has an overview, a key decisions and findings table with headline numbers read from the saved tables, the model
+specification table and a limitations section, with a test that runs it in a fresh kernel. The interim `README.md` states the
+problem, data, method, results, limitations, roadmap and how to reproduce, with a test that its numbers equal the saved tables.
+Self-checked, with no separate QA round, as the user asked.
+
+Next: M4 (not started). Rerun M3 comparisons and M5 if M4 changes the chosen model. Open questions: none.
