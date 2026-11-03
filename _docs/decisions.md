@@ -804,3 +804,18 @@ GLM tariff age check: the 80+ relativity (0.887 against the 65-69 band) is below
 rebalances the base and reports the effect. The tariff is not changed now.
 Why: the simpler model with intervals is as accurate, and a monotone age rule suits UK PMI.
 Alternatives: the GBM surrogate tariff, which is more complex and less accurate here.
+
+## 2026-11-03 Monotone adult age rule for the tariff (issue #57, M6)
+Decision: the user chose one rule and not individual floors. The adult age relativities of the tariff (18 and over) must be non-decreasing.
+The rule is an exposure-weighted isotonic adjustment (pool adjacent violators) of the adult band relativities, which smooths the dip
+from 65-69 to 70-74 and the dip at 80+. Children's bands (0 to 17) are left as fitted. The base is then rebalanced on 2022 train, so
+the train total equals that of the unadjusted tariff (a base-rate multiplier of 0.998). The rule is in `models/agemonotone.py`, the
+frozen tariff of M3 is unchanged and the adjusted one sits beside it. It stays in M6.
+Effect on the bands (relativities against the 65-69 band before the rule): the bands 60-64 to 80+ are pooled to 0.963. 60-64 moves
+-0.3 percent, 65-69 -3.7 percent, 70-74 -2.6 percent, 75-79 +1.4 percent and 80+ +8.5 percent. All other bands are unchanged.
+Effect on scores (2022 test): deviance 838,173 to 839,170 (+0.12 percent), Gini 0.3783 to 0.3763, A/E 1.0811 to 1.0810. On train the
+deviance goes from 3,051,675 to 3,051,872.
+A/E by band on test, before and after: 65-69 1.307 to 1.361, 70-74 0.814 to 0.837, 75-79 1.260 to 1.245, 80+ 0.821 to 0.759. The
+other bands move by less than 0.01. Tables are in `outputs/m6_draft/`.
+Why: UK PMI premiums rise with age, so the tariff should not charge a person of 80 less than a person of 70.
+Alternatives: floors on the 80+ band only, and a monotone rule from 65-69 only.
