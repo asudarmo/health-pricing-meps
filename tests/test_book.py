@@ -96,7 +96,8 @@ def test_pound_columns_appear_with_a_scaling_and_totals_reconcile(book, tariff):
     cells, totals = result["cells"], result["totals"]
     assert totals["new_premium_gbp"] == pytest.approx(0.25 * totals["new_premium"])
     assert np.allclose(cells["change_amount_gbp"], 0.25 * cells["change_amount"])
-    assert "old_premium_gbp" not in bk.apply_scenario(book, bk.Scenario(), tariff)["cells"]
+    unscaled = dataclasses.replace(tariff, scaling=None)
+    assert "old_premium_gbp" not in bk.apply_scenario(book, bk.Scenario(), unscaled)["cells"]
 
 
 def test_dislocation_covers_age_group_region_and_conditions(book, tariff):
