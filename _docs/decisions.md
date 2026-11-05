@@ -866,3 +866,13 @@ It includes the exchange rate, so no separate rate is needed. Claims cost is not
 Options: (A) all covered lives, 576 pounds per life, factor 0.244. (B) workplace only, 483 pounds, factor 0.205. (C) individual only, 867 pounds, factor 0.368, derived by subtraction.
 (D) the exchange rate only, which would give about 1,900 pounds and is well above the UK claims cost per life, because US costs are higher.
 Recommendation: A, because it uses the published headline figures for the whole market and the book mix of MEPS is not an employer or individual mix.
+
+## 2026-11-05 Gate 8 decided: UK scaling, option A (issue #60)
+Decision: the user chose option A. The scaling factor is 0.244 pounds per dollar of premium, which sets the model mean of 2,358 dollars per exposure-year
+equal to 576 pounds, the UK claims cost per covered life.
+Source: ABI press release of 6 November 2024 on 2023 data. Claims paid were 3.57 billion pounds and 6.2 million people were covered. It is recorded in
+`scaling.json` beside the tariff tables (`outputs/m6_draft/` for now, and `outputs/v1/` from #62).
+Label: the output is a "risk premium (expected claims cost), illustrative pounds", excluding expenses and margin. The engine returns this label and shows the
+scaling as the last row of the breakdown. The README states it too.
+Why: the headline market figures, and the MEPS mix is not an employer or individual mix.
+Alternatives: B (workplace only, 0.205), C (individual only, 0.368), D (exchange rate only).

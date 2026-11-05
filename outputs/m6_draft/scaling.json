@@ -1,0 +1,13 @@
+{
+  "gbp_per_usd_premium": 0.244,
+  "label": "risk premium (expected claims cost), illustrative GBP, excluding expenses and margin",
+  "basis": "UK PMI claims paid per covered life, all covered lives, 2023",
+  "claims_paid_gbp": 3570000000.0,
+  "people_covered": 6200000.0,
+  "gbp_per_covered_life": 576,
+  "model_mean_usd_rating_level": 2358,
+  "includes_exchange_rate": true,
+  "source": "ABI press release, 6 November 2024, private medical insurance data for 2023 (https://www.abi.org.uk/media-hub/news-post/private-medical-insurers-report-record-47-million-covered-by-employer-health-schemes)",
+  "decided": "2026-11-05, gate 8, option A",
+  "illustrative": true
+}

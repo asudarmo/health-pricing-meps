@@ -22,6 +22,7 @@ OUTPUTS = Path(__file__).resolve().parents[3] / "outputs"
 RELATIVITIES = "final_tariff_relativities.csv"
 BASE_RATE = "final_tariff_base_rate.csv"
 SCALING = "scaling.json"
+GBP_LABEL = "risk premium (expected claims cost), illustrative GBP, excluding expenses and margin"
 AGE_RANGE = (0, 120)
 # Fitted as controls and priced at their reference level, so a profile may carry them.
 ANALYSIS_ONLY = {"rthlth", "mnhlth", "OFTSMK53", "PHYEXE53", "inscov"}
@@ -117,7 +118,9 @@ def rate(
     """Price a profile. Returns the premium and a breakdown table.
 
     The premium is for `exposure` years, in dollars, with the rating-period level applied. If
-    the model version has a scaling, the premium is also given in illustrative pounds.
+    the model version has a scaling, the premium is also given as a risk premium (expected claims
+    cost) in illustrative pounds, excluding expenses and margin, and the breakdown gains a last
+    row for the scaling, so it then multiplies to the pound figure.
     """
     tariff = tariff or load_tariff(model_version)
     levels = _check(tariff, profile)
@@ -140,6 +143,15 @@ def rate(
         "priced_at_reference": sorted(ANALYSIS_ONLY & set(profile)),
     }
     if tariff.scaling:
-        result["premium_illustrative_gbp"] = premium * tariff.scaling["gbp_per_usd_premium"]
+        factor = tariff.scaling["gbp_per_usd_premium"]
+        result["premium_illustrative_gbp"] = premium * factor
+        result["illustrative_label"] = GBP_LABEL
         result["illustrative"] = True
+        result["breakdown"] = pd.concat(
+            [
+                result["breakdown"],
+                pd.DataFrame([{"step": f"scaling to {GBP_LABEL}", "level": "", "factor": factor}]),
+            ],
+            ignore_index=True,
+        )
     return result

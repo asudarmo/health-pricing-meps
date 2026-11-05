@@ -16,7 +16,7 @@ CONDITIONS = ["HIBPDX", "CHDDX", "OHRTDX", "CHOLDX", "CANCERDX", "ARTHDX", "ASTH
 def tariff():
     if not (engine.OUTPUTS / VERSION / engine.RELATIVITIES).exists():
         pytest.skip("run python -m health_pricing.models.finaltariff")
-    return engine.load_tariff(VERSION)
+    return dataclasses.replace(engine.load_tariff(VERSION), scaling=None)
 
 
 def _profile(**changes):
@@ -94,3 +94,15 @@ def test_scaling_is_given_only_when_the_version_has_one(tariff):
     result = engine.rate(_profile(), tariff=scaled)
     assert result["premium_illustrative_gbp"] == pytest.approx(0.5 * result["premium"])
     assert result["illustrative"] is True
+    assert result["illustrative_label"].startswith("risk premium (expected claims cost)")
+    assert "excluding expenses and margin" in result["breakdown"]["step"].iloc[-1]
+    assert result["breakdown"]["factor"].prod() == pytest.approx(result["premium_illustrative_gbp"])
+
+
+def test_the_decided_scaling_is_recorded_with_its_source_and_label():
+    version = engine.load_tariff(VERSION)
+    assert version.scaling["gbp_per_usd_premium"] == 0.244
+    assert "ABI" in version.scaling["source"] and "6 November 2024" in version.scaling["source"]
+    result = engine.rate(_profile(), tariff=version)
+    assert result["premium_illustrative_gbp"] == pytest.approx(0.244 * result["premium"])
+    assert result["illustrative_label"] == engine.GBP_LABEL

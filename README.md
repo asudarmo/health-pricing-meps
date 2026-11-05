@@ -174,6 +174,10 @@ The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary
   the bands from 60-64 to 80+ so that adult relativities never fall. This puts the 80+ tariff 8.2 percent above the technical model on
   the 2022 test split. The likely cause is the exclusion of ER-originated stays, concentrated at older ages, which pulls the model's
   own older-age curve down. This cause is not tested beyond the ER sensitivity above.
+- **Illustrative pounds.** Premiums in pounds are a risk premium (expected claims cost), illustrative, and exclude expenses and margin.
+  The scaling of 0.244 pounds per dollar sets the model mean (2,358 dollars per exposure-year) equal to the UK claims cost per
+  covered life of 576 pounds (ABI, published 6 November 2024, 2023 data: 3.57 billion pounds of claims and 6.2 million people
+  covered). It includes the exchange rate and is not a UK price.
 - **The trend is an assumption.** The 1.9 percent is an external utilization trend from insurers' rate filings. The A/E and the rebase are
   shown at a low and a high trend.
 - **One out-of-time year.** A one-off change in level cannot be separated from a lasting one with one year of data.
