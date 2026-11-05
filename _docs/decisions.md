@@ -838,7 +838,7 @@ Status: evidence and recommendation, awaiting the user's decision at gate 7.
 Construction: the M3 tariff (surrogate of the technical model, five-year age bands, exposure offset), then the monotone adult age rule, then the base
 rate rebalanced so total predicted cost on 2022 train is unchanged (multiplier 0.998). Scope change: the issue says pooled with a year term and the load
 and trend applied. Under v1-lite the model is fitted on 2022 only, and the rating-period level is a factor on the base rate, the forecast trend of
-1.019 times the decided rebase of 1.06 (1.080 together). Age is presented against the 65-69 band, so the base rate carries that band's relativity.
+1.019 times the decided rebase of 1.06 (1.080 together). Age is presented against the 65-69 band as fitted before the rule, so the base rate carries that band's pre-rule relativity. After the rule the 65-69 relativity in the table is 0.963, and the base rate is the cost of the reference profile at age 65-69 only before the rule.
 Base rate: 1,828 at 2022 level and 1,975 at the rating-period level (dollars per exposure-year for the reference profile).
 Bounds: each level keeps the width of the technical model's combined bounds (frequency and severity treated as independent), centred on the tariff
 relativity. The 65-69 band has none, because the model measures age against it. The bounds show model uncertainty and are not a fit of the tariff.
