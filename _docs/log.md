@@ -295,5 +295,5 @@ Done: `train.py`, `predict.py`, a FastAPI service (five endpoints, saved OpenAPI
 docker run, with the same golden-case tests run against the container), a README ML Zoomcamp section with a sample curl and Cloud Run instructions marked not yet deployed. QA passed
 the golden-case test (#65). `06_tariff_summary.ipynb` (6 seconds) with its test and README link. FastAPI and uvicorn were added as approved.
 
-Next: push the image to ghcr.io (#67), which needs the token scope `write:packages` (`gh auth refresh -h github.com -s write:packages`), then update the README line on the registry
-and close #67 and #68. Then M9 README sections. Open questions: none.
+Update: the image was pushed to ghcr.io after the token scope was added (#67, #68 closed). Next: the M9 README sections.
+Open questions: none.

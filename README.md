@@ -217,8 +217,14 @@ docker build -t health-pricing-service:v1 .
 docker run --rm -p 8000:8000 health-pricing-service:v1
 ```
 
-The image is to be published to the GitHub Container Registry as `ghcr.io/asudarmo/health-pricing-meps:v1`. The push has not been
-done yet (issue #67), so build the image locally for now.
+The image is published to the GitHub Container Registry as `ghcr.io/asudarmo/health-pricing-meps:v1` (and `latest`).
+
+```
+docker run --rm -p 8000:8000 ghcr.io/asudarmo/health-pricing-meps:v1
+```
+
+The package is private by default, so run `gh auth token | docker login ghcr.io -u USERNAME --password-stdin` first, or ask the owner to
+make it public. A pull from the registry and the golden-case tests against that container were checked on 5 November 2026.
 
 **Tests.** `uv run pytest tests/test_service.py` starts the service and checks that `/quote` returns the premium of every golden case.
 Set `SERVICE_URL=http://localhost:8000` to run the same checks against a running container. The golden cases are a regression baseline,
@@ -275,7 +281,7 @@ URL. Drop `--allow-unauthenticated` to require a Google identity token.
 | M4 Pure premium and ML challenger | Done (lite): the LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff, with the GLM tariff kept as the pricing basis. A Tweedie GLM and a GBM with the health and exercise controls are optional and not run | Nothing, because M4 did not change the chosen model |
 | M6 Final model, rating engine and rate change | Done (v1-lite): the monotone adult age rule, the final tariff with the 1.06 rebase, the rating engine, the in-force book, scenario impact and the published `outputs/v1/` (drafts in `outputs/m6_draft/`). Deferred to v2: a pooled refit with a year term, a re-estimated large-claim load and indexed cap, and a projection to the rating period | The v2 refit supersedes the 1.06 rebase |
 | M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
-| M10 Model serving | Done (lite, not deployed): `train.py`, `predict.py`, a FastAPI service for quotes, relativities, monitoring and scenario impact, the saved OpenAPI schema and a Docker image. Cloud deployment is not done | |
+| M10 Model serving | Done (lite, not deployed): `train.py`, `predict.py`, a FastAPI service for quotes, relativities, monitoring and scenario impact, the saved OpenAPI schema and a Docker image on ghcr.io. Cloud deployment is not done | |
 
 ## Reproduce from a clean clone
 
