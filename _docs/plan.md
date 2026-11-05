@@ -221,7 +221,7 @@ each milestone for the user's review. A milestone may start once the milestones 
 | M7 Excel reconciliation | Excel-to-Python automation story | Small Excel rating/A-E workbook built by hand · Python reproduces it · golden test cases (profiles → expected premiums) | Python matches Excel to the penny · golden tests pass in CI/pytest | M6 |
 | M8 Conversion and elasticity | Demand side | Simulated quotes from a known price-response curve · logistic conversion model · elasticity by segment · recovered vs true parameters · fair-pricing note | Elasticity recovers the simulated truth within stated tolerance | M6 |
 | M9 Write-up | Reviewer-ready repo | README (problem, data, UK translation, time periods and trend assumptions, method, results, limitations) · model documentation (assumptions, risks, limitations) · key charts · notebooks run top to bottom | A reviewer can reproduce results from a clean clone using the README | M1–M8 |
-| M10 Model serving (ML Zoomcamp midterm) | Deployed pricing web service | `train.py` and `predict.py` entry points · FastAPI service serving the published `outputs/v1/` tables and the rating engine, with endpoints `/quote`, `/relativities`, `/monitoring` and `/scenario-impact` · OpenAPI schema · Dockerfile and a published Docker image · cloud deployment · ML Zoomcamp section in the README (problem, how to run, how the project relates to the AI Dev Tools app, instructor approval) | The deployed service returns the same premiums as the golden test cases · `docker run` of the image works from a clean machine · the README instructions reproduce training and serving | M6, M7, M9 |
+| M10 Model serving (ML Zoomcamp midterm) | Deployed pricing web service | `train.py` and `predict.py` entry points · FastAPI service serving the published `outputs/v1/` tables and the rating engine, with endpoints `/quote`, `/relativities`, `/monitoring` and `/scenario-impact` · OpenAPI schema · Dockerfile and a published Docker image · cloud deployment · ML Zoomcamp section in the README (problem, how to run, how the project relates to the AI Dev Tools app, instructor approval) | The deployed service returns the same premiums as the golden test cases · `docker run` of the image works from a clean machine · the README instructions reproduce training and serving | M6 v1-lite items (#57, #37, #60, #61, #62), M9 |
 
 M7 and M8 are independent of each other and can run in either order once M6 is done.
 
@@ -246,6 +246,26 @@ Slack (2 Nov 2026) that the Phase 2 app may consume this service.
   - Remaining check: run `dbt docs generate` on the real database once the file lock is released (#22).
   - Detail is in `_docs/decisions.md` and `_docs/log.md`.
 - **M3 onwards:** not started. M3 starts after the user's review of M2.
+
+### Delivery scope until 16 Nov 2026 (v1-lite)
+
+Two course projects are due on 16 Nov 2026: the ML Zoomcamp midterm (this repo, served by M10) and the AI
+Dev Tools capstone (a separate app repo that calls the M10 service). To fit both, the work until then is
+limited to a "v1-lite" tariff and the serving layer.
+
+In scope, in this order:
+
+1. M6 v1-lite: #57 (adult age monotone rule) and #37 (final multiplicative tariff, rebalanced), both on the
+   2022-fitted model with the 1.06 credibility-weighted rebase, then #60 (rating engine, with the pound
+   scaling gate kept short), #61 (in-force book, scenario impact and dislocation) and #62 (publish
+   `outputs/v1/` with golden test cases labelled "regression baseline, provisional until M7").
+2. M10: model serving for the ML Zoomcamp midterm.
+3. M9: README sections the courses need (ML Zoomcamp section, v1-lite description, roadmap).
+
+Deferred until after 16 Nov 2026 (v2): #58 (pooled refit with a year term), #38 (large-claim tail model and
+indexed cap), #59 (projection to the rating period), M7 (Excel reconciliation, which replaces the provisional
+golden cases), M8 (conversion and elasticity), and all `optional` tasks. The README states that v1 is fitted on
+2022 with a credibility-weighted rebase, and that v2 refits on pooled years and projects to a rating period.
 
 ### Priority and cut order
 

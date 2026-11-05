@@ -87,4 +87,4 @@ Pre-approved patterns (no gate needed, log each use in `_docs/decisions.md`):
 - `_docs/writing-style.md` - writing rules for all prose (read before writing any text for people)
 - `_docs/decisions.md` - decision log
 - `_docs/log.md` - session log
-- `_docs/team/` - role definitions (PM, engineer, QA)
+- `_docs/team/` - role definitions (engineer and QA. The PM role is no longer used)
