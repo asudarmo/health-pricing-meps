@@ -261,3 +261,13 @@ household intervals for the deviance gap), its surrogate tariff, SHAP, and scori
 
 Next: the user's decision at the gate, the GLM tariff or the GBM surrogate tariff as the basis for pricing. The recommendation is the
 GLM tariff. Open questions: whether to test the GBM with the health and exercise controls, and the Tweedie GLM of M4.
+
+## 2026-11-05 Process update and M6 v1-lite start (issues #57 and #37)
+
+Done: reviewed and committed the new process (engineer and QA-lite, token-saving tactics, no PM) and the v1-lite delivery scope. #57: the monotone
+age rule is a tested pure function with a household-grouped cross-validation (out-of-fold deviance -0.07 percent, Gini 0.4749 to 0.4756). #37: the
+v1-lite final tariff module `models/finaltariff.py` gives relativities with bounds, the base rate with the trend and rebase, and the approximation
+error by segment. Decisions are logged. Tables are in `outputs/m6_draft/`.
+
+Next: the user's decision at gate 7 on the final tariff, then #60 (rating engine). Open questions: whether to accept the 8 percent gap at 80+ that the
+rule creates against the technical model.

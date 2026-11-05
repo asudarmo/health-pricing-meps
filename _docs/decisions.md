@@ -819,3 +819,31 @@ A/E by band on test, before and after: 65-69 1.307 to 1.361, 70-74 0.814 to 0.83
 other bands move by less than 0.01. Tables are in `outputs/m6_draft/`.
 Why: UK PMI premiums rise with age, so the tariff should not charge a person of 80 less than a person of 70.
 Alternatives: floors on the 80+ band only, and a monotone rule from 65-69 only.
+
+## 2026-11-05 Monotone age rule as a tested function, with cross-validation (issue #57, v1-lite)
+Decision: the rule is now the function `agemonotone.monotone_adult_rule`. It takes the band relativities, exposures and predicted cost by band,
+and returns the monotone relativities and the base-rate multiplier that restores total cost. `adjust_tariff` applies it to any surrogate tariff.
+Scope change: the issue asked for the pooled model. Under the v1-lite delivery scope (`_docs/plan.md`), the rule is checked on the 2022-fitted
+tariff. The pooled bands are v2 work, and the limitation about UK market calibration of older ages stays.
+Evidence: on a five-fold cross-validation grouped by household, with the tariff refitted in each fold, the out-of-fold deviance goes from
+3,087,302 to 3,085,067 (-0.07 percent) and the Gini from 0.4749 to 0.4756. A/E is 1.0012 and 1.0010. The base-rate multiplier is 0.9965 to
+0.9997 across folds, and 3 to 5 adult bands are pooled in each fold. Out-of-fold A/E by band, before and after: 65-69 1.021 to 1.061, 70-74 1.077
+to 1.104, 75-79 1.113 to 1.096, 80+ 1.064 to 0.980. The holdout result (+0.12 percent deviance) is the opposite sign, so the effect on fit is
+within noise either way. Tables are in `outputs/m6_draft/age_monotone_cv_*.csv`. The grouping of levels is kept as decided on the full 2022 train split.
+Why: the rule is a pricing requirement and costs nothing measurable in fit.
+Alternatives: floors on single bands, as logged on 2026-11-03.
+
+## 2026-11-05 Final v1-lite tariff, evidence for gate 7 (issue #37)
+Status: evidence and recommendation, awaiting the user's decision at gate 7.
+Construction: the M3 tariff (surrogate of the technical model, five-year age bands, exposure offset), then the monotone adult age rule, then the base
+rate rebalanced so total predicted cost on 2022 train is unchanged (multiplier 0.998). Scope change: the issue says pooled with a year term and the load
+and trend applied. Under v1-lite the model is fitted on 2022 only, and the rating-period level is a factor on the base rate, the forecast trend of
+1.019 times the decided rebase of 1.06 (1.080 together). Age is presented against the 65-69 band, so the base rate carries that band's relativity.
+Base rate: 1,828 at 2022 level and 1,975 at the rating-period level (dollars per exposure-year for the reference profile).
+Bounds: each level keeps the width of the technical model's combined bounds (frequency and severity treated as independent), centred on the tariff
+relativity. The 65-69 band has none, because the model measures age against it. The bounds show model uncertainty and are not a fit of the tariff.
+Approximation error (tariff over technical model, by segment, test split, median and maximum absolute departure from 1): age band 0.5 and 8.2 percent
+(80+, from the rule), factor level 0.3 and 1.1 percent, number of conditions 2.4 and 3.6 percent, predicted-cost decile 2.8 and 4.2 percent. Before the
+rule the age band maximum was 1.1 percent. Train is similar. Tables are in `outputs/m6_draft/final_tariff_*.csv`.
+Recommendation: adopt this tariff as the v1 tariff. The 8 percent gap at 80+ is the price of a non-decreasing age curve and is stated in the limitations.
+Alternatives: no rule (the age relativity falls after 70), or a floor at 80+ only.

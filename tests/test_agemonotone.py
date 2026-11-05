@@ -2,6 +2,7 @@
 
 import duckdb
 import numpy as np
+import pandas as pd
 import pytest
 
 from health_pricing.data.load import DUCKDB_PATH
@@ -72,3 +73,44 @@ def test_the_rebalanced_base_keeps_the_train_total_and_scores_are_close(setup):
     assert abs(gap - 1) < 0.01
     ae = am.ae_by_band(frozen, adjusted)
     assert len(ae) == 16 and {"a_e_before", "a_e_after"} <= set(ae.columns)
+
+
+def _bands():
+    index = ["05-14", "18-24", "25-29", "30-34", "35-39"]
+    relativity = pd.Series([1.0, 1.2, 1.1, 1.5, 1.4], index=index)
+    exposure = pd.Series([10.0, 4.0, 4.0, 2.0, 6.0], index=index)
+    cost = pd.Series([20.0, 10.0, 9.0, 6.0, 12.0], index=index)
+    return relativity, exposure, cost
+
+
+def test_rule_function_pools_adult_violations_and_leaves_children_alone():
+    relativity, exposure, cost = _bands()
+    adjusted, _ = am.monotone_adult_rule(relativity, exposure, cost)
+    assert adjusted["05-14"] == 1.0
+    assert adjusted[["18-24", "25-29"]].tolist() == pytest.approx([1.15, 1.15])
+    assert adjusted[["30-34", "35-39"]].tolist() == pytest.approx([1.425, 1.425])
+    assert (adjusted.iloc[1:].diff().dropna() >= 0).all()
+
+
+def test_rule_function_multiplier_restores_the_total_cost():
+    relativity, exposure, cost = _bands()
+    adjusted, multiplier = am.monotone_adult_rule(relativity, exposure, cost)
+    assert multiplier * (cost * adjusted / relativity).sum() == pytest.approx(cost.sum())
+
+
+def test_rule_function_returns_a_monotone_input_unchanged_with_multiplier_one():
+    relativity = pd.Series([1.0, 1.1, 1.2, 1.2, 1.5], index=_bands()[0].index)
+    exposure, cost = _bands()[1:]
+    adjusted, multiplier = am.monotone_adult_rule(relativity, exposure, cost)
+    assert adjusted.tolist() == pytest.approx(relativity.tolist())
+    assert multiplier == pytest.approx(1.0)
+
+
+def test_cross_validation_scores_both_tariffs_on_the_same_held_out_rows(setup):
+    frozen, _ = setup
+    result = am.cross_validate(frozen, n_folds=3)
+    assert set(result.scores["candidate"]) == {am.ORIGINAL, am.ADJUSTED}
+    assert len(result.folds) == 3 and (result.folds["base_rate_multiplier"] > 0.9).all()
+    assert len(result.ae_by_band) == 16
+    gap = result.scores.set_index("candidate")["tweedie_deviance"]
+    assert abs(gap[am.ADJUSTED] / gap[am.ORIGINAL] - 1) < 0.01

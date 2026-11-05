@@ -10,6 +10,7 @@ frozen tariff of M3 is not changed. This module builds the adjusted tariff besid
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from dataclasses import dataclass
 
@@ -62,19 +63,44 @@ class AdjustedTariff:
         return self.balance * np.exp(linear + np.log(frame["exposure"].to_numpy()))
 
 
+def monotone_adult_rule(
+    relativity: pd.Series, exposure: pd.Series, cost: pd.Series
+) -> tuple[pd.Series, float]:
+    """The rule on band relativities, indexed by age band label (all bands, children included).
+
+    The adult bands are pooled by `pava` with `exposure` as weights, and children are left as
+    given. `cost` is the predicted cost of each band under the relativities as given. Returns the
+    adjusted relativities and the base-rate multiplier that keeps the total predicted cost equal
+    to what it was before the rule.
+    """
+    bands = adult_bands(relativity.index)
+    adjusted = relativity.astype(float).copy()
+    adjusted[bands] = pava(relativity[bands].to_numpy(), exposure[bands].to_numpy())
+    new_cost = (cost * adjusted / relativity).sum()
+    return adjusted, float(cost.sum() / new_cost)
+
+
 def adjust(frozen: FrozenModel) -> AdjustedTariff:
     """Apply the isotonic rule to the adult age relativities and rebalance on train."""
-    tariff = frozen.final_tariff.tariff
-    train = frozen.prepared.train
+    return adjust_tariff(frozen.final_tariff.tariff, frozen.prepared.train)
+
+
+def adjust_tariff(tariff, train: pd.DataFrame) -> AdjustedTariff:
+    """Apply the rule to a surrogate tariff, with exposure and cost taken from `train`."""
     params = tariff.result.params.copy()
-    bands = adult_bands(train[FACTOR].cat.categories)
+    bands = [str(level) for level in train[FACTOR].cat.categories]
+    terms = {band: f"{FACTOR}={band}" for band in bands if f"{FACTOR}={band}" in params.index}
+    relativity = pd.Series(
+        {b: float(np.exp(params[terms[b]])) if b in terms else 1.0 for b in bands}
+    )
     exposure = train.groupby(FACTOR, observed=True)["exposure"].sum()
-    terms = [f"{FACTOR}={band}" for band in bands]
-    relativity = np.exp(params[terms].to_numpy())
-    pooled = pava(relativity, exposure.loc[bands].to_numpy())
-    params[terms] = np.log(pooled)
-    unadjusted = AdjustedTariff(tariff, params, 1.0)
-    balance = float(tariff.predict(train).sum() / unadjusted.predict(train).sum())
+    predicted = pd.Series(tariff.predict(train), index=train.index)
+    cost = predicted.groupby(train[FACTOR].astype(str).to_numpy()).sum()
+    adjusted, balance = monotone_adult_rule(
+        relativity, exposure.rename(index=str)[bands], cost[bands]
+    )
+    for band, term in terms.items():
+        params[term] = np.log(adjusted[band])
     return AdjustedTariff(tariff, params, balance)
 
 
@@ -140,6 +166,74 @@ def ae_by_band(frozen: FrozenModel, adjusted: AdjustedTariff, split: str = "test
     return out.sort_values("_order").drop(columns="_order").reset_index(drop=True)
 
 
+SEED_FOLDS = 5
+
+
+@dataclass
+class CrossValidation:
+    """Out-of-fold results of the tariff before and after the rule."""
+
+    scores: pd.DataFrame  # deviance, Gini and A/E on the pooled out-of-fold rows
+    ae_by_band: pd.DataFrame
+    folds: pd.DataFrame  # base-rate multiplier and the bands the rule changed, by fold
+
+
+def cross_validate(frozen: FrozenModel, n_folds: int = SEED_FOLDS) -> CrossValidation:
+    """Refit the tariff on each fold's training rows, apply the rule, and score the held-out fold.
+
+    Folds hold whole households (`DUID`). The grouping of levels is kept as decided on the full
+    2022 train split. Each fold refits the technical model, extracts the tariff, applies the rule
+    and rebalances on its own training rows.
+    """
+    from sklearn.model_selection import GroupKFold
+
+    from health_pricing.models import agecurve
+
+    train, raw = frozen.prepared.train, frozen.raw.train
+    held, before, after, folds = [], [], [], []
+    for number, (fit_rows, test_rows) in enumerate(
+        GroupKFold(n_splits=n_folds).split(train, groups=train["DUID"]), start=1
+    ):
+        prepared = dataclasses.replace(
+            frozen.prepared, train=train.iloc[fit_rows], test=train.iloc[test_rows]
+        )
+        fold_raw = dataclasses.replace(
+            frozen.raw, train=raw.iloc[fit_rows], test=raw.iloc[test_rows]
+        )
+        tariff = agecurve.final_tariff(prepared, fold_raw).tariff
+        adjusted = adjust_tariff(tariff, prepared.train)
+        frame = prepared.test
+        held.append(frame)
+        before.append(tariff.predict(frame))
+        after.append(adjusted.predict(frame))
+        pooled = tariff.result.params.filter(like=f"{FACTOR}=")
+        moved = pooled.round(12).ne(adjusted.coefficients[pooled.index].round(12))
+        folds.append(
+            {
+                "fold": number,
+                "base_rate_multiplier": adjusted.balance,
+                "bands_changed": int(moved.sum()),
+            }
+        )
+    frame = pd.concat(held)
+    predicted = {ORIGINAL: np.concatenate(before), ADJUSTED: np.concatenate(after)}
+    scores = pd.concat(
+        [
+            glm.candidate_scores(name, 0, {"out_of_fold": (frame, values)})
+            for name, values in predicted.items()
+        ],
+        ignore_index=True,
+    ).drop(columns=["parameters", "dropped_reason"])
+    first = metrics.ae_by_factor(frame, predicted[ORIGINAL], [FACTOR])
+    second = metrics.ae_by_factor(frame, predicted[ADJUSTED], [FACTOR])
+    ae = first[["level", "person_years", "claimants", "actual", "expected", "a_e"]].merge(
+        second[["level", "expected", "a_e"]], on="level", suffixes=("_before", "_after")
+    )
+    ae["_order"] = ae["level"].map(lower_age)
+    ae = ae.sort_values("_order").drop(columns="_order").reset_index(drop=True)
+    return CrossValidation(scores, ae, pd.DataFrame(folds))
+
+
 OUTPUT_DIR = relativities.OUTPUT_DIR.parent / "m6_draft"
 
 
@@ -156,6 +250,10 @@ def save_all(frozen: FrozenModel | None = None) -> dict[str, pd.DataFrame]:
         "age_monotone_ae_by_band_train.csv": ae_by_band(frozen, adjusted, "train"),
         "age_monotone_balance.csv": pd.DataFrame({"base_rate_multiplier": [adjusted.balance]}),
     }
+    cv_result = cross_validate(frozen)
+    tables["age_monotone_cv_scores.csv"] = cv_result.scores
+    tables["age_monotone_cv_ae_by_band.csv"] = cv_result.ae_by_band
+    tables["age_monotone_cv_folds.csv"] = cv_result.folds
     for name, table in tables.items():
         outofsample.save_table(table, name, OUTPUT_DIR)
     return tables
