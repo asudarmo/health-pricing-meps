@@ -59,6 +59,8 @@ def test_premium_never_falls_with_adult_age(tariff):
     [
         ({"sex": "F"}, "not permitted"),
         ({"income": 1}, "not permitted"),
+        ({"race": "x"}, "not permitted"),
+        ({"education": 12}, "not permitted"),
         ({"age": -1}, "between"),
         ({"age": 121}, "between"),
         ({"age": 40.5}, "whole number"),

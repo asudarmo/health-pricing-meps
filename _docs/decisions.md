@@ -876,3 +876,13 @@ Label: the output is a "risk premium (expected claims cost), illustrative pounds
 scaling as the last row of the breakdown. The README states it too.
 Why: the headline market figures, and the MEPS mix is not an employer or individual mix.
 Alternatives: B (workplace only, 0.205), C (individual only, 0.368), D (exchange rate only).
+
+## 2026-11-05 In-force book, scenario and dislocation rules (issue #61)
+Decision: the in-force book is the exposure of 2022 train and test by rating cell (age band, region, seven condition flags), 364 cells and 21,541 person-years.
+It holds exposure only. Small-cell rule: a cell with fewer than 10 person-year rows is merged into the nearest larger cell of the same age band and region, meaning
+the fewest condition flags that differ and then the larger exposure, so total exposure is unchanged. A scenario is a base change, relativity changes, and a cap and floor on the
+percent change of a cell, applied after the base and relativity changes. The cost of the cap and floor is the premium given up against the uncapped scenario.
+Example scenario saved: base +4 percent, +5 percent on 75-79 and +10 percent on 80+, cap +12 percent, floor 0. Total premium +5.4 percent, 34 cells capped, and the
+cap costs 123,623 dollars of premium on a new premium of 46.1 million. The 65+ group has a mean change of 6.8 percent and 22 percent of its exposure rises by more than 10 percent.
+Why: a rate change is judged by who it moves, and the book weights the cells by exposure.
+Alternatives: cell suppression, which would break the totals.
