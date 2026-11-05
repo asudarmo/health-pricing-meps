@@ -280,3 +280,11 @@ The rating engine (`rating/engine.py`) passed QA. The in-force book, scenario fu
 QA-lite scope. #57, #37 and #60 are closed.
 
 Next: #62 (publish `outputs/v1/`, golden cases labelled provisional until M7, and copy `scaling.json` into `model_version.json`). Open questions: none.
+
+## 2026-11-05 Published contract outputs/v1 (issue #62)
+
+Done: `health_pricing.publish` builds `outputs/v1/` (model version metadata, relativities, base rate and UK scaling, A/E, PSI, in-force book, 33 golden cases labelled
+"regression baseline, provisional until M7", example scenario tables and the dislocation histogram). A contract test checks files, schemas, keys, totals, bounds and each
+golden premium. The README has a v1 section, and the roadmap shows M6 as done (lite). QA passed. The extra scenario files are logged in `_docs/decisions.md`.
+
+Next: M10 model serving (ML Zoomcamp midterm), then the M9 README sections the courses need. Deferred to v2: #58, #38, #59, M7, M8. Open questions: none.
