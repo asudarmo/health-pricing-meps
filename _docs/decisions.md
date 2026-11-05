@@ -909,3 +909,10 @@ at reference. The OpenAPI schema is saved in `_docs/openapi.json` and a test fai
 Cloud Run instructions use `gcloud run deploy --source .`, which builds from the Dockerfile, and are marked not yet deployed. Cloud Run cannot pull from ghcr.io directly.
 Why: a reviewer can run the same engine locally, in Docker and over HTTP, and get the golden-case premiums.
 Alternatives: serving the package with all dependencies (a much larger image), and a test client (a new dependency).
+
+## 2026-11-05 Tariff summary notebook sources (issue #69)
+Decision: `06_tariff_summary.ipynb` loads `outputs/v1/` and calls the rating engine for its quotes. The age curve before the rule is read from the saved
+table `outputs/m6_draft/age_monotone_bands.csv`, because the published relativities hold the tariff after the rule only and adding a column would change the contract.
+The 8.2 percent gap at 80+ is checked in a test against `outputs/m6_draft/final_tariff_approximation_summary.csv`. Helpers are in `tariff_summary.py`, so the notebook defines nothing.
+Why: the notebook shows the published tariff and never refits.
+Alternatives: a before-rule column in `relativities.csv`, which is a contract change for the user.

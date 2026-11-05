@@ -23,7 +23,8 @@ The audience is an actuarial pricing reviewer. The full notebooks explain each s
 `05_gbm.ipynb`. The short versions, which only load saved tables and charts, are
 [`notebooks/03_glm_summary.ipynb`](notebooks/03_glm_summary.ipynb),
 [`notebooks/04_monitoring_summary.ipynb`](notebooks/04_monitoring_summary.ipynb) and
-[`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb). Every number below is read from a saved table under `outputs/`.
+[`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb). The v1 tariff and rating engine have their own short version,
+[`notebooks/06_tariff_summary.ipynb`](notebooks/06_tariff_summary.ipynb), which loads `outputs/v1/`. Every number below is read from a saved table under `outputs/`.
 
 ## How this was built
 
@@ -293,7 +294,7 @@ uv run jupyter lab
 ```
 
 Open the notebooks in order: `01_data.ipynb`, `02_eda.ipynb`, `03_glm.ipynb`, `04_monitoring.ipynb` and `05_gbm.ipynb`. The summary
-notebooks `03_glm_summary.ipynb`, `04_monitoring_summary.ipynb` and `05_gbm_summary.ipynb` only read saved tables and charts. Seeds are fixed, so the results reproduce.
+notebooks `03_glm_summary.ipynb`, `04_monitoring_summary.ipynb`, `05_gbm_summary.ipynb` and `06_tariff_summary.ipynb` only read saved tables and charts. Seeds are fixed, so the results reproduce.
 
 ## Licence note
 

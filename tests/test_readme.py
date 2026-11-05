@@ -138,6 +138,7 @@ def test_the_notebook_list_names_all_full_and_summary_notebooks():
         "03_glm_summary.ipynb",
         "04_monitoring_summary.ipynb",
         "05_gbm_summary.ipynb",
+        "06_tariff_summary.ipynb",
     ):
         assert name in README, name
 

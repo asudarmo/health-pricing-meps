@@ -288,3 +288,12 @@ Done: `health_pricing.publish` builds `outputs/v1/` (model version metadata, rel
 golden premium. The README has a v1 section, and the roadmap shows M6 as done (lite). QA passed. The extra scenario files are logged in `_docs/decisions.md`.
 
 Next: M10 model serving (ML Zoomcamp midterm), then the M9 README sections the courses need. Deferred to v2: #58, #38, #59, M7, M8. Open questions: none.
+
+## 2026-11-05 M10-lite and the tariff summary notebook (issues #63 to #69)
+
+Done: `train.py`, `predict.py`, a FastAPI service (five endpoints, saved OpenAPI schema in `_docs/openapi.json`), a Dockerfile (283 MB, non-root, tested with docker build and
+docker run, with the same golden-case tests run against the container), a README ML Zoomcamp section with a sample curl and Cloud Run instructions marked not yet deployed. QA passed
+the golden-case test (#65). `06_tariff_summary.ipynb` (6 seconds) with its test and README link. FastAPI and uvicorn were added as approved.
+
+Next: push the image to ghcr.io (#67), which needs the token scope `write:packages` (`gh auth refresh -h github.com -s write:packages`), then update the README line on the registry
+and close #67 and #68. Then M9 README sections. Open questions: none.
