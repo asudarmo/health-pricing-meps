@@ -1,0 +1,606 @@
+{
+  "components": {
+    "schemas": {
+      "BreakdownRow": {
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "number"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "level",
+          "factor"
+        ],
+        "title": "BreakdownRow",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Quote": {
+        "additionalProperties": true,
+        "description": "A customer profile. Unknown and not permitted fields are rejected by the rating engine.",
+        "example": {
+          "ARTHDX": "0",
+          "ASTHDX": "0",
+          "CANCERDX": "1",
+          "CHDDX": "0",
+          "CHOLDX": "0",
+          "HIBPDX": "0",
+          "OHRTDX": "0",
+          "age": 40,
+          "region": "3"
+        },
+        "properties": {
+          "ARTHDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Arthritis, 0 or 1",
+            "title": "Arthdx"
+          },
+          "ASTHDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Asthma, 0 or 1",
+            "title": "Asthdx"
+          },
+          "CANCERDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cancer, 0 or 1",
+            "title": "Cancerdx"
+          },
+          "CHDDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Coronary heart disease, 0 or 1",
+            "title": "Chddx"
+          },
+          "CHOLDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "High cholesterol, 0 or 1",
+            "title": "Choldx"
+          },
+          "HIBPDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "High blood pressure, 0 or 1",
+            "title": "Hibpdx"
+          },
+          "OHRTDX": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Other heart disease, 0 or 1",
+            "title": "Ohrtdx"
+          },
+          "age": {
+            "description": "Age in whole years, 0 to 120",
+            "title": "Age",
+            "type": "number"
+          },
+          "exposure": {
+            "default": 1.0,
+            "description": "Years of cover",
+            "exclusiveMinimum": 0.0,
+            "title": "Exposure",
+            "type": "number"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Region level, 1 to 4",
+            "title": "Region"
+          }
+        },
+        "required": [
+          "age",
+          "region"
+        ],
+        "title": "Quote",
+        "type": "object"
+      },
+      "QuoteResponse": {
+        "properties": {
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "Breakdown",
+            "type": "array"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "illustrative_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Illustrative Label"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "premium_illustrative_gbp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Illustrative Gbp"
+          },
+          "premium_usd": {
+            "title": "Premium Usd",
+            "type": "number"
+          },
+          "priced_at_reference": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Priced At Reference",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model_version",
+          "premium_usd",
+          "premium_illustrative_gbp",
+          "illustrative_label",
+          "exposure",
+          "breakdown",
+          "priced_at_reference"
+        ],
+        "title": "QuoteResponse",
+        "type": "object"
+      },
+      "RelativityChange": {
+        "properties": {
+          "change": {
+            "description": "Change in the relativity, 0.05 is +5 percent",
+            "title": "Change",
+            "type": "number"
+          },
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "factor",
+          "level",
+          "change"
+        ],
+        "title": "RelativityChange",
+        "type": "object"
+      },
+      "ScenarioRequest": {
+        "example": {
+          "base_change": 0.04,
+          "cap": 0.12,
+          "floor": 0.0,
+          "relativity_changes": [
+            {
+              "change": 0.1,
+              "factor": "age",
+              "level": "80+"
+            }
+          ]
+        },
+        "properties": {
+          "base_change": {
+            "default": 0.0,
+            "description": "Change to every premium, 0.04 is +4 percent",
+            "title": "Base Change",
+            "type": "number"
+          },
+          "cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Largest increase for a cell, 0.12 is +12 percent",
+            "title": "Cap"
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Largest decrease for a cell, -0.05 is -5 percent",
+            "title": "Floor"
+          },
+          "include_cells": {
+            "default": false,
+            "title": "Include Cells",
+            "type": "boolean"
+          },
+          "relativity_changes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RelativityChange"
+            },
+            "title": "Relativity Changes",
+            "type": "array"
+          }
+        },
+        "title": "ScenarioRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "UK-style private medical insurance pricing on US MEPS data. The premium is a risk premium (expected claims cost) in dollars, with illustrative pounds alongside, excluding expenses and margin. Statistical analysis only, source AHRQ MEPS.",
+    "title": "Health pricing service",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Service and model version status"
+      }
+    },
+    "/monitoring": {
+      "get": {
+        "operationId": "monitoring_monitoring_get",
+        "parameters": [
+          {
+            "description": "Only this A/E or PSI period",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this A/E or PSI period",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "Only this factor",
+            "in": "query",
+            "name": "factor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this factor",
+              "title": "Factor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Monitoring Monitoring Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "A/E, PSI and the validation metrics of the model version"
+      }
+    },
+    "/quote": {
+      "post": {
+        "operationId": "quote_quote_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Quote"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Price a profile with its breakdown"
+      }
+    },
+    "/relativities": {
+      "get": {
+        "operationId": "relativities_relativities_get",
+        "parameters": [
+          {
+            "description": "Only this factor",
+            "in": "query",
+            "name": "factor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this factor",
+              "title": "Factor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Relativities Relativities Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The relativities, the base rate and the UK scaling"
+      }
+    },
+    "/scenario-impact": {
+      "post": {
+        "operationId": "scenario_impact_scenario_impact_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Scenario Impact Scenario Impact Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply a rate change to the in-force book"
+      }
+    }
+  }
+}

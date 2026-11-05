@@ -15,7 +15,6 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from health_pricing.models import outofsample
 from health_pricing.rating import engine
 
 MIN_PERSONS = 10
@@ -34,6 +33,8 @@ def age_group(band) -> pd.Series:
 def build_book(frame: pd.DataFrame | None = None, min_persons: int = MIN_PERSONS) -> pd.DataFrame:
     """Exposure by rating cell from the modelling table, with small cells merged."""
     if frame is None:
+        from health_pricing.models import outofsample  # heavy, so only the build needs it
+
         frozen = outofsample.freeze()
         frame = pd.concat([frozen.prepared.train, frozen.prepared.test])
     data = frame[[*KEYS, "exposure"]].copy()
