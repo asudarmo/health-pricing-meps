@@ -5,7 +5,7 @@ model version, with no model object and no notebook. The premium is the base rat
 level times one relativity per rating factor, times the forecast trend and the rebase. The
 large-claim load is already inside the base rate and the relativities, because the tariff is a
 surrogate of the technical model that includes it. The tables are read from
-`outputs/<model_version>/`: `final_tariff_relativities.csv`, `final_tariff_base_rate.csv` and,
+`outputs/<model_version>/`: `relativities.csv`, `base_rate.csv` and,
 once the scaling has been decided, `scaling.json`.
 """
 
@@ -19,8 +19,8 @@ from pathlib import Path
 import pandas as pd
 
 OUTPUTS = Path(__file__).resolve().parents[3] / "outputs"
-RELATIVITIES = "final_tariff_relativities.csv"
-BASE_RATE = "final_tariff_base_rate.csv"
+RELATIVITIES = "relativities.csv"
+BASE_RATE = "base_rate.csv"
 SCALING = "scaling.json"
 GBP_LABEL = "risk premium (expected claims cost), illustrative GBP, excluding expenses and margin"
 AGE_RANGE = (0, 120)

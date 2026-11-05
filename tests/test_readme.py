@@ -201,3 +201,18 @@ def test_the_unconstrained_diagnostic_and_the_older_age_limitation_agree_with_sa
     tariff = pd.read_csv(REPO / "outputs" / "m3_draft" / "relativities_tariff.csv")
     age = tariff[tariff["factor"] == "age"].set_index("level")["presentation_relativity"]
     assert f"{age['80+']:.3f}" in flat
+
+
+def test_the_v1_numbers_are_quoted_as_the_published_tables_have_them():
+    import json
+
+    flat = " ".join(README.split())
+    meta = json.loads((REPO / "outputs" / "v1" / "model_version.json").read_text())
+    test = meta["validation_metrics"]["test_split_2022"]
+    assert f"deviance of {test['tweedie_deviance']:,.0f}" in flat
+    assert f"Gini of {test['gini']:.3f}" in flat
+    assert f"A/E is {meta['validation_metrics']['a_e_2023_after_rating_level']:.3f}" in flat
+    totals = pd.read_csv(REPO / "outputs" / "v1" / "scenario_example_totals.csv")
+    assert f"total premium rises {totals['change_pct'].iloc[0]:.1f} percent" in flat
+    assert "regression baseline, provisional until M7" in flat
+    assert "risk premium (expected claims cost), illustrative pounds" in flat

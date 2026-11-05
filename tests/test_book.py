@@ -10,13 +10,13 @@ from health_pricing.models import outofsample
 from health_pricing.rating import book as bk
 from health_pricing.rating import engine
 
-VERSION = "m6_draft"
+VERSION = "v1"
 
 
 @pytest.fixture(scope="module")
 def tariff():
     if not (engine.OUTPUTS / VERSION / engine.RELATIVITIES).exists():
-        pytest.skip("run python -m health_pricing.models.finaltariff")
+        pytest.skip("run python -m health_pricing.publish")
     return engine.load_tariff(VERSION)
 
 

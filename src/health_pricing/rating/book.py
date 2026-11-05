@@ -174,26 +174,3 @@ EXAMPLE = Scenario(
     cap=0.12,
     floor=0.0,
 )
-
-
-def save_all(model_version: str = "m6_draft") -> dict[str, pd.DataFrame]:
-    """Build the book and the example scenario and save the tables and the histogram."""
-    tariff = engine.load_tariff(model_version)
-    directory = engine.OUTPUTS / model_version
-    book = build_book()
-    result = apply_scenario(book, EXAMPLE, tariff)
-    tables = {
-        "in_force_book.csv": book,
-        "scenario_example_cells.csv": result["cells"],
-        "scenario_example_totals.csv": pd.DataFrame([result["totals"]]),
-        "scenario_example_dislocation.csv": dislocation(result["cells"]),
-    }
-    for name, table in tables.items():
-        table.to_csv(directory / name, index=False)
-    (directory / "figures").mkdir(exist_ok=True)
-    save_histogram(result["cells"], directory / "figures" / "scenario_example_dislocation.png")
-    return tables
-
-
-if __name__ == "__main__":
-    save_all()

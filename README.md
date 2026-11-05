@@ -5,6 +5,8 @@
 - **Final tariff.** 9 UK-permitted rating factors, a test deviance 9.7 percent below the baseline and a Gini of 0.378.
 - **Out-of-time 2023.** A/E of 1.145, but the ranking, the relativities and the mix held, so it is a **level change and not a structure
   change**. A credibility-weighted rebase of 1.06.
+- **v1 tariff and rating engine.** The final tariff adds a monotone adult age rule and a base rate at the rating-period level. The
+  rating engine prices a profile with a factor-by-factor breakdown, and the contract tables are published in `outputs/v1/`.
 - **GBM challenger.** LightGBM with cross-validation grouped by household did not beat the GLM, and SHAP found no missed
   interactions, so the **GLM tariff is the pricing basis**.
 - **Judgement calls.** A smoker discount (a relativity of 0.60 for daily smokers) was found in the data, investigated and not priced.
@@ -13,7 +15,7 @@
 
 A UK-style private medical insurance (PMI) pricing exercise built on US MEPS survey data. This is the **interim README**. The data
 pipeline, the frequency and severity GLMs, the final tariff, the out-of-time test and monitoring on 2023 and the GBM challenger
-(M4, lite) are done. The final rating engine, the Excel reconciliation and the model service are in progress (see
+(M4, lite) are done. The v1 tariff, the rating engine and the published contract tables (M6, lite) are also done. The Excel reconciliation and the model service are in progress (see
 [Roadmap](#roadmap-in-progress)). The full plan is in [`_docs/plan.md`](_docs/plan.md), the decisions are in
 [`_docs/decisions.md`](_docs/decisions.md) and the data flow is in [`_docs/data-flow.md`](_docs/data-flow.md).
 
@@ -155,6 +157,26 @@ that the GLM misses. On 2023 the Gini is 0.469 for the GBM, 0.460 for its tariff
 and a diagnostic refit without the constraint was no better (deviance 843,561, Gini 0.372). **The GLM tariff is the pricing basis.**
 The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is `notebooks/05_gbm.ipynb`.
 
+## The v1 tariff, rating engine and published tables (M6, lite)
+
+The v1 tariff is the 2022-fitted multiplicative tariff of M3 with two changes. The adult age relativities follow a monotone rule (an
+isotonic adjustment that pools the bands from 60-64 to 80+), and the base rate carries the forecast trend of 1.019 and the rebase of
+1.06 (1.080 together). On the 2022 test split the tariff has a deviance of 839,170 and a Gini of 0.376, and on grouped
+cross-validation the rule lowers the out-of-fold deviance by 0.07 percent. On 2023 the A/E is 1.080 after the rating-period level.
+The rebase is a credibility-weighted judgement, so it does not bring the 2023 A/E to 1.00.
+
+The rating engine, `health_pricing.rating.rate(profile, "v1")`, returns the premium and its breakdown from the published tables. It
+rejects sex, race, income and education and prices the analysis-only controls at their reference level. Premiums are dollars per
+exposure-year, with a **risk premium (expected claims cost), illustrative pounds** alongside, excluding expenses and margin (see
+Limitations). The golden test cases in `outputs/v1/golden_cases.csv` are a **regression baseline, provisional until M7**, because the
+Excel reconciliation will replace them.
+
+`outputs/v1/` holds `model_version.json`, `relativities.csv`, `base_rate.csv`, `scaling.json`, `ae_table.csv`, `psi_table.csv`,
+`in_force_book.csv`, `golden_cases.csv` and an example scenario with its dislocation histogram. They are aggregated tables only. A
+contract test (`tests/test_contract_v1.py`) checks the files, the schemas, the totals and each golden premium. Rebuild them with
+`uv run python -m health_pricing.publish`. In the example scenario (base +4 percent, +5 percent on 75-79 and +10 percent on 80+, cap
++12 percent) total premium rises 5.4 percent and the cap gives up about 0.3 percent of premium.
+
 ## Limitations
 
 - **US data.** MEPS is a US survey. Costs, benefit design and the mix of people differ from a UK book, so the results show the
@@ -187,7 +209,7 @@ The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary
 | Milestone | What it will add | Reruns |
 |---|---|---|
 | M4 Pure premium and ML challenger | Done (lite): the LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff, with the GLM tariff kept as the pricing basis. A Tweedie GLM and a GBM with the health and exercise controls are optional and not run | Nothing, because M4 did not change the chosen model |
-| M6 Final model, rating engine and rate change | A final refit on 2022 and 2023 with a year term, a re-estimated large-claim load and indexed cap, a rating engine, the in-force book and rate-change impact. It also adopts the monotone adult age rule (issue #57, drafted in `outputs/m6_draft/`), an isotonic adjustment of the adult band relativities followed by a rebalance | Supersedes the 1.06 rebase |
+| M6 Final model, rating engine and rate change | Done (v1-lite): the monotone adult age rule, the final tariff with the 1.06 rebase, the rating engine, the in-force book, scenario impact and the published `outputs/v1/` (drafts in `outputs/m6_draft/`). Deferred to v2: a pooled refit with a year term, a re-estimated large-claim load and indexed cap, and a projection to the rating period | The v2 refit supersedes the 1.06 rebase |
 | M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
 | M10 Model serving | A FastAPI service for quotes, relativities and monitoring, serving the published outputs | |
 

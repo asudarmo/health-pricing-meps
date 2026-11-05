@@ -1,0 +1,78 @@
+{
+  "id": "v1",
+  "date": "2026-11-05",
+  "description": "v1-lite: 2022-fitted multiplicative tariff with a monotone adult age rule",
+  "data_years": {
+    "fit": 2022,
+    "out_of_time": 2023,
+    "cost_basis": "2023 prices, PMI scope"
+  },
+  "trend_assumptions": {
+    "forecast_trend": 1.019,
+    "forecast_trend_range": [
+      1.008,
+      1.031
+    ],
+    "rebase": 1.06,
+    "rebase_range": [
+      1.025,
+      1.145
+    ],
+    "rating_level_factor": 1.0801399999999999,
+    "note": "v2 refits on pooled years and projects to a rating period"
+  },
+  "validation_metrics": {
+    "test_split_2022": {
+      "tweedie_deviance": 839170.0134496919,
+      "gini": 0.37630277975785686,
+      "a_e": 1.0809607138112065
+    },
+    "grouped_cross_validation_2022": {
+      "tweedie_deviance": 3085066.7820555493,
+      "gini": 0.4755947216036628
+    },
+    "a_e_2023_after_rating_level": 1.0799250384316228
+  },
+  "permitted_rating_factors": [
+    "age",
+    "region",
+    "HIBPDX",
+    "CHDDX",
+    "CANCERDX",
+    "ARTHDX",
+    "ASTHDX",
+    "CHOLDX",
+    "OHRTDX"
+  ],
+  "excluded_factors": [
+    "education",
+    "income",
+    "race",
+    "sex"
+  ],
+  "analysis_only_priced_at_reference": [
+    "OFTSMK53",
+    "PHYEXE53",
+    "inscov",
+    "mnhlth",
+    "rthlth"
+  ],
+  "uk_scaling": {
+    "gbp_per_usd_premium": 0.244,
+    "label": "risk premium (expected claims cost), illustrative GBP, excluding expenses and margin",
+    "basis": "UK PMI claims paid per covered life, all covered lives, 2023",
+    "claims_paid_gbp": 3570000000.0,
+    "people_covered": 6200000.0,
+    "gbp_per_covered_life": 576,
+    "model_mean_usd_rating_level": 2358,
+    "includes_exchange_rate": true,
+    "source": "ABI press release, 6 November 2024, private medical insurance data for 2023 (https://www.abi.org.uk/media-hub/news-post/private-medical-insurers-report-record-47-million-covered-by-employer-health-schemes)",
+    "decided": "2026-11-05, gate 8, option A",
+    "illustrative": true
+  },
+  "golden_cases": {
+    "file": "golden_cases.csv",
+    "status": "regression baseline, provisional until M7"
+  },
+  "monetary_unit": "dollars per exposure-year at 2023 prices, with a risk premium in illustrative pounds alongside"
+}
