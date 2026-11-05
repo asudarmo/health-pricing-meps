@@ -855,3 +855,14 @@ The likely cause, as the user put it, is the exclusion of ER-originated stays, w
 curve down. The ER sensitivity points the same way and does not settle it. The limitation is in the README.
 Why: UK PMI premiums rise with age.
 Alternatives: no rule, or a floor at 80+ only.
+
+## 2026-11-05 UK scaling for illustrative pound premiums, options (issue #60, gate 8)
+Status: evidence and recommendation, awaiting the user's decision at gate 8.
+Source: ABI press release of 6 November 2024 on 2023 data. PMI claims paid were 3.57 billion pounds, of which workplace 2.27 billion. People covered
+were 6.2 million, of which 4.7 million under employer schemes. The individual figures are by subtraction (1.30 billion pounds, 1.5 million people).
+Model side: the mean predicted cost per exposure-year of the v1 tariff on 2022 train is 2,183 dollars at 2022 level and 2,358 dollars at the rating-period
+level (trend 1.019 and rebase 1.06). The scaling is a factor from dollars to illustrative pounds that sets the model mean equal to the UK claims cost per covered life.
+It includes the exchange rate, so no separate rate is needed. Claims cost is not premium, so it excludes expenses and margin.
+Options: (A) all covered lives, 576 pounds per life, factor 0.244. (B) workplace only, 483 pounds, factor 0.205. (C) individual only, 867 pounds, factor 0.368, derived by subtraction.
+(D) the exchange rate only, which would give about 1,900 pounds and is well above the UK claims cost per life, because US costs are higher.
+Recommendation: A, because it uses the published headline figures for the whole market and the book mix of MEPS is not an employer or individual mix.
