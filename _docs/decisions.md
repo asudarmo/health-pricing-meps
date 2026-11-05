@@ -847,3 +847,11 @@ Approximation error (tariff over technical model, by segment, test split, median
 rule the age band maximum was 1.1 percent. Train is similar. Tables are in `outputs/m6_draft/final_tariff_*.csv`.
 Recommendation: adopt this tariff as the v1 tariff. The 8 percent gap at 80+ is the price of a non-decreasing age curve and is stated in the limitations.
 Alternatives: no rule (the age relativity falls after 70), or a floor at 80+ only.
+
+## 2026-11-05 Gate 7 decided: the v1 final tariff (issue #37)
+Decision: the user decided that the final tariff is the monotone adult age rule applied to the M3 tariff, with the base rate rebalanced, as recommended.
+Limitation to state: the 80+ band of the tariff is 8.2 percent above the technical model on the 2022 test split, because the rule pools 60-64 to 80+.
+The likely cause, as the user put it, is the exclusion of ER-originated stays, which are concentrated at older ages and pull the model's own older-age
+curve down. The ER sensitivity points the same way and does not settle it. The limitation is in the README.
+Why: UK PMI premiums rise with age.
+Alternatives: no rule, or a floor at 80+ only.

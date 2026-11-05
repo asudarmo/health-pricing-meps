@@ -170,8 +170,10 @@ The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary
   older ages (they add 39.0 percent to cost at 65 and over against 24.8 percent at 18 to 39). The ER sensitivity points the same way
   but does not settle it. With the stays added, the age curve is higher at old ages (the relativity at 80 against 67 is 0.983 against
   0.870 and at 85 it is 0.947 against 0.782), yet the interval of the ratio contains 1 at every age. A UK implementation would
-  calibrate older-age relativities to UK market experience. The monotone adult age rule drafted for M6 (issue #57) removes the fall
-  in the meantime.
+  calibrate older-age relativities to UK market experience. The v1 tariff applies a monotone adult age rule (issue #57), which pools
+  the bands from 60-64 to 80+ so that adult relativities never fall. This puts the 80+ tariff 8.2 percent above the technical model on
+  the 2022 test split. The likely cause is the exclusion of ER-originated stays, concentrated at older ages, which pulls the model's
+  own older-age curve down. This cause is not tested beyond the ER sensitivity above.
 - **The trend is an assumption.** The 1.9 percent is an external utilization trend from insurers' rate filings. The A/E and the rebase are
   shown at a low and a high trend.
 - **One out-of-time year.** A one-off change in level cannot be separated from a lasting one with one year of data.
