@@ -271,3 +271,12 @@ error by segment. Decisions are logged. Tables are in `outputs/m6_draft/`.
 
 Next: the user's decision at gate 7 on the final tariff, then #60 (rating engine). Open questions: whether to accept the 8 percent gap at 80+ that the
 rule creates against the technical model.
+
+## 2026-11-05 Gates 7 and 8, rating engine and in-force book (issues #37, #57, #60, #61)
+
+Done: gate 7 decided (monotone age rule, rebalanced base rate), the 80+ gap of 8.2 percent logged as a limitation with its likely cause. Gate 8 decided (option A, 0.244,
+ABI 2023 data), recorded in `scaling.json`, `_docs/decisions.md` and the README, and labelled as an illustrative risk premium (expected claims cost) excluding expenses and margin.
+The rating engine (`rating/engine.py`) passed QA. The in-force book, scenario function and dislocation tables (`rating/book.py`) are built with tests and a self-check, per the
+QA-lite scope. #57, #37 and #60 are closed.
+
+Next: #62 (publish `outputs/v1/`, golden cases labelled provisional until M7, and copy `scaling.json` into `model_version.json`). Open questions: none.
