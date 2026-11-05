@@ -177,6 +177,69 @@ contract test (`tests/test_contract_v1.py`) checks the files, the schemas, the t
 `uv run python -m health_pricing.publish`. In the example scenario (base +4 percent, +5 percent on 75-79 and +10 percent on 80+, cap
 +12 percent) total premium rises 5.4 percent and the cap gives up about 0.3 percent of premium.
 
+## ML Zoomcamp: the pricing service (M10-lite)
+
+**Problem.** A pricing team needs to quote a customer, read the relativities, check the monitoring tables and test a rate change without
+running the modelling code. The service answers those four questions over HTTP, from the published tables in `outputs/v1/` and the
+rating engine. It holds no model object. Premiums are dollars per exposure-year, with a **risk premium (expected claims cost),
+illustrative pounds** alongside, excluding expenses and margin.
+
+**Train.** `uv run python train.py` rebuilds `outputs/v1/` from the MEPS data (see
+[Reproduce from a clean clone](#reproduce-from-a-clean-clone) for the download, load and dbt steps) and saves the OpenAPI schema to
+[`_docs/openapi.json`](_docs/openapi.json). `uv run python predict.py --age 40 --region 3 --CANCERDX 1` prices one profile from the
+command line.
+
+**Run.**
+
+```
+uv run uvicorn health_pricing.service.app:app --port 8000
+```
+
+The endpoints are `GET /health`, `POST /quote`, `GET /relativities`, `GET /monitoring` and `POST /scenario-impact`. The interactive
+documentation is at `http://localhost:8000/docs`.
+
+**Call.**
+
+```
+curl -s -X POST http://localhost:8000/quote -H "Content-Type: application/json"   -d '{"age":40,"region":"3","HIBPDX":"0","CHDDX":"0","OHRTDX":"0","CHOLDX":"0","CANCERDX":"1","ARTHDX":"0","ASTHDX":"0"}'
+
+curl -s -X POST http://localhost:8000/scenario-impact -H "Content-Type: application/json"   -d '{"base_change":0.04,"relativity_changes":[{"factor":"age","level":"80+","change":0.1}],"cap":0.12,"floor":0.0}'
+```
+
+A profile with a factor that is not permitted (sex, race, income or education) or a level that does not exist returns a 422 with the
+reason. Smoking, health and exercise answers are accepted and priced at their reference level.
+
+**Docker.** The image holds only the service code and `outputs/v1/`. It needs no MEPS data and runs as a non-root user.
+
+```
+docker build -t health-pricing-service:v1 .
+docker run --rm -p 8000:8000 health-pricing-service:v1
+```
+
+The image is to be published to the GitHub Container Registry as `ghcr.io/asudarmo/health-pricing-meps:v1`. The push has not been
+done yet (issue #67), so build the image locally for now.
+
+**Tests.** `uv run pytest tests/test_service.py` starts the service and checks that `/quote` returns the premium of every golden case.
+Set `SERVICE_URL=http://localhost:8000` to run the same checks against a running container. The golden cases are a regression baseline,
+provisional until the Excel reconciliation (M7).
+
+**Relation to the AI Dev Tools app.** The app is a separate repository for the AI Dev Tools capstone. It calls this service over HTTP and
+does not import the package. The course instructor confirmed in the ML Zoomcamp Slack on 2 November 2026 that the app may consume this
+service. This repository is the ML Zoomcamp midterm.
+
+**Cloud deployment (not yet deployed).** The service has not been deployed. To run it on Google Cloud Run, with a Google Cloud
+project and the `gcloud` CLI installed, run these commands from the repository root.
+
+```
+gcloud auth login
+gcloud config set project PROJECT_ID
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+gcloud run deploy health-pricing --source . --region europe-west2 --port 8000 --allow-unauthenticated
+```
+
+Cloud Run builds the image from the `Dockerfile` and prints the service URL. Replace `http://localhost:8000` in the calls above with that
+URL. Drop `--allow-unauthenticated` to require a Google identity token.
+
 ## Limitations
 
 - **US data.** MEPS is a US survey. Costs, benefit design and the mix of people differ from a UK book, so the results show the
@@ -211,7 +274,7 @@ contract test (`tests/test_contract_v1.py`) checks the files, the schemas, the t
 | M4 Pure premium and ML challenger | Done (lite): the LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff, with the GLM tariff kept as the pricing basis. A Tweedie GLM and a GBM with the health and exercise controls are optional and not run | Nothing, because M4 did not change the chosen model |
 | M6 Final model, rating engine and rate change | Done (v1-lite): the monotone adult age rule, the final tariff with the 1.06 rebase, the rating engine, the in-force book, scenario impact and the published `outputs/v1/` (drafts in `outputs/m6_draft/`). Deferred to v2: a pooled refit with a year term, a re-estimated large-claim load and indexed cap, and a projection to the rating period | The v2 refit supersedes the 1.06 rebase |
 | M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
-| M10 Model serving | A FastAPI service for quotes, relativities and monitoring, serving the published outputs | |
+| M10 Model serving | Done (lite, not deployed): `train.py`, `predict.py`, a FastAPI service for quotes, relativities, monitoring and scenario impact, the saved OpenAPI schema and a Docker image. Cloud deployment is not done | |
 
 ## Reproduce from a clean clone
 

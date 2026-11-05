@@ -1,6 +1,7 @@
 """Tests for the pricing web service and the command line entry points (M10-lite)."""
 
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -28,6 +29,9 @@ NONE = dict.fromkeys(predict.CONDITIONS, "0")
 def server():
     if not GOLDEN.exists():
         pytest.skip("run python -m health_pricing.publish")
+    if os.environ.get("SERVICE_URL"):  # an already running service, for example docker run
+        yield os.environ["SERVICE_URL"].rstrip("/")
+        return
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]

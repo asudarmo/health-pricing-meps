@@ -216,3 +216,13 @@ def test_the_v1_numbers_are_quoted_as_the_published_tables_have_them():
     assert f"total premium rises {totals['change_pct'].iloc[0]:.1f} percent" in flat
     assert "regression baseline, provisional until M7" in flat
     assert "risk premium (expected claims cost), illustrative pounds" in flat
+
+
+def test_the_zoomcamp_section_names_the_endpoints_and_says_not_yet_deployed():
+    flat = " ".join(README.split())
+    assert "## ML Zoomcamp: the pricing service" in README
+    for endpoint in ("/health", "/quote", "/relativities", "/monitoring", "/scenario-impact"):
+        assert endpoint in flat
+    assert "not yet deployed" in flat and "gcloud run deploy" in flat
+    assert "AI Dev Tools" in flat and "2 November 2026" in flat
+    assert "_docs/openapi.json" in flat

@@ -899,3 +899,13 @@ Golden cases: 33 profiles (the reference profile, each age band, each region, ea
 M6 done-when for v1-lite: all section 6 outputs exist and are tested (`tests/test_contract_v1.py`). The v2 items stay deferred.
 Why: the app consumes these files, so they are tested as a contract.
 Alternatives: extra columns in the relativities table, which would be a contract change.
+
+## 2026-11-05 M10-lite service design (issues #63 to #68)
+Decision: the service is a thin FastAPI layer over the rating engine and the tables in `outputs/v1/`. It needs only fastapi, uvicorn, pandas and numpy at run time. To keep it so,
+`rating/book.py` imports the model code only inside `build_book`, and a test checks that importing the service loads no modelling library. `requirements-service.txt` pins the
+run-time packages to the versions in `uv.lock`. FastAPI and uvicorn were added as approved. Tests start the service with uvicorn in a thread and call it with the standard library, so no
+test client (httpx) was added. The same tests run against a container with `SERVICE_URL`. Omitted condition flags are an error, as in the engine, and controls are accepted and priced
+at reference. The OpenAPI schema is saved in `_docs/openapi.json` and a test fails when it is out of date. `_docs/` also holds the schema because it is a document of the service.
+Cloud Run instructions use `gcloud run deploy --source .`, which builds from the Dockerfile, and are marked not yet deployed. Cloud Run cannot pull from ghcr.io directly.
+Why: a reviewer can run the same engine locally, in Docker and over HTTP, and get the golden-case premiums.
+Alternatives: serving the package with all dependencies (a much larger image), and a test client (a new dependency).

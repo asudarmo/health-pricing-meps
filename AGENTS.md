@@ -20,6 +20,10 @@ To be confirmed and updated by Task 1. Keep this section accurate.
 - `uv run dbt build --project-dir dbt --profiles-dir dbt` - build and test the dbt models
 - `uv run python -m health_pricing.data_dictionary` - regenerate `_docs/data-dictionary.md` from the dbt marts `schema.yml`
 - `uv run ruff check . && uv run ruff format --check .` - lint and format check
+- `uv run python train.py` - rebuild `outputs/v1/` and the saved OpenAPI schema
+- `uv run python predict.py --age 40 --region 3 --CANCERDX 1` - price one profile from the published tables
+- `uv run uvicorn health_pricing.service.app:app --port 8000` - run the pricing service
+- `docker build -t health-pricing-service:v1 .` - build the service image
 - `uv run jupyter lab` - notebooks
 
 ## Structure
