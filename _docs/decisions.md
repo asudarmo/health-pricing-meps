@@ -894,7 +894,7 @@ Decision: `outputs/v1/` holds the section 6 files with the columns of the plan, 
 Under v1-lite the A/E and PSI are for the 2022-fitted tariff, not the pooled model. A/E covers the 2022 test split and 2023, with the 2023 expected cost at the rating-period level
 (trend 1.019 and rebase 1.06), so the 2023 A/E is 1.080. The rebase is credibility-weighted, so it does not reach 1.00. A/E is by rating factor level with segment "all", plus an overall row.
 PSI is the 2023 against 2022 train mix of the rating factors from M5, which does not depend on the age rule. The scaling is in `model_version.json` and `scaling.json`.
-Golden cases: 38 profiles (the reference profile, each age band, each region, each condition alone, and five mixed profiles) with expected premiums from the engine, labelled
+Golden cases: 33 profiles (the reference profile, each age band, each region, each condition alone, and five mixed profiles) with expected premiums from the engine, labelled
 "regression baseline, provisional until M7". A test checks each against the engine and three against the adjusted tariff, and the full set by cell in the engine test.
 M6 done-when for v1-lite: all section 6 outputs exist and are tested (`tests/test_contract_v1.py`). The v2 items stay deferred.
 Why: the app consumes these files, so they are tested as a contract.
