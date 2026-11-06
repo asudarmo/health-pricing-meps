@@ -72,7 +72,7 @@
   },
   "golden_cases": {
     "file": "golden_cases.csv",
-    "status": "regression baseline, provisional until M7"
+    "status": "regression baseline, provisional until the Excel reconciliation"
   },
   "monetary_unit": "dollars per exposure-year at 2023 prices, with a risk premium in illustrative pounds alongside"
 }

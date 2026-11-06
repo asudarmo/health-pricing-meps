@@ -45,7 +45,7 @@ def test_the_notebook_defines_nothing_and_never_fits_a_model():
         assert heading in markdown, heading
     assert r"\text{premium}" in markdown
     assert "risk premium (expected claims cost), illustrative £" in markdown
-    assert "regression baseline, provisional until M7" in markdown
+    assert "regression baseline, provisional until the Excel reconciliation" in markdown
 
 
 def test_the_notebook_runs_in_a_fresh_kernel_in_under_30_seconds():

@@ -88,7 +88,8 @@ def test_the_service_returns_every_golden_case_premium(server):
 def test_health_and_the_golden_label(server):
     status, body = call(server, "/health")
     assert status == 200 and body["status"] == "ok" and body["model_version"] == "v1"
-    assert body["golden_cases_status"] == "regression baseline, provisional until M7"
+    label = "regression baseline, provisional until the Excel reconciliation"
+    assert body["golden_cases_status"] == label
     assert body["description"].startswith("v1: 2022-fitted") and "lite" not in body["description"]
 
 

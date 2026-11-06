@@ -21,7 +21,7 @@ from health_pricing.rating import book as bk
 from health_pricing.rating import engine
 
 VERSION = "v1"
-GOLDEN_LABEL = "regression baseline, provisional until M7"
+GOLDEN_LABEL = "regression baseline, provisional until the Excel reconciliation"
 PERMITTED = ["age", "region", *finaltariff.CONDITIONS]
 RELATIVITY_COLUMNS = ["factor", "level", "relativity", "exposure", "lower_95", "upper_95"]
 AE_COLUMNS = ["factor", "level", "segment", "period", "actual", "expected", "exposure"]
