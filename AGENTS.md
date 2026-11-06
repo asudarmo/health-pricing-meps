@@ -31,7 +31,7 @@ To be confirmed and updated by Task 1. Keep this section accurate.
 - `src/health_pricing/` - installable pricing package: data loading, validation, features, models, rating
   engine, monitoring, scenario impact. All reusable logic lives here.
 - `dbt/` - DuckDB staging and modelling-table SQL, with dbt tests.
-- `notebooks/` - numbered notebooks (`01_data.ipynb`, `02_eda.ipynb`, ...) that explain each modelling
+- `notebooks/` - numbered notebooks (`02_eda.ipynb`, `03_glm.ipynb`, ...) that explain each modelling
   step for a reviewer. Notebooks import from the package. They do not define reusable logic.
 - `data/raw/` - downloaded MEPS files. Git-ignored. Never committed.
 - `data/interim/` - DuckDB database and intermediate files. Git-ignored.

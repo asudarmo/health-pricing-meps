@@ -13,11 +13,12 @@
   Exercise showed a raw 31 percent cost gap but no clear effect after adjustment (0.97 on frequency and 1.07 on severity).
 - **Stack.** Python, SQL (DuckDB and dbt), statsmodels, LightGBM, SHAP and pytest.
 
-A UK-style private medical insurance (PMI) pricing exercise built on US MEPS survey data. This is the **interim README**. The data
-pipeline, the frequency and severity GLMs, the final tariff, the out-of-time test and monitoring on 2023 and the GBM challenger
-(M4, lite) are done. The v1 tariff, the rating engine and the published contract tables (M6, lite) are also done. The Excel reconciliation and the model service are in progress (see
-[Roadmap](#roadmap-in-progress)). The full plan is in [`_docs/plan.md`](_docs/plan.md), the decisions are in
-[`_docs/decisions.md`](_docs/decisions.md) and the data flow is in [`_docs/data-flow.md`](_docs/data-flow.md).
+A UK-style private medical insurance (PMI) pricing exercise built on US MEPS survey data. It covers the data pipeline, the frequency and
+severity GLMs, the final tariff, the out-of-time test and monitoring on 2023, a gradient-boosting challenger, the v1 tariff with its
+rating engine and published tables, and a pricing service. What comes next is listed under [Next steps](#next-steps). The decisions are
+in [`_docs/decisions.md`](_docs/decisions.md), the assumptions, risks and limitations are in
+[`_docs/model-documentation.md`](_docs/model-documentation.md), the data flow is in [`_docs/data-flow.md`](_docs/data-flow.md) and the internal project
+plan is in [`_docs/plan.md`](_docs/plan.md).
 
 The audience is an actuarial pricing reviewer. The full notebooks explain each step and are `03_glm.ipynb`, `04_monitoring.ipynb` and
 `05_gbm.ipynb`. The short versions, which only load saved tables and charts, are
@@ -81,7 +82,7 @@ of factor $k$.
 
 **Large claims.** Annual cost per person-year is capped at 100,000 dollars when fitting. In train, 32 claimants are above the cap and
 6.1 percent of train cost is above it. A flat provisional load of 6.5 percent adds it back. Costs are scored uncapped. The load is
-re-estimated in M6.
+re-estimated in v2.
 
 **Factors.** The final structure has 9 rating factors: age, region and seven condition flags (high blood pressure, coronary heart
 disease, other heart disease, cholesterol, cancer, arthritis and asthma). Four condition flags were dropped by a selection rule.
@@ -129,8 +130,8 @@ utilization trend of 1.9 percent, set before looking at 2023.
 The Gini on 2023 and on the 2022 test split are not directly comparable, because they come from different people and years. The
 ranking holds on 2023 and the relativities and the mix do not move, so the gap is a **change of level and not of structure**.
 It is mostly severity beyond the price index, read as intensity. The recalibration rule recommends a rebase, and the factor of 1.06
-weights one noisy year of own experience (+14.5 percent) with an external level change (+2.5 percent). The M6 pooled refit with a
-year term estimates the level directly and supersedes it. People with a diagnosed condition were under-predicted by more than the
+weights one noisy year of own experience (+14.5 percent) with an external level change (+2.5 percent). The planned pooled refit with a
+year term (v2) estimates the level directly and would supersede it. People with a diagnosed condition were under-predicted by more than the
 book, which is a pattern to watch. The rule is in [`_docs/recalibration-rule.md`](_docs/recalibration-rule.md).
 
 ![Lift on 2023](outputs/m5_draft/figures/lift_2023.png)
@@ -147,7 +148,7 @@ How the evidence is produced and read:
 
 ![Level or structure](outputs/figures/diagrams/diagram_5b.svg)
 
-### Gradient-boosting challenger (M4-lite)
+### Gradient-boosting challenger
 
 A LightGBM model with a Tweedie objective, log exposure as an offset and five-fold cross-validation grouped by household did not beat
 the GLM on the 2022 holdout. Its test deviance is 840,754 against 838,173 for the GLM tariff and 831,786 for the technical model, with
@@ -158,9 +159,9 @@ that the GLM misses. On 2023 the Gini is 0.469 for the GBM, 0.460 for its tariff
 and a diagnostic refit without the constraint was no better (deviance 843,561, Gini 0.372). **The GLM tariff is the pricing basis.**
 The short version is [`notebooks/05_gbm_summary.ipynb`](notebooks/05_gbm_summary.ipynb) and the full one is `notebooks/05_gbm.ipynb`.
 
-## The v1 tariff, rating engine and published tables (M6, lite)
+## The v1 tariff, rating engine and published tables
 
-The v1 tariff is the 2022-fitted multiplicative tariff of M3 with two changes. The adult age relativities follow a monotone rule (an
+The v1 tariff is the 2022-fitted multiplicative tariff of the final model with two changes. The adult age relativities follow a monotone rule (an
 isotonic adjustment that pools the bands from 60-64 to 80+), and the base rate carries the forecast trend of 1.019 and the rebase of
 1.06 (1.080 together). On the 2022 test split the tariff has a deviance of 839,170 and a Gini of 0.376, and on grouped
 cross-validation the rule lowers the out-of-fold deviance by 0.07 percent. On 2023 the A/E is 1.080 after the rating-period level.
@@ -169,8 +170,8 @@ The rebase is a credibility-weighted judgement, so it does not bring the 2023 A/
 The rating engine, `health_pricing.rating.rate(profile, "v1")`, returns the premium and its breakdown from the published tables. It
 rejects sex, race, income and education and prices the analysis-only controls at their reference level. Premiums are dollars per
 exposure-year, with a **risk premium (expected claims cost), illustrative pounds** alongside, excluding expenses and margin (see
-Limitations). The golden test cases in `outputs/v1/golden_cases.csv` are a **regression baseline, provisional until M7**, because the
-Excel reconciliation will replace them.
+Limitations). The golden test cases in `outputs/v1/golden_cases.csv` are a **regression baseline, provisional until the Excel
+reconciliation**, because the planned reconciliation will replace them.
 
 `outputs/v1/` holds `model_version.json`, `relativities.csv`, `base_rate.csv`, `scaling.json`, `ae_table.csv`, `psi_table.csv`,
 `in_force_book.csv`, `golden_cases.csv` and an example scenario with its dislocation histogram. They are aggregated tables only. A
@@ -178,7 +179,7 @@ contract test (`tests/test_contract_v1.py`) checks the files, the schemas, the t
 `uv run python -m health_pricing.publish`. In the example scenario (base +4 percent, +5 percent on 75-79 and +10 percent on 80+, cap
 +12 percent) total premium rises 5.4 percent and the cap gives up about 0.3 percent of premium.
 
-## ML Zoomcamp: the pricing service (M10-lite)
+## Pricing service (ML Zoomcamp)
 
 **Problem.** A pricing team needs to quote a customer, read the relativities, check the monitoring tables and test a rate change without
 running the modelling code. The service answers those four questions over HTTP, from the published tables in `outputs/v1/` and the
@@ -228,7 +229,7 @@ The package is public, so no login is needed. A pull from the registry and the g
 
 **Tests.** `uv run pytest tests/test_service.py` starts the service and checks that `/quote` returns the premium of every golden case.
 Set `SERVICE_URL=http://localhost:8000` to run the same checks against a running container. The golden cases are a regression baseline,
-provisional until the Excel reconciliation (M7).
+provisional until the planned Excel reconciliation.
 
 **Relation to the AI Dev Tools app.** The app is a separate repository for the AI Dev Tools capstone. It calls this service over HTTP and
 does not import the package. The course instructor confirmed in the ML Zoomcamp Slack on 2 November 2026 that the app may consume this
@@ -253,7 +254,7 @@ URL. Drop `--allow-unauthenticated` to require a Google identity token.
   method and not UK prices.
 - **Small, heavy-tailed samples.** The 2022 test split and the 2023 year are small with a heavy tail, so intervals are wide and
   level-by-level A/E flags are noted and not tuned.
-- **Provisional large-claim load.** The load of 6.5 percent is from 2022 train and is not tuned to 2023. It is re-estimated in M6.
+- **Provisional large-claim load.** The load of 6.5 percent is from 2022 train and is not tuned to 2023. It is re-estimated in v2.
 - **Conditions stand in for underwriting.** The condition flags are a proxy for underwriting information, and the A/E by level
   shows a pattern for them that is worth watching.
 - **Smoking.** Smoking is analysis-only and no discount or loading is applied.
@@ -262,7 +263,7 @@ URL. Drop `--allow-unauthenticated` to require a Google identity token.
   older ages (they add 39.0 percent to cost at 65 and over against 24.8 percent at 18 to 39). The ER sensitivity points the same way
   but does not settle it. With the stays added, the age curve is higher at old ages (the relativity at 80 against 67 is 0.983 against
   0.870 and at 85 it is 0.947 against 0.782), yet the interval of the ratio contains 1 at every age. A UK implementation would
-  calibrate older-age relativities to UK market experience. The v1 tariff applies a monotone adult age rule (issue #57), which pools
+  calibrate older-age relativities to UK market experience. The v1 tariff applies a monotone adult age rule, which pools
   the bands from 60-64 to 80+ so that adult relativities never fall. This puts the 80+ tariff 8.2 percent above the technical model on
   the 2022 test split. The likely cause is the exclusion of ER-originated stays, concentrated at older ages, which pulls the model's
   own older-age curve down. This cause is not tested beyond the ER sensitivity above.
@@ -274,33 +275,51 @@ URL. Drop `--allow-unauthenticated` to require a Google identity token.
   shown at a low and a high trend.
 - **One out-of-time year.** A one-off change in level cannot be separated from a lasting one with one year of data.
 
-## Roadmap (in progress)
+## Next steps
 
-| Milestone | What it will add | Reruns |
-|---|---|---|
-| M4 Pure premium and ML challenger | Done (lite): the LightGBM challenger with SHAP, grouped cross-validation and its surrogate tariff, with the GLM tariff kept as the pricing basis. A Tweedie GLM and a GBM with the health and exercise controls are optional and not run | Nothing, because M4 did not change the chosen model |
-| M6 Final model, rating engine and rate change | Done (v1-lite): the monotone adult age rule, the final tariff with the 1.06 rebase, the rating engine, the in-force book, scenario impact and the published `outputs/v1/` (drafts in `outputs/m6_draft/`). Deferred to v2: a pooled refit with a year term, a re-estimated large-claim load and indexed cap, and a projection to the rating period | The v2 refit supersedes the 1.06 rebase |
-| M7 Excel reconciliation | A small Excel rating workbook that Python reproduces to the penny, with golden test cases | |
-| M10 Model serving | Done (lite, not deployed): `train.py`, `predict.py`, a FastAPI service for quotes, relativities, monitoring and scenario impact, the saved OpenAPI schema and a Docker image on ghcr.io. Cloud deployment is not done | |
+v1 is fitted on 2022 with a credibility-weighted rebase. The next version (v2) and the other planned work are:
+
+- **Pooled refit with a year term (v2).** Refit on 2022 and 2023 together, estimate the level change directly and project costs to a
+  rating period. This replaces the 1.06 rebase.
+- **Large-claim tail model.** Re-estimate the large-claim load and index the cap, in place of the provisional flat load of 6.5 percent.
+- **Excel reconciliation.** A small Excel rating workbook that Python reproduces to the penny. It replaces the provisional golden cases.
+- **Conversion and elasticity.** A conversion model and price elasticity by segment, tested on simulated quotes with a known response.
+- **Cloud deployment.** Deploy the pricing service, for example on Google Cloud Run (see the instructions above).
 
 ## Reproduce from a clean clone
 
-The raw files are downloaded by script and are not committed.
+**Needs.** Python 3.12 or later, [uv](https://docs.astral.sh/uv/) and about 1 GB of free disk space (the raw MEPS files are about 270 MB).
+Docker is only needed for the container. No account, API key or `.env` file is needed. The raw files are downloaded by script from AHRQ,
+with each file's size checked, and are not committed.
 
 ```
+git clone https://github.com/asudarmo/health-pricing-meps.git
+cd health-pricing-meps
 uv sync
 uv run python -m health_pricing.data.download
 uv run python -m health_pricing.data.load
 uv run dbt deps --project-dir dbt --profiles-dir dbt
 uv run dbt build --project-dir dbt --profiles-dir dbt
+uv run python train.py
 uv run pytest
-uv run python -m health_pricing.data.urr
-uv run python -m health_pricing.diagrams
-uv run jupyter lab
 ```
 
-Open the notebooks in order: `01_data.ipynb`, `02_eda.ipynb`, `03_glm.ipynb`, `04_monitoring.ipynb` and `05_gbm.ipynb`. The summary
-notebooks `03_glm_summary.ipynb`, `04_monitoring_summary.ipynb`, `05_gbm_summary.ipynb` and `06_tariff_summary.ipynb` only read saved tables and charts. Seeds are fixed, so the results reproduce.
+`train.py` rebuilds the published tables in `outputs/v1/` and the OpenAPI schema. It was checked on a fresh clone with no `.env` file. The
+dbt build passed all 252 models and tests, and the rebuilt tables match the committed ones to within a relative difference of 1e-13. The
+only other change is the publish date in `model_version.json`. Seeds are fixed, so the results reproduce.
+
+**The price index needs no key.** The PCE-Health index used to put 2022 costs on 2023 prices is committed in
+[`data/reference/pce_health.csv`](data/reference/pce_health.csv), with its checksum, and the dbt models read that file. A free BEA API key
+is only needed to refresh the index, with `uv run --env-file .env python -m health_pricing.data.price_index` (copy `.env.example` to
+`.env` and set `BEA_API_KEY`). Nothing in the steps above uses it.
+
+**Optional steps.** `uv run python -m health_pricing.data.urr` and `uv run python -m health_pricing.diagrams` rebuild the trend
+reference table and the diagrams, and `uv run jupyter lab` opens the notebooks.
+
+Open the notebooks in order: `02_eda.ipynb`, `03_glm.ipynb`, `04_monitoring.ipynb` and `05_gbm.ipynb`. The summary
+notebooks `03_glm_summary.ipynb`, `04_monitoring_summary.ipynb`, `05_gbm_summary.ipynb` and `06_tariff_summary.ipynb` only read saved tables and charts.
+On a fresh clone all eight ran top to bottom. The full notebooks took about 13 seconds (`02_eda`), 3 minutes (`03_glm`), 5 minutes
+(`04_monitoring`) and 1.5 minutes (`05_gbm`), and each summary notebook took under 15 seconds. The full test suite took about 21 minutes.
 
 ## Licence note
 

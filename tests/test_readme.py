@@ -1,4 +1,4 @@
-"""The interim README quotes the saved tables and points to files that exist (M5, issue #51)."""
+"""The README quotes the saved tables, points to files that exist and has no planning labels."""
 
 import re
 from pathlib import Path
@@ -15,7 +15,7 @@ SECTIONS = [
     "## Method",
     "## Results",
     "## Limitations",
-    "## Roadmap (in progress)",
+    "## Next steps",
     "## Reproduce from a clean clone",
 ]
 
@@ -190,7 +190,7 @@ def test_the_unconstrained_diagnostic_and_the_older_age_limitation_agree_with_sa
     row = free.loc["GBM, no age constraint (diagnostic)"]
     assert f"{row['tweedie_deviance']:,.0f}" in flat and f"{row['gini']:.3f}" in flat
     assert "The GLM tariff is the pricing basis" in flat
-    assert "Done (lite)" in flat and "issue #57" in flat and "outputs/m6_draft/" in flat
+    assert "monotone adult age rule" in flat and "pools the bands from 60-64 to 80+" in flat
     curve = pd.read_csv(outofsample.OUTPUT_DIR / "er_stays_age_curve.csv").set_index("age")
     for age in (80, 85):
         assert f"{curve.loc[age, 'relativity_broad']:.3f}" in flat
@@ -215,15 +215,25 @@ def test_the_v1_numbers_are_quoted_as_the_published_tables_have_them():
     assert f"A/E is {meta['validation_metrics']['a_e_2023_after_rating_level']:.3f}" in flat
     totals = pd.read_csv(REPO / "outputs" / "v1" / "scenario_example_totals.csv")
     assert f"total premium rises {totals['change_pct'].iloc[0]:.1f} percent" in flat
-    assert "regression baseline, provisional until M7" in flat
+    assert "regression baseline, provisional until the Excel reconciliation" in flat
     assert "risk premium (expected claims cost), illustrative pounds" in flat
 
 
 def test_the_zoomcamp_section_names_the_endpoints_and_says_not_yet_deployed():
     flat = " ".join(README.split())
-    assert "## ML Zoomcamp: the pricing service" in README
+    assert "## Pricing service (ML Zoomcamp)" in README
     for endpoint in ("/health", "/quote", "/relativities", "/monitoring", "/scenario-impact"):
         assert endpoint in flat
     assert "not yet deployed" in flat and "gcloud run deploy" in flat
     assert "AI Dev Tools" in flat and "2 November 2026" in flat
     assert "_docs/openapi.json" in flat
+
+
+def test_the_readme_has_no_internal_planning_labels():
+    assert not re.search(r"M(?:10|[1-9])", README)
+    assert not re.search(r"#\d+", README)
+    assert not re.search(r"lite", README, re.IGNORECASE)
+    assert README.count("(_docs/plan.md)") == 1
+    assert "(_docs/model-documentation.md)" in README
+    for word in ("employer", "job application", "Vitality"):
+        assert word.lower() not in README.lower()

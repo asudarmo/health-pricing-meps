@@ -299,3 +299,14 @@ Update: the image was pushed to ghcr.io after the token scope was added (#67, #6
 Open questions: none.
 
 Update (6 Nov): the ghcr.io package was made public. A pull from a logged-out session succeeded (checked by the user), so the README login note was removed.
+
+## 6 Nov 2026: M9 write-up (#70 to #73)
+
+Done: opened #70 to #73. Reproduced from a fresh clone with no `.env` and no BEA key: download, load, dbt build (252 pass), `train.py`,
+the full test suite (948 passed, 2 skipped, 21 minutes) and all eight notebooks (6 s to 280 s each). The rebuilt `outputs/v1/` matches
+the committed tables to within a relative 6e-14 (float noise and the publish date). `train.py` needs no BEA key, because dbt reads the
+committed `data/reference/pce_health.csv`. Cleaned the README of milestone IDs, "lite" and issue numbers, replaced the roadmap with Next
+steps, removed the non-existent `01_data.ipynb`, expanded the reproduce section and wrote `_docs/model-documentation.md`.
+
+Next: the user decides whether to change the "v1-lite" description in `outputs/v1/model_version.json` (a published file, so gate 8).
+Open question: none otherwise.
