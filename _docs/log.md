@@ -297,3 +297,5 @@ the golden-case test (#65). `06_tariff_summary.ipynb` (6 seconds) with its test 
 
 Update: the image was pushed to ghcr.io after the token scope was added (#67, #68 closed). Next: the M9 README sections.
 Open questions: none.
+
+Update (6 Nov): the ghcr.io package was made public. A pull from a logged-out session succeeded (checked by the user), so the README login note was removed.

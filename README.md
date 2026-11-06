@@ -223,8 +223,8 @@ The image is published to the GitHub Container Registry as `ghcr.io/asudarmo/hea
 docker run --rm -p 8000:8000 ghcr.io/asudarmo/health-pricing-meps:v1
 ```
 
-The package is private by default, so run `gh auth token | docker login ghcr.io -u USERNAME --password-stdin` first, or ask the owner to
-make it public. A pull from the registry and the golden-case tests against that container were checked on 5 November 2026.
+The package is public, so no login is needed. A pull from the registry and the golden-case tests against that container were checked on
+5 November 2026, and a pull from a logged-out session was checked on 6 November 2026.
 
 **Tests.** `uv run pytest tests/test_service.py` starts the service and checks that `/quote` returns the premium of every golden case.
 Set `SERVICE_URL=http://localhost:8000` to run the same checks against a running container. The golden cases are a regression baseline,
