@@ -310,3 +310,5 @@ steps, removed the non-existent `01_data.ipynb`, expanded the reproduce section 
 
 Next: the user decides whether to change the "v1-lite" description in `outputs/v1/model_version.json` (a published file, so gate 8).
 Open question: none otherwise.
+
+Update (6 Nov): the `model_version.json` description now reads "v1: 2022-fitted multiplicative tariff with a monotone adult age rule" (text only, gate 8 approved by the user). `/health` also returns the description. Tables and the version id are unchanged. The image was rebuilt and pushed as `:v1` and `:latest` (digest sha256:6ca7e754...) and checked by a logged-out pull.

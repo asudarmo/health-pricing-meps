@@ -126,7 +126,7 @@ def model_version(frozen, adjusted, cv, tariff_scores, ae: pd.DataFrame) -> dict
     return {
         "id": VERSION,
         "date": date.today().isoformat(),
-        "description": "v1-lite: 2022-fitted multiplicative tariff with a monotone adult age rule",
+        "description": "v1: 2022-fitted multiplicative tariff with a monotone adult age rule",
         "data_years": {"fit": 2022, "out_of_time": 2023, "cost_basis": "2023 prices, PMI scope"},
         "trend_assumptions": {
             "forecast_trend": finaltariff.FORECAST_TREND,

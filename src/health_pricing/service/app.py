@@ -140,6 +140,7 @@ def health() -> dict:
         "status": "ok",
         "model_version": current.model_version,
         "date": current.meta["date"],
+        "description": current.meta["description"],
         "golden_cases_status": current.meta["golden_cases"]["status"],
     }
 

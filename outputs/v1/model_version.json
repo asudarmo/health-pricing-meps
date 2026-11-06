@@ -1,7 +1,7 @@
 {
   "id": "v1",
   "date": "2026-11-05",
-  "description": "v1-lite: 2022-fitted multiplicative tariff with a monotone adult age rule",
+  "description": "v1: 2022-fitted multiplicative tariff with a monotone adult age rule",
   "data_years": {
     "fit": 2022,
     "out_of_time": 2023,
