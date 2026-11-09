@@ -17,6 +17,7 @@ FILES = [
     "scaling.json",
     "ae_table.csv",
     "psi_table.csv",
+    "ae_intervals.csv",
     "in_force_book.csv",
     "golden_cases.csv",
     "figures/scenario_example_dislocation.png",

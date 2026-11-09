@@ -916,3 +916,11 @@ table `outputs/m6_draft/age_monotone_bands.csv`, because the published relativit
 The 8.2 percent gap at 80+ is checked in a test against `outputs/m6_draft/final_tariff_approximation_summary.csv`. Helpers are in `tariff_summary.py`, so the notebook defines nothing.
 Why: the notebook shows the published tariff and never refits.
 Alternatives: a before-rule column in `relativities.csv`, which is a contract change for the user.
+
+## 9 Nov 2026: service v1.1, additive change to the published contract (gate 8, approved by the user)
+
+Decision: the service adds `GET /model`, and `POST /scenario-impact` gains `histogram`, `histogram_edges_pct`, `projected_ae`, `exposure_capped` and `exposure_floored`. The four JSON responses are typed. The published tables gain one file, `outputs/v1/ae_intervals.csv`: the 2023 A/E of each rating level with its 95 percent interval and its A/E relative to the book. Nothing existing changed.
+Rule at level: a level with 30 or more claimants is flagged when its A/E interval excludes 1 (a level shift) or its relative A/E interval excludes 1 (a change in shape, which takes precedence). The code is `rating/flags.py`, pandas only, so the image can use it. The intervals are those of the out-of-time test of the tariff, scaled by the ratio of the published A/E (with the rating level) to the test A/E, so each keeps its relative width. They are an approximation of the interval on the published basis.
+Histogram: edges in percent change at -20, -10, -5, -2.5, 0, 2.5, 5, 10, 15, 20 and 30, buckets [low, high) with open ends, in life-years. `projected_ae` is the 2023 actual over the expected multiplied by new over old premium of the book.
+Why: the Workbench app needs these and would otherwise reimplement rating logic.
+Alternatives: the rule applied to the book-level evidence only (no per-segment flags), or an interval-free flag from the point A/E, which would flag noise.

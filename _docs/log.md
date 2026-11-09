@@ -314,3 +314,8 @@ Open question: none otherwise.
 Update (6 Nov): the `model_version.json` description now reads "v1: 2022-fitted multiplicative tariff with a monotone adult age rule" (text only, gate 8 approved by the user). `/health` also returns the description. Tables and the version id are unchanged. The image was rebuilt and pushed as `:v1` and `:latest` (digest sha256:6ca7e754...) and checked by a logged-out pull.
 
 Update (6 Nov, later): the golden-case label now reads "regression baseline, provisional until the Excel reconciliation" in `model_version.json`, the `golden_cases.csv` status column, `publish.py`, the tariff summary notebook and the tests (text only, user approved). Premiums are unchanged. Image republished as `:v1` and `:latest` (digest sha256:8af9804b...) and checked by a logged-out pull.
+
+## 9 Nov 2026: service v1.1 (#74 to #76)
+
+Done: `GET /model`, scenario `histogram`, `projected_ae`, `exposure_capped` and `exposure_floored`, typed responses, new table `ae_intervals.csv`, README and OpenAPI schema updated, tests in `tests/test_service_v11.py`. Image published as `:v1.1` and `:latest`, `:v1` untouched.
+Next: the Workbench app can call the new fields. Open question: the segment intervals are scaled test intervals (see decisions, 9 Nov).

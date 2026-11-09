@@ -14,6 +14,7 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -21,14 +22,14 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from health_pricing.rating import book as bk
-from health_pricing.rating import engine
+from health_pricing.rating import engine, flags
 
 DESCRIPTION = (
     "UK-style private medical insurance pricing on US MEPS data. The premium is a risk premium "
     "(expected claims cost) in dollars, with illustrative pounds alongside, excluding expenses "
     "and margin. Statistical analysis only, source AHRQ MEPS."
 )
-app = FastAPI(title="Health pricing service", version="1.0.0", description=DESCRIPTION)
+app = FastAPI(title="Health pricing service", version="1.1.0", description=DESCRIPTION)
 
 
 @dataclass
@@ -133,6 +134,153 @@ class ScenarioRequest(BaseModel):
     )
 
 
+class Fields(BaseModel):
+    """Fields of the published tables. Others are kept, so a wider table does not break clients."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class BaseRateRow(Fields):
+    component: str
+    value: float
+
+
+class RelativityRow(Fields):
+    factor: str
+    level: str
+    relativity: float
+    exposure: float
+    lower_95: float | None = None
+    upper_95: float | None = None
+
+
+class RelativitiesResponse(BaseModel):
+    model_version: str
+    base_rate: list[BaseRateRow]
+    uk_scaling: dict[str, Any] | None
+    relativities: list[RelativityRow]
+
+
+class AERow(Fields):
+    factor: str
+    level: str
+    segment: str
+    period: str
+    actual: float
+    expected: float
+    exposure: float
+    a_e: float
+
+
+class PSIRow(Fields):
+    factor: str
+    period: str
+    psi: float | None
+
+
+class MonitoringResponse(BaseModel):
+    model_version: str
+    validation_metrics: dict[str, Any]
+    ae: list[AERow]
+    psi: list[PSIRow]
+
+
+class Totals(Fields):
+    exposure: float
+    old_premium: float
+    new_premium: float
+    change_pct: float
+    cap_floor_cost: float
+    cells_capped: int
+    cells_floored: int
+    exposure_capped: float = Field(description="Life-years in the cells above the cap")
+    exposure_floored: float = Field(description="Life-years in the cells below the floor")
+    old_premium_gbp: float | None = None
+    new_premium_gbp: float | None = None
+
+
+class DislocationRow(Fields):
+    dimension: str
+    segment: str
+    exposure: float
+    mean_change_pct: float
+    p05_change_pct: float
+    p25_change_pct: float
+    p50_change_pct: float
+    p75_change_pct: float
+    p95_change_pct: float
+    share_increase_over_10pct: float
+
+
+class HistogramBucket(BaseModel):
+    bucket_low: float | None = Field(description="Percent change, included. Null is open below")
+    bucket_high: float | None = Field(description="Percent change, excluded. Null is open above")
+    exposure: float = Field(description="Life-years")
+
+
+class ScenarioResponse(BaseModel):
+    model_version: str
+    totals: Totals
+    dislocation: list[DislocationRow]
+    histogram: list[HistogramBucket]
+    histogram_edges_pct: list[float] = Field(
+        description="The fixed bucket edges in percent. Buckets are [low, high)"
+    )
+    projected_ae: float | None = Field(
+        description="Actual / (expected x new premium / old premium) on the latest A/E period"
+    )
+    cells: list[dict[str, Any]] | None = None
+
+
+class FactorLevel(BaseModel):
+    level: str
+    label: str
+
+
+class RatingFactor(BaseModel):
+    factor: str
+    label: str
+    levels: list[FactorLevel]
+
+
+class DataYears(BaseModel):
+    fit: int
+    out_of_time: int
+    cost_basis: str
+
+
+class TrendAssumptions(Fields):
+    forecast_trend: float
+    rebase: float
+
+
+class HeadlineAE(BaseModel):
+    period: str
+    a_e: float
+    lower_95: float | None
+    upper_95: float | None
+    exposure: float
+
+
+class RecalibrationFlag(BaseModel):
+    segment: str
+    a_e: float
+    exposure: float
+    gap_type: Literal["level shift", "change in shape"]
+    note: str
+
+
+class ModelResponse(BaseModel):
+    id: str
+    date: str
+    description: str
+    data_years: DataYears
+    trend_assumptions: TrendAssumptions
+    permitted_rating_factors: list[RatingFactor]
+    headline_ae: HeadlineAE
+    recalibration_flags: list[RecalibrationFlag]
+
+
 @app.get("/health", summary="Service and model version status")
 def health() -> dict:
     current = state()
@@ -164,7 +312,12 @@ def quote(request: Quote) -> QuoteResponse:
     )
 
 
-@app.get("/relativities", summary="The relativities, the base rate and the UK scaling")
+@app.get(
+    "/relativities",
+    response_model=RelativitiesResponse,
+    response_model_exclude_unset=True,
+    summary="The relativities, the base rate and the UK scaling",
+)
 def relativities(factor: str | None = Query(None, description="Only this factor")) -> dict:
     current = state()
     table = current.tariff.relativities[engine_columns()]
@@ -185,7 +338,12 @@ def engine_columns() -> list[str]:
     return ["factor", "level", "relativity", "exposure", "lower_95", "upper_95"]
 
 
-@app.get("/monitoring", summary="A/E, PSI and the validation metrics of the model version")
+@app.get(
+    "/monitoring",
+    response_model=MonitoringResponse,
+    response_model_exclude_unset=True,
+    summary="A/E, PSI and the validation metrics of the model version",
+)
 def monitoring(
     period: str | None = Query(None, description="Only this A/E or PSI period"),
     factor: str | None = Query(None, description="Only this factor"),
@@ -206,8 +364,43 @@ def monitoring(
     }
 
 
-@app.post("/scenario-impact", summary="Apply a rate change to the in-force book")
+PERIOD = "2023 out-of-time"
+HISTOGRAM_EDGES_PCT = [-20.0, -10.0, -5.0, -2.5, 0.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0]
+
+
+def histogram(cells: pd.DataFrame) -> list[dict]:
+    """Exposure by bucket of individual premium change, buckets [low, high) with open ends."""
+    edges = HISTOGRAM_EDGES_PCT
+    index = np.searchsorted(edges, cells["change_pct"].to_numpy(), side="right")
+    exposure = np.bincount(index, weights=cells["exposure"].to_numpy(), minlength=len(edges) + 1)
+    lows, highs = [None, *edges], [*edges, None]
+    return [
+        {"bucket_low": lo, "bucket_high": hi, "exposure": float(x)}
+        for lo, hi, x in zip(lows, highs, exposure)
+    ]
+
+
+def overall_ae(current: State) -> pd.Series:
+    """The `all` row of the latest A/E period."""
+    table = pd.read_csv(current.directory / "ae_table.csv", dtype={"level": str})
+    return table[(table["factor"] == "all") & (table["period"] == PERIOD)].iloc[0]
+
+
+@app.post(
+    "/scenario-impact",
+    response_model=ScenarioResponse,
+    response_model_exclude_unset=True,
+    summary="Apply a rate change to the in-force book",
+)
 def scenario_impact(request: ScenarioRequest) -> dict:
+    """Old and new premium for the in-force book under a rate change.
+
+    `projected_ae` is actual divided by expected after the change. Actual and expected are the
+    totals of the latest A/E period (`2023 out-of-time`, the `all` row of `ae_table.csv`), and
+    expected after the change is expected times new premium over old premium of the book.
+    `exposure_capped` and `exposure_floored` are the life-years in the `cells_capped` and
+    `cells_floored` cells. The histogram counts life-years by individual premium change.
+    """
     current = state()
     if request.cap is not None and request.floor is not None and request.cap < request.floor:
         raise HTTPException(status_code=422, detail="cap must not be below floor")
@@ -221,11 +414,87 @@ def scenario_impact(request: ScenarioRequest) -> dict:
         changes[(item.factor, item.level)] = item.change
     scenario = bk.Scenario(request.base_change, changes, request.cap, request.floor)
     result = bk.apply_scenario(current.book, scenario, current.tariff)
+    cells = result["cells"]
+    uncapped = cells["uncapped_change_pct"] / 100
+    capped = uncapped > (request.cap if request.cap is not None else np.inf)
+    floored = uncapped < (request.floor if request.floor is not None else -np.inf)
+    totals = {
+        **result["totals"],
+        "exposure_capped": float(cells.loc[capped, "exposure"].sum()),
+        "exposure_floored": float(cells.loc[floored, "exposure"].sum()),
+    }
+    ae = overall_ae(current)
+    ratio = totals["new_premium"] / totals["old_premium"]
     body = {
         "model_version": current.model_version,
-        "totals": result["totals"],
-        "dislocation": records(bk.dislocation(result["cells"])),
+        "totals": totals,
+        "dislocation": records(bk.dislocation(cells)),
+        "histogram": histogram(cells),
+        "histogram_edges_pct": HISTOGRAM_EDGES_PCT,
+        "projected_ae": float(ae["actual"] / (ae["expected"] * ratio)),
     }
     if request.include_cells:
-        body["cells"] = records(result["cells"].replace({np.nan: None}))
+        body["cells"] = records(cells.replace({np.nan: None}))
     return body
+
+
+FACTOR_LABELS = {
+    "age": "Age band",
+    "region": "Region",
+    "HIBPDX": "High blood pressure",
+    "CHDDX": "Coronary heart disease",
+    "OHRTDX": "Other heart disease",
+    "CHOLDX": "High cholesterol",
+    "CANCERDX": "Cancer",
+    "ARTHDX": "Arthritis",
+    "ASTHDX": "Asthma",
+}
+REGION_LABELS = {"1": "Northeast", "2": "Midwest", "3": "South", "4": "West"}
+
+
+def level_label(factor: str, level: str) -> str:
+    if factor == "region":
+        return REGION_LABELS.get(level, level)
+    if factor == "age":
+        return level
+    return {"0": "No", "1": "Yes"}.get(level, level)
+
+
+@app.get("/model", response_model=ModelResponse, summary="The model version and its status")
+def model() -> dict:
+    """The version facts, the permitted factors, the headline A/E and the recalibration flags.
+
+    The flags apply the rule of `_docs/recalibration-rule.md` to `ae_intervals.csv`, level by level
+    (see `health_pricing.rating.flags`).
+    """
+    current = state()
+    meta = current.meta
+    table = current.tariff.relativities
+    factors = []
+    for factor in meta["permitted_rating_factors"]:
+        levels = [str(x) for x in table.loc[table["factor"] == factor, "level"]]
+        factors.append(
+            {
+                "factor": factor,
+                "label": FACTOR_LABELS.get(factor, factor),
+                "levels": [{"level": x, "label": level_label(factor, x)} for x in levels],
+            }
+        )
+    intervals = pd.read_csv(current.directory / "ae_intervals.csv", dtype={"level": str})
+    total = intervals[intervals["factor"] == "all"].iloc[0]
+    return {
+        "id": meta["id"],
+        "date": meta["date"],
+        "description": meta["description"],
+        "data_years": meta["data_years"],
+        "trend_assumptions": meta["trend_assumptions"],
+        "permitted_rating_factors": factors,
+        "headline_ae": {
+            "period": str(total["period"]),
+            "a_e": float(total["a_e"]),
+            "lower_95": float(total["lower_95"]),
+            "upper_95": float(total["upper_95"]),
+            "exposure": float(total["exposure"]),
+        },
+        "recalibration_flags": flags.segment_flags(intervals),
+    }

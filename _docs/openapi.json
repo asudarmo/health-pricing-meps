@@ -1,6 +1,74 @@
 {
   "components": {
     "schemas": {
+      "AERow": {
+        "additionalProperties": true,
+        "properties": {
+          "a_e": {
+            "title": "A E",
+            "type": "number"
+          },
+          "actual": {
+            "title": "Actual",
+            "type": "number"
+          },
+          "expected": {
+            "title": "Expected",
+            "type": "number"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "factor",
+          "level",
+          "segment",
+          "period",
+          "actual",
+          "expected",
+          "exposure",
+          "a_e"
+        ],
+        "title": "AERow",
+        "type": "object"
+      },
+      "BaseRateRow": {
+        "additionalProperties": true,
+        "properties": {
+          "component": {
+            "title": "Component",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "component",
+          "value"
+        ],
+        "title": "BaseRateRow",
+        "type": "object"
+      },
       "BreakdownRow": {
         "properties": {
           "factor": {
@@ -24,6 +92,106 @@
         "title": "BreakdownRow",
         "type": "object"
       },
+      "DataYears": {
+        "properties": {
+          "cost_basis": {
+            "title": "Cost Basis",
+            "type": "string"
+          },
+          "fit": {
+            "title": "Fit",
+            "type": "integer"
+          },
+          "out_of_time": {
+            "title": "Out Of Time",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fit",
+          "out_of_time",
+          "cost_basis"
+        ],
+        "title": "DataYears",
+        "type": "object"
+      },
+      "DislocationRow": {
+        "additionalProperties": true,
+        "properties": {
+          "dimension": {
+            "title": "Dimension",
+            "type": "string"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "mean_change_pct": {
+            "title": "Mean Change Pct",
+            "type": "number"
+          },
+          "p05_change_pct": {
+            "title": "P05 Change Pct",
+            "type": "number"
+          },
+          "p25_change_pct": {
+            "title": "P25 Change Pct",
+            "type": "number"
+          },
+          "p50_change_pct": {
+            "title": "P50 Change Pct",
+            "type": "number"
+          },
+          "p75_change_pct": {
+            "title": "P75 Change Pct",
+            "type": "number"
+          },
+          "p95_change_pct": {
+            "title": "P95 Change Pct",
+            "type": "number"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          },
+          "share_increase_over_10pct": {
+            "title": "Share Increase Over 10Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "dimension",
+          "segment",
+          "exposure",
+          "mean_change_pct",
+          "p05_change_pct",
+          "p25_change_pct",
+          "p50_change_pct",
+          "p75_change_pct",
+          "p95_change_pct",
+          "share_increase_over_10pct"
+        ],
+        "title": "DislocationRow",
+        "type": "object"
+      },
+      "FactorLevel": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "label"
+        ],
+        "title": "FactorLevel",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -35,6 +203,210 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HeadlineAE": {
+        "properties": {
+          "a_e": {
+            "title": "A E",
+            "type": "number"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "lower_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower 95"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "upper_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper 95"
+          }
+        },
+        "required": [
+          "period",
+          "a_e",
+          "lower_95",
+          "upper_95",
+          "exposure"
+        ],
+        "title": "HeadlineAE",
+        "type": "object"
+      },
+      "HistogramBucket": {
+        "properties": {
+          "bucket_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percent change, excluded. Null is open above",
+            "title": "Bucket High"
+          },
+          "bucket_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percent change, included. Null is open below",
+            "title": "Bucket Low"
+          },
+          "exposure": {
+            "description": "Life-years",
+            "title": "Exposure",
+            "type": "number"
+          }
+        },
+        "required": [
+          "bucket_low",
+          "bucket_high",
+          "exposure"
+        ],
+        "title": "HistogramBucket",
+        "type": "object"
+      },
+      "ModelResponse": {
+        "properties": {
+          "data_years": {
+            "$ref": "#/components/schemas/DataYears"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "headline_ae": {
+            "$ref": "#/components/schemas/HeadlineAE"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "permitted_rating_factors": {
+            "items": {
+              "$ref": "#/components/schemas/RatingFactor"
+            },
+            "title": "Permitted Rating Factors",
+            "type": "array"
+          },
+          "recalibration_flags": {
+            "items": {
+              "$ref": "#/components/schemas/RecalibrationFlag"
+            },
+            "title": "Recalibration Flags",
+            "type": "array"
+          },
+          "trend_assumptions": {
+            "$ref": "#/components/schemas/TrendAssumptions"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "description",
+          "data_years",
+          "trend_assumptions",
+          "permitted_rating_factors",
+          "headline_ae",
+          "recalibration_flags"
+        ],
+        "title": "ModelResponse",
+        "type": "object"
+      },
+      "MonitoringResponse": {
+        "properties": {
+          "ae": {
+            "items": {
+              "$ref": "#/components/schemas/AERow"
+            },
+            "title": "Ae",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "psi": {
+            "items": {
+              "$ref": "#/components/schemas/PSIRow"
+            },
+            "title": "Psi",
+            "type": "array"
+          },
+          "validation_metrics": {
+            "additionalProperties": true,
+            "title": "Validation Metrics",
+            "type": "object"
+          }
+        },
+        "required": [
+          "model_version",
+          "validation_metrics",
+          "ae",
+          "psi"
+        ],
+        "title": "MonitoringResponse",
+        "type": "object"
+      },
+      "PSIRow": {
+        "additionalProperties": true,
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "psi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Psi"
+          }
+        },
+        "required": [
+          "factor",
+          "period",
+          "psi"
+        ],
+        "title": "PSIRow",
         "type": "object"
       },
       "Quote": {
@@ -252,6 +624,111 @@
         "title": "QuoteResponse",
         "type": "object"
       },
+      "RatingFactor": {
+        "properties": {
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/FactorLevel"
+            },
+            "title": "Levels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "factor",
+          "label",
+          "levels"
+        ],
+        "title": "RatingFactor",
+        "type": "object"
+      },
+      "RecalibrationFlag": {
+        "properties": {
+          "a_e": {
+            "title": "A E",
+            "type": "number"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "gap_type": {
+            "enum": [
+              "level shift",
+              "change in shape"
+            ],
+            "title": "Gap Type",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "segment",
+          "a_e",
+          "exposure",
+          "gap_type",
+          "note"
+        ],
+        "title": "RecalibrationFlag",
+        "type": "object"
+      },
+      "RelativitiesResponse": {
+        "properties": {
+          "base_rate": {
+            "items": {
+              "$ref": "#/components/schemas/BaseRateRow"
+            },
+            "title": "Base Rate",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "relativities": {
+            "items": {
+              "$ref": "#/components/schemas/RelativityRow"
+            },
+            "title": "Relativities",
+            "type": "array"
+          },
+          "uk_scaling": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uk Scaling"
+          }
+        },
+        "required": [
+          "model_version",
+          "base_rate",
+          "uk_scaling",
+          "relativities"
+        ],
+        "title": "RelativitiesResponse",
+        "type": "object"
+      },
       "RelativityChange": {
         "properties": {
           "change": {
@@ -274,6 +751,57 @@
           "change"
         ],
         "title": "RelativityChange",
+        "type": "object"
+      },
+      "RelativityRow": {
+        "additionalProperties": true,
+        "properties": {
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "factor": {
+            "title": "Factor",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "lower_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower 95"
+          },
+          "relativity": {
+            "title": "Relativity",
+            "type": "number"
+          },
+          "upper_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper 95"
+          }
+        },
+        "required": [
+          "factor",
+          "level",
+          "relativity",
+          "exposure"
+        ],
+        "title": "RelativityRow",
         "type": "object"
       },
       "ScenarioRequest": {
@@ -337,6 +865,173 @@
         "title": "ScenarioRequest",
         "type": "object"
       },
+      "ScenarioResponse": {
+        "properties": {
+          "cells": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cells"
+          },
+          "dislocation": {
+            "items": {
+              "$ref": "#/components/schemas/DislocationRow"
+            },
+            "title": "Dislocation",
+            "type": "array"
+          },
+          "histogram": {
+            "items": {
+              "$ref": "#/components/schemas/HistogramBucket"
+            },
+            "title": "Histogram",
+            "type": "array"
+          },
+          "histogram_edges_pct": {
+            "description": "The fixed bucket edges in percent. Buckets are [low, high)",
+            "items": {
+              "type": "number"
+            },
+            "title": "Histogram Edges Pct",
+            "type": "array"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "projected_ae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Actual / (expected x new premium / old premium) on the latest A/E period",
+            "title": "Projected Ae"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/Totals"
+          }
+        },
+        "required": [
+          "model_version",
+          "totals",
+          "dislocation",
+          "histogram",
+          "histogram_edges_pct",
+          "projected_ae"
+        ],
+        "title": "ScenarioResponse",
+        "type": "object"
+      },
+      "Totals": {
+        "additionalProperties": true,
+        "properties": {
+          "cap_floor_cost": {
+            "title": "Cap Floor Cost",
+            "type": "number"
+          },
+          "cells_capped": {
+            "title": "Cells Capped",
+            "type": "integer"
+          },
+          "cells_floored": {
+            "title": "Cells Floored",
+            "type": "integer"
+          },
+          "change_pct": {
+            "title": "Change Pct",
+            "type": "number"
+          },
+          "exposure": {
+            "title": "Exposure",
+            "type": "number"
+          },
+          "exposure_capped": {
+            "description": "Life-years in the cells above the cap",
+            "title": "Exposure Capped",
+            "type": "number"
+          },
+          "exposure_floored": {
+            "description": "Life-years in the cells below the floor",
+            "title": "Exposure Floored",
+            "type": "number"
+          },
+          "new_premium": {
+            "title": "New Premium",
+            "type": "number"
+          },
+          "new_premium_gbp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Premium Gbp"
+          },
+          "old_premium": {
+            "title": "Old Premium",
+            "type": "number"
+          },
+          "old_premium_gbp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Premium Gbp"
+          }
+        },
+        "required": [
+          "exposure",
+          "old_premium",
+          "new_premium",
+          "change_pct",
+          "cap_floor_cost",
+          "cells_capped",
+          "cells_floored",
+          "exposure_capped",
+          "exposure_floored"
+        ],
+        "title": "Totals",
+        "type": "object"
+      },
+      "TrendAssumptions": {
+        "additionalProperties": true,
+        "properties": {
+          "forecast_trend": {
+            "title": "Forecast Trend",
+            "type": "number"
+          },
+          "rebase": {
+            "title": "Rebase",
+            "type": "number"
+          }
+        },
+        "required": [
+          "forecast_trend",
+          "rebase"
+        ],
+        "title": "TrendAssumptions",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -382,7 +1077,7 @@
   "info": {
     "description": "UK-style private medical insurance pricing on US MEPS data. The premium is a risk premium (expected claims cost) in dollars, with illustrative pounds alongside, excluding expenses and margin. Statistical analysis only, source AHRQ MEPS.",
     "title": "Health pricing service",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -404,6 +1099,25 @@
           }
         },
         "summary": "Service and model version status"
+      }
+    },
+    "/model": {
+      "get": {
+        "description": "The version facts, the permitted factors, the headline A/E and the recalibration flags.\n\nThe flags apply the rule of `_docs/recalibration-rule.md` to `ae_intervals.csv`, level by level\n(see `health_pricing.rating.flags`).",
+        "operationId": "model_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The model version and its status"
       }
     },
     "/monitoring": {
@@ -452,9 +1166,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Monitoring Monitoring Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/MonitoringResponse"
                 }
               }
             },
@@ -540,9 +1252,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Relativities Relativities Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/RelativitiesResponse"
                 }
               }
             },
@@ -564,6 +1274,7 @@
     },
     "/scenario-impact": {
       "post": {
+        "description": "Old and new premium for the in-force book under a rate change.\n\n`projected_ae` is actual divided by expected after the change. Actual and expected are the\ntotals of the latest A/E period (`2023 out-of-time`, the `all` row of `ae_table.csv`), and\nexpected after the change is expected times new premium over old premium of the book.\n`exposure_capped` and `exposure_floored` are the life-years in the `cells_capped` and\n`cells_floored` cells. The histogram counts life-years by individual premium change.",
         "operationId": "scenario_impact_scenario_impact_post",
         "requestBody": {
           "content": {
@@ -580,9 +1291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Scenario Impact Scenario Impact Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ScenarioResponse"
                 }
               }
             },

@@ -180,7 +180,14 @@ def test_scenario_impact_endpoint(server):
 def test_the_saved_openapi_schema_is_current_and_lists_the_endpoints():
     assert openapi.PATH.read_text(encoding="utf-8") == openapi.schema_text()
     paths = set(json.loads(openapi.PATH.read_text(encoding="utf-8"))["paths"])
-    assert paths == {"/health", "/quote", "/relativities", "/monitoring", "/scenario-impact"}
+    assert paths == {
+        "/health",
+        "/model",
+        "/quote",
+        "/relativities",
+        "/monitoring",
+        "/scenario-impact",
+    }
 
 
 def test_the_service_imports_no_modelling_libraries():

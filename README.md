@@ -173,7 +173,7 @@ exposure-year, with a **risk premium (expected claims cost), illustrative pounds
 Limitations). The golden test cases in `outputs/v1/golden_cases.csv` are a **regression baseline, provisional until the Excel
 reconciliation**, because the planned reconciliation will replace them.
 
-`outputs/v1/` holds `model_version.json`, `relativities.csv`, `base_rate.csv`, `scaling.json`, `ae_table.csv`, `psi_table.csv`,
+`outputs/v1/` holds `model_version.json`, `relativities.csv`, `base_rate.csv`, `scaling.json`, `ae_table.csv`, `psi_table.csv`, `ae_intervals.csv`,
 `in_force_book.csv`, `golden_cases.csv` and an example scenario with its dislocation histogram. They are aggregated tables only. A
 contract test (`tests/test_contract_v1.py`) checks the files, the schemas, the totals and each golden premium. Rebuild them with
 `uv run python -m health_pricing.publish`. In the example scenario (base +4 percent, +5 percent on 75-79 and +10 percent on 80+, cap
@@ -197,8 +197,22 @@ command line.
 uv run uvicorn health_pricing.service.app:app --port 8000
 ```
 
-The endpoints are `GET /health`, `POST /quote`, `GET /relativities`, `GET /monitoring` and `POST /scenario-impact`. The interactive
-documentation is at `http://localhost:8000/docs`.
+The endpoints are:
+
+- `GET /health`: status, model version, date and description.
+- `GET /model`: id, date, description, data years, trend assumptions, the permitted rating factors with levels and labels, the headline A/E
+  on 2023 and the recalibration flags. The flags apply the rule in `_docs/recalibration-rule.md` to `outputs/v1/ae_intervals.csv`, level by
+  level. A level with an A/E interval that excludes 1 is a level shift. A level whose A/E relative to the book excludes 1 is a change in shape.
+- `POST /quote`: the premium of one profile with its breakdown.
+- `GET /relativities`: the relativities, the base rate and the UK scaling.
+- `GET /monitoring`: A/E, PSI and the validation metrics.
+- `POST /scenario-impact`: the effect of a rate change on the in-force book. Since v1.1 it also returns `histogram` (life-years by premium
+  change, with the fixed bucket edges in `histogram_edges_pct`), `projected_ae` (actual over expected after the change, on 2023) and
+  `exposure_capped` and `exposure_floored` in life-years, next to `cells_capped` and `cells_floored`.
+
+The responses of `/model`, `/relativities`, `/monitoring` and `/scenario-impact` are typed, so the OpenAPI schema (`_docs/openapi.json`)
+shows the full shapes. Version 1.1 only adds fields and one table (`ae_intervals.csv`). No existing field, premium or golden case changed.
+The interactive documentation is at `http://localhost:8000/docs`.
 
 **Call.**
 
@@ -214,14 +228,15 @@ reason. Smoking, health and exercise answers are accepted and priced at their re
 **Docker.** The image holds only the service code and `outputs/v1/`. It needs no MEPS data and runs as a non-root user.
 
 ```
-docker build -t health-pricing-service:v1 .
-docker run --rm -p 8000:8000 health-pricing-service:v1
+docker build -t health-pricing-service:v1.1 .
+docker run --rm -p 8000:8000 health-pricing-service:v1.1
 ```
 
-The image is published to the GitHub Container Registry as `ghcr.io/asudarmo/health-pricing-meps:v1` (and `latest`).
+The image is published to the GitHub Container Registry as `ghcr.io/asudarmo/health-pricing-meps:v1.1` (and `latest`). The tag `v1` is the
+earlier image without the additions above and is kept unchanged.
 
 ```
-docker run --rm -p 8000:8000 ghcr.io/asudarmo/health-pricing-meps:v1
+docker run --rm -p 8000:8000 ghcr.io/asudarmo/health-pricing-meps:v1.1
 ```
 
 The package is public, so no login is needed. A pull from the registry and the golden-case tests against that container were checked on

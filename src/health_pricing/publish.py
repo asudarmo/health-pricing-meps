@@ -73,6 +73,65 @@ def ae_table(frozen, adjusted, oot) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)[AE_COLUMNS]
 
 
+def ae_intervals(
+    directory: Path = outofsample.OUTPUT_DIR, version: Path | None = None
+) -> pd.DataFrame:
+    """The 2023 A/E of each rating level with its interval, on the published `ae_table` basis.
+
+    The intervals come from the out-of-time test of the tariff. They are scaled by the ratio of the
+    published A/E (which includes the rating level) to the test A/E, so each interval keeps its
+    relative width. Read by `health_pricing.rating.flags.segment_flags`.
+    """
+    published = pd.read_csv(
+        version or engine.OUTPUTS / VERSION / "ae_table.csv", dtype={"level": str}
+    )
+    published = published[published["period"] == PERIOD_2023].copy()
+    published["a_e"] = published["actual"] / published["expected"]
+    overall = published.loc[published["factor"] == "all", "a_e"].iloc[0]
+    test = pd.read_csv(directory / "ae_by_level_2023.csv", dtype={"level": str})
+    test = test[(test["model"] == outofsample.TARIFF) & (test["role"] == "rating")]
+    test = test.rename(columns=lambda c: f"test_{c}" if c not in ("factor", "level") else c)
+    total = (
+        pd.read_csv(directory / "ae_overall_2023.csv").set_index("model").loc[outofsample.TARIFF]
+    )
+    total_row = pd.DataFrame(
+        [
+            {
+                "factor": "all",
+                "level": "all",
+                "test_a_e": total["a_e"],
+                "test_lower_95": total["lower_95"],
+                "test_upper_95": total["upper_95"],
+                "test_relative_a_e": 1.0,
+                "test_relative_lower_95": 1.0,
+                "test_relative_upper_95": 1.0,
+                "test_claimants": test.groupby("factor")["test_claimants"].sum().max(),
+                "test_enough_claimants": True,
+            }
+        ]
+    )
+    merged = published.merge(pd.concat([test, total_row]), on=["factor", "level"], how="inner")
+    scale = merged["a_e"] / merged["test_a_e"]
+    relative = merged["a_e"] / overall
+    relative_scale = relative / merged["test_relative_a_e"]
+    return pd.DataFrame(
+        {
+            "factor": merged["factor"],
+            "level": merged["level"],
+            "period": PERIOD_2023,
+            "a_e": merged["a_e"],
+            "lower_95": merged["test_lower_95"] * scale,
+            "upper_95": merged["test_upper_95"] * scale,
+            "relative_a_e": relative,
+            "relative_lower_95": merged["test_relative_lower_95"] * relative_scale,
+            "relative_upper_95": merged["test_relative_upper_95"] * relative_scale,
+            "claimants": merged["test_claimants"].astype(int),
+            "enough_claimants": merged["test_enough_claimants"].astype(bool),
+            "exposure": merged["exposure"],
+        }
+    )
+
+
 def psi_table(directory: Path = outofsample.OUTPUT_DIR) -> pd.DataFrame:
     """PSI of the rating factors, 2023 against 2022 train, from the M5 table.
 
