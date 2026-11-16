@@ -294,7 +294,7 @@ How the project meets each criterion of the [ML Zoomcamp project rubric](https:/
 | Exporting the notebook to a script | The logic is in the [`src/health_pricing/`](src/health_pricing/) package and [`train.py`](train.py) rebuilds `outputs/v1/`. [`predict.py`](predict.py) prices one profile from the command line. The notebooks import from the package |
 | Reproducibility | "Reproduce from a clean clone" above. The data is downloaded by script with each file's size checked, seeds are fixed, and a fresh clone reproduced the tables to a relative 1e-13 |
 | Model deployment | A FastAPI service with six endpoints and a saved schema, [`_docs/openapi.json`](_docs/openapi.json) |
-| Dependencies and environment | [`pyproject.toml`](pyproject.toml) and `uv.lock` (full project), [`requirements-service.txt`](requirements-service.txt) (service). `uv sync` creates the virtual environment in `.venv`, and `uv run` uses it. To activate it by hand, run `.venv\Scriptsctivate` on Windows or `source .venv/bin/activate` on macOS and Linux |
+| Dependencies and environment | [`pyproject.toml`](pyproject.toml) and `uv.lock` (full project), [`requirements-service.txt`](requirements-service.txt) (service). `uv sync` creates the virtual environment in `.venv`, and `uv run` uses it. To activate it by hand, run `.venv\Scripts\activate` on Windows or `source .venv/bin/activate` on macOS and Linux |
 | Containerisation | [`Dockerfile`](Dockerfile), with build and run commands under "Docker" above. The image is on `ghcr.io` |
 | Cloud deployment | Public URL https://health-pricing-1063228706897.europe-west2.run.app on Google Cloud Run, with the deployment commands and a test under "Cloud deployment" above |
 
