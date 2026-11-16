@@ -219,12 +219,13 @@ def test_the_v1_numbers_are_quoted_as_the_published_tables_have_them():
     assert "risk premium (expected claims cost), illustrative pounds" in flat
 
 
-def test_the_zoomcamp_section_names_the_endpoints_and_says_not_yet_deployed():
+def test_the_zoomcamp_section_names_the_endpoints_and_the_cloud_url():
     flat = " ".join(README.split())
     assert "## Pricing service (ML Zoomcamp)" in README
     for endpoint in ("/health", "/quote", "/relativities", "/monitoring", "/scenario-impact"):
         assert endpoint in flat
-    assert "not yet deployed" in flat and "gcloud run deploy" in flat
+    assert "not yet deployed" not in flat and "gcloud run deploy" in flat
+    assert "health-pricing-1063228706897.europe-west2.run.app" in flat
     assert "AI Dev Tools" in flat and "2 November 2026" in flat
     assert "_docs/openapi.json" in flat
 

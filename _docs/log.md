@@ -319,3 +319,8 @@ Update (6 Nov, later): the golden-case label now reads "regression baseline, pro
 
 Done: `GET /model`, scenario `histogram`, `projected_ae`, `exposure_capped` and `exposure_floored`, typed responses, new table `ae_intervals.csv`, README and OpenAPI schema updated, tests in `tests/test_service_v11.py`. Image published as `:v1.1` and `:latest`, `:v1` untouched.
 Next: the Workbench app can call the new fields. Open question: the segment intervals are scaled test intervals (see decisions, 9 Nov).
+
+## 16 Nov 2026: Cloud Run deployment and course requirements table
+
+Done: deployed the published image `ghcr.io/asudarmo/health-pricing-meps:v1.1` to Google Cloud Run (project `dtc-aidev-2026`, `europe-west2`, scale to zero, maximum two instances, 512 MiB). Health, quote and the ten golden-case service tests pass against the live URL. The README has the URL, the deploy and delete commands, and a "Course requirements" table for the ML Zoomcamp rubric.
+Next: submit the repository on the course form, then the three peer reviews. Delete the Cloud Run service after the review period. Open question: none.

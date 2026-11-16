@@ -250,18 +250,53 @@ provisional until the planned Excel reconciliation.
 does not import the package. The course instructor confirmed in the ML Zoomcamp Slack on 2 November 2026 that the app may consume this
 service. This repository is the ML Zoomcamp midterm.
 
-**Cloud deployment (not yet deployed).** The service has not been deployed. To run it on Google Cloud Run, with a Google Cloud
-project and the `gcloud` CLI installed, run these commands from the repository root.
+**Cloud deployment.** The service runs on Google Cloud Run in `europe-west2` at
+https://health-pricing-1063228706897.europe-west2.run.app (interactive documentation at `/docs`). It runs the published image
+`ghcr.io/asudarmo/health-pricing-meps:v1.1`, so what runs in the cloud is the image that was tested locally. The service scales to zero
+when idle and is limited to two instances. It stays up for the peer-review period and is then deleted, so the link may stop working later.
+
+```
+curl -s https://health-pricing-1063228706897.europe-west2.run.app/health
+curl -s -X POST https://health-pricing-1063228706897.europe-west2.run.app/quote -H "Content-Type: application/json" -d '{"age":40,"region":"3","HIBPDX":"0","CHDDX":"0","OHRTDX":"0","CHOLDX":"0","CANCERDX":"1","ARTHDX":"0","ASTHDX":"0"}'
+```
+
+The quote returns a premium of 2,588.98 dollars (631.71 illustrative pounds) for that profile. The golden-case tests also pass against
+the live service (10 passed on 16 November 2026):
+
+```
+SERVICE_URL=https://health-pricing-1063228706897.europe-west2.run.app uv run pytest tests/test_service.py
+```
+
+To deploy it yourself, you need a Google Cloud project with billing and the `gcloud` CLI. The image is public, so Cloud Run pulls it
+directly and no build step is needed.
 
 ```
 gcloud auth login
 gcloud config set project PROJECT_ID
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
-gcloud run deploy health-pricing --source . --region europe-west2 --port 8000 --allow-unauthenticated
+gcloud services enable run.googleapis.com
+gcloud run deploy health-pricing --image ghcr.io/asudarmo/health-pricing-meps:v1.1 --region europe-west2 --port 8000 --allow-unauthenticated --max-instances 2 --memory 512Mi
 ```
 
-Cloud Run builds the image from the `Dockerfile` and prints the service URL. Replace `http://localhost:8000` in the calls above with that
-URL. Drop `--allow-unauthenticated` to require a Google identity token.
+The last command prints the service URL. Drop `--allow-unauthenticated` to require a Google identity token. To build from source
+instead, run `gcloud run deploy health-pricing --source . --region europe-west2 --port 8000 --allow-unauthenticated`, which also needs
+the `cloudbuild.googleapis.com` and `artifactregistry.googleapis.com` services. To remove the service, run
+`gcloud run services delete health-pricing --region europe-west2`.
+
+## Course requirements
+
+How the project meets each criterion of the [ML Zoomcamp project rubric](https://github.com/DataTalksClub/machine-learning-zoomcamp/tree/main/projects).
+
+| Criterion | Evidence |
+|---|---|
+| Problem description | "The problem" and "The data and the UK framing" above, and "Pricing service" for how the model is used |
+| EDA | [`notebooks/02_eda.ipynb`](notebooks/02_eda.ipynb): data dictionary, exposure, zero-claim share, frequency and severity by age, sex, region and condition, the claim-cost distribution, train and test balance. Missing values are checked in the dbt tests and the validation layer. Factor strength is shown in `03_glm.ipynb` and by SHAP in `05_gbm.ipynb` |
+| Model training | Linear: Poisson and negative binomial frequency GLMs, a Gamma severity GLM and candidate rating structures ([`03_glm.ipynb`](notebooks/03_glm.ipynb)). Tree-based: a LightGBM challenger with a 12-combination grid and five-fold cross-validation grouped by household (`outputs/m4_draft/gbm_cv_grid.csv`, [`05_gbm.ipynb`](notebooks/05_gbm.ipynb)). The GLM is chosen as the pricing basis |
+| Exporting the notebook to a script | The logic is in the [`src/health_pricing/`](src/health_pricing/) package and [`train.py`](train.py) rebuilds `outputs/v1/`. [`predict.py`](predict.py) prices one profile from the command line. The notebooks import from the package |
+| Reproducibility | "Reproduce from a clean clone" above. The data is downloaded by script with each file's size checked, seeds are fixed, and a fresh clone reproduced the tables to a relative 1e-13 |
+| Model deployment | A FastAPI service with six endpoints and a saved schema, [`_docs/openapi.json`](_docs/openapi.json) |
+| Dependencies and environment | [`pyproject.toml`](pyproject.toml) and `uv.lock` (full project), [`requirements-service.txt`](requirements-service.txt) (service). `uv sync` creates the virtual environment in `.venv`, and `uv run` uses it. To activate it by hand, run `.venv\Scriptsctivate` on Windows or `source .venv/bin/activate` on macOS and Linux |
+| Containerisation | [`Dockerfile`](Dockerfile), with build and run commands under "Docker" above. The image is on `ghcr.io` |
+| Cloud deployment | Public URL https://health-pricing-1063228706897.europe-west2.run.app on Google Cloud Run, with the deployment commands and a test under "Cloud deployment" above |
 
 ## Limitations
 
@@ -299,7 +334,6 @@ v1 is fitted on 2022 with a credibility-weighted rebase. The next version (v2) a
 - **Large-claim tail model.** Re-estimate the large-claim load and index the cap, in place of the provisional flat load of 6.5 percent.
 - **Excel reconciliation.** A small Excel rating workbook that Python reproduces to the penny. It replaces the provisional golden cases.
 - **Conversion and elasticity.** A conversion model and price elasticity by segment, tested on simulated quotes with a known response.
-- **Cloud deployment.** Deploy the pricing service, for example on Google Cloud Run (see the instructions above).
 
 ## Reproduce from a clean clone
 
